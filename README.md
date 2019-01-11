@@ -4,7 +4,7 @@ This repository is the knowledge base for the MindTrails Calm Thinking Study (R0
 
 For more information about the Calm Thinking study, see the MindTrails Wiki.
 
-The data issue history and suggested cleaning procedure are forthcoming.
+The data issues history and suggested cleaning procedure are forthcoming.
 
 Each data analysis project will have its own folder that contains the code specific to that project.
 
