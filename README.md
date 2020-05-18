@@ -1,4 +1,4 @@
-# R01-Data
+# MindTrails-Data-CalmThinkingStudy
 
 This repository is the knowledge base for the MindTrails Calm Thinking Study (R01) dataset. For more information about the _Calm Thinking_ study, see [the Calm Thinking wiki](https://sites.google.com/a/virginia.edu/mindtrails-wiki/studies/calmthinking).
 
