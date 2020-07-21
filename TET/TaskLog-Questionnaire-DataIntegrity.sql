@@ -1,3 +1,25 @@
+ -- --------------------------            
+-- taskLog: Eligibility must have 1 or 2  distinct tasks for TET
+-- --------------------------     
+#183 participants have 2 task in Eligibility
+-- select count(distinct(task_name)) as task_count, study_id from  task_log where  
+--   		study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0)) 
+-- 		 and session_name = 'Eligibility' 
+-- 		 group by study_id   
+--          having task_count = 2
+-- --------------------------     
+#66 participants have one task in Eligibility
+-- select count(distinct(task_name)) as task_count, study_id from  task_log where  
+--   		study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0)) 
+-- 		 and session_name = 'Eligibility' 
+-- 		 group by study_id   
+--          having task_count = 1
+-- --------------------------                        
+-- select * from task_log where 
+-- 	study_id = 83330 
+--     and study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0))       
+ -- --------------------------     
+ -- --------------------------     
 -- taskLog: preTest must have 14 distinct tasks
 -- --------------------------        
 #180 participant finished preTest    
@@ -119,28 +141,7 @@
 --         HAVING  task_count < 18
 -- --------------------------                        
 -- select * from task_log where study_id = 83320 and study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0))       
- -- --------------------------      
- -- --------------------------            
--- taskLog: Eligibility must have 1 or 2  distinct tasks for TET
--- --------------------------     
-#183 participants have 2 task in Eligibility
--- select count(distinct(task_name)) as task_count, study_id from  task_log where  
---   		study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0)) 
--- 		 and session_name = 'Eligibility' 
--- 		 group by study_id   
---          having task_count = 2
--- --------------------------     
-#66 participants have one task in Eligibility
--- select count(distinct(task_name)) as task_count, study_id from  task_log where  
---   		study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0)) 
--- 		 and session_name = 'Eligibility' 
--- 		 group by study_id   
---          having task_count = 1
--- --------------------------                        
--- select * from task_log where 
--- 	study_id = 83330 
---     and study_id in (select id from calm.study where study_extension = 'TET' and id in (select study_id from participant where test_account = 0 and admin = 0))       
- -- --------------------------      
+ -- --------------------------       
  -- --------------------------            
 -- taskLog: PostFollowUp must have 12  distinct tasks for TET??? (no data exist for this)
 -- --------------------------     
