@@ -11,13 +11,14 @@ raw_data_dir = "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data"
 setwd(raw_data_dir)
 filenames = list.files(raw_data_dir, pattern="*.csv", full.names=FALSE)
 
-data = lapply(filenames, read.csv)
-# data = lapply(filenames, function(i){read.csv(i,  sep="\t", header=TRUE)})
+data = lapply(filenames, read.csv) #if you downloaded the data from the server run this
+# data = lapply(filenames, function(i){read.csv(i,  sep="\t", header=TRUE)}) #if you downloaded the data from the MindTrails run this
+
 names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', fixed=FALSE))[1]}))
-# names(data) = unlist(strsplit(filenames, ".csv"))
 #---------------------------
 
 #---------------------------
+# standard_ID_function, does the following steps
 #1. standard the IDs, study, and session
 #2. remove test and admin users
 #3. standard the data column
@@ -69,10 +70,12 @@ standard_ID_function = function(df){
   return(df)
 }
 #---------------------------
+#after apply the `standard_ID_function function`, we restore the data in the new_data
 new_data = lapply(data, standard_ID_function)
 #---------------------------
 
 #---------------------------
+# add_info, does the following steps
 #1. soft and true launch
 #2. algorithm or manual condition assignment
 add_info = function(data, study_name){
@@ -91,6 +94,7 @@ add_info = function(data, study_name){
   return(data)
 }
 #---------------------------
+#after apply the `add_info` function, we restore the data in the new_data
 new_data = add_info(new_data, "R01")
 #---------------------------
 
@@ -116,13 +120,16 @@ study_ID_function = function(data, study_name){
   return(tmp)
 }
 #---------------------------
+# the second argument of `study_ID_function` is the study name, so it can be `R01`, `TET`, or `GIDI`
 study_participants = study_ID_function(new_data, "R01")
+# extract the participant ids of the selected study (here is `R01`)
 participantIDs = study_participants$participantID
+# extract the system ids of the selected study (here is `R01`)
 systemIDs = study_participants$systemID
 #---------------------------
 
 #---------------------------
-#extract the data of users in each study
+#`select_study_participants_data` function extracts the data of each tables for the users of the selected study
 select_study_participants_data = function(data, participant_ids, system_ids, study_name = "R01"){
   tmp = list()
   
@@ -141,11 +148,13 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
   return(tmp)
 }
 #---------------------------
+#restore the data of each tables for the users of the selected study in the participant_data 
 participant_data = select_study_participants_data(new_data, participantIDs, systemIDs, "R01")
 #---------------------------
 
 #---------------------------
-#check for the duplication and show which ID have a duplicated values in the corresponding tables
+#`check_duplication` functions check for the duplication and show which IDs have duplicated values in the corresponding tables
+# returne the data without duplication
 check_duplication = function(data){
   tmp = list()
   cnt = 1
@@ -224,6 +233,7 @@ check_duplication = function(data){
   return(tmp)
 }
 #---------------------------
+# `no_duplicated_data` is a collection of tables without any duplication
 no_duplicated_data = check_duplication(participant_data)
 #---------------------------
 
@@ -234,6 +244,7 @@ data_summary = lapply(no_duplicated_data, summary)
 for (i in 1:length(no_duplicated_data)){
   assign(paste(paste("df", i, sep=""), "summary", sep="."), data_summary[[i]])
 }
+data_summary
 #---------------------------
 
 
@@ -340,11 +351,12 @@ data_missing = lapply(no_duplicated_data, missing_function)
 
 
 #---------------------------
-#check the number of taks per session for each participant
-number_of_tasks = c(2, 14, 8, 5)
+#create an object with the number of taks that should be done per session
+number_of_tasks = c(2, 14, 8, 5) 
 names(number_of_tasks) = c("Eligibility", "preTest", "firstSession", "secondSession")
-number_of_tasks
+number_of_tasks #e.g., session eligibility should have 2 different task 
 #---------------------------
+#`session_task_check` function, return if the participant complete a session or it is in the middle of the session
 session_task_check = function(df, session_name){
   tmp = ddply(df,~systemID+session,summarise,number_of_distinct_tasks=length(unique(task_name)))
   tmp2 = filter(tmp, session == session_name) 
@@ -353,5 +365,7 @@ session_task_check = function(df, session_name){
   return(tmp2)
 }
 #---------------------------
+# the second argument can be any session name of the study
+# we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks 
 number_of_distinct_task_for_session = session_task_check(no_duplicated_data$taskLog, "preTest")
 #---------------------------
