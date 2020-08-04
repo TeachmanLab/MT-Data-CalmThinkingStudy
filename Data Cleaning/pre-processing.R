@@ -1,31 +1,29 @@
-setwd("/Users/soniabaee/Documents/Projects/MindTrails/R01/") 
-library(dplyr) # Load package
 library(reshape2)
 library(plyr)
+library(dplyr) # Needs to be loaded after dplyr
 library(data.table)
 require(lubridate)
 library(anytime)
 
 #----------------------------------------------------------------------
-raw_data_dir = "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data"
+raw_data_dir = "C:/Users/anbag/code/MT-Data-CalmThinkingStudy/data"
 setwd(raw_data_dir)
 filenames = list.files(raw_data_dir, pattern="*.csv", full.names=FALSE)
 
-data = lapply(filenames, read.csv) #if you downloaded the data from the server run this
-# data = lapply(filenames, function(i){read.csv(i,  sep="\t", header=TRUE)}) #if you downloaded the data from the MindTrails run this
+data = lapply(filenames, read.csv) # If you downloaded the data from the server run this
+# data = lapply(filenames, function(i){read.csv(i,  sep="\t", header=TRUE)}) # If you downloaded the data from the MindTrails run this
 
-names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', fixed=FALSE))[1]}))
+names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', fixed=FALSE))[1]})) # Assign file names to their respective data frames in the list `data`
+
 #---------------------------
 
 #---------------------------
-# standard_ID_function, does the following steps
-#1. standard the IDs, study, and session
-#2. remove test and admin users
-#3. standard the data column
-standard_ID_function = function(df){
+# function `standardize_colnames` enforces a standardized column naming scheme across data tables
+#  For instance, `participandID` replaces the columns `participant_id` and `id`
+
+standardize_colnames = function(df){
   df_colnames = colnames(df)
   
-  # Create variable with consistent participant and study id name
   if("participant_id" %in% df_colnames){
     df = df %>% select(participantID = participant_id, everything()) 
   }
@@ -39,21 +37,13 @@ standard_ID_function = function(df){
     df = df %>% select(systemID = id, everything()) 
   }
   
-  # Remove admin and test account in the participant table
-  if(("admin" %in% df_colnames)&("test_account" %in% df_colnames) ){
-    df = df %>% select(participantID = id, everything()) 
-    df = filter(df, test_account == 0 & admin == 0) 
-  }
-  
-  # Create variable with consistent session column name
   if(("session_name" %in% df_colnames)){
     df = df %>% select(session = session_name, everything()) 
   }
   if(("current_session" %in% df_colnames)){
     df = df %>% select(session = current_session, everything()) 
   }
-  
-  # Create variable with consistent date format
+
   if(("date" %in% df_colnames)){
     df = mutate(df, dateTime = anytime(as.factor(df$date))) 
   }
@@ -67,18 +57,42 @@ standard_ID_function = function(df){
     df = mutate(df, dateTime = anytime(as.factor(df$last_login_date))) 
   }
   
+  # ----- Leave commented out for now. Sonia uses tag col later to check for duplicates
+  
+  
+  # Remove empty `tag` and `coronavirus` columns, if they exist
+  
+   
+#  for (col in list("tag", "coronavirus")) {
+#    if (col %in% colnames(df)) {
+#      df = df[,-c(grep(col, colnames(df)))]
+#    }
+#  }
+
   return(df)
 }
 #---------------------------
-#after apply the `standard_ID_function function`, we restore the data in the new_data
-new_data = lapply(data, standard_ID_function)
-#---------------------------
 
-#---------------------------
-# add_info, does the following steps
-#1. soft and true launch
-#2. algorithm or manual condition assignment
-add_info = function(data, study_name){
+# Standardize column names across dataset
+data = lapply(data, standardize_colnames)
+
+
+# -------------- Handle special case of Participant table -------------------
+
+data$participant = data$participant %>% select(participantID = id, everything()) # Standardize participantID field
+data$participant = filter(data$participant, test_account == 0 & admin == 0) # Remove admin and test accounts
+
+
+# -------------- Handle special case of DASS --------------------------------
+eligible <- filter(data$dass21AS, session == "ELIGIBLE")
+eligible <- eligible[!rev(duplicated(rev(eligible[, c("participantID")]))),]
+other <- filter(data$dass21AS, session != "ELIGIBLE")
+data$dass21AS <- rbind(eligible, other)
+
+#----------------------------------------------------------------------------
+# function `add_participant_info` creates helper columns that explain
+#  launch membership and condition assignment
+add_participant_info = function(data, study_name){
   if(study_name == "R01"){
     
     # Create new variable to differentiate soft and true launch Ps
@@ -94,14 +108,14 @@ add_info = function(data, study_name){
   return(data)
 }
 #---------------------------
-#after apply the `add_info` function, we restore the data in the new_data
-new_data = add_info(new_data, "R01")
+# Add helper columns
+data = add_participant_info(data, "R01")
 #---------------------------
 
 
 #---------------------------
-#extract the users' IDs for each specific study
-study_ID_function = function(data, study_name){
+# Extract the participants for the given study
+get_study_participants = function(data, study_name){
   study = data$study
   participant = data$participant
   systemID_match = select(participant, participantID, systemID)
@@ -120,11 +134,15 @@ study_ID_function = function(data, study_name){
   return(tmp)
 }
 #---------------------------
-# the second argument of `study_ID_function` is the study name, so it can be `R01`, `TET`, or `GIDI`
+# The second argument of `get_study_participants` is the study name, so it can be `R01`, `TET`, or `GIDI`
+# TODO: Move above comment to the function description when describing params
+
 study_name = "R01"
-study_participants = study_ID_function(new_data, "R01")
-# extract the participant ids of the selected study (here is `R01`)
+study_participants = get_study_participants(data, study_name)
+
+# Extract the participant ids of the selected study (here is `R01`)
 participantIDs = study_participants$participantID
+
 # extract the system ids of the selected study (here is `R01`)
 systemIDs = study_participants$systemID
 cat("number of participant in study", study_name, "is: ", length(participantIDs))
@@ -136,7 +154,7 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
   tmp = list()
   
   cnt = 1
-  for(df in new_data){
+  for(df in data){
     if("systemID" %in% colnames(df)){
       df = subset(df, systemID %in% systemIDs)
     }
@@ -151,117 +169,43 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
 }
 #---------------------------
 #restore the data of each tables for the users of the selected study in the participant_data 
-participant_data = select_study_participants_data(new_data, participantIDs, systemIDs, "R01")
+participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
 
 #---------------------------
-#`check_duplication` functions check for the duplication and show which IDs have duplicated values in the corresponding tables
-# returne the data without duplication
-check_duplication = function(data){
+# function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have duplicated values (across all data tables) and returns the dataset without duplication 
+remove_duplicates = function(data){
   tmp = list()
   cnt = 1
+  cols = list()
   for(name in names(data)){
     if(name == 'taskLog'){
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("systemID","session","task_name","tag")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values in the table:", name)
-        cat("\n")
-        cat("For the following ids: ", duplicated_rows$systemID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID","session","task_name","tag")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication in the table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
+      cols = list("systemID","session","task_name","tag")
     }
-    else if(name == 'participant'){
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values for table:", name)
-        cat("\n")
-        cat("for the following ids: ", duplicated_rows$participantID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
+    else if((name == 'participant') | (name=="attritionPrediction")) {
+      cols = list("participantID")
     }
     else if(name == 'study'){
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("systemID", "session")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values for table:", name)
-        cat("\n")
-        cat("for the following ids: ", duplicated_rows$systemID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID", "session")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
+      cols = list("systemID", "session")
     }
     else if(name == 'affect'){
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session", "tag")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values for table:", name)
-        cat("\n")
-        cat("for the following ids: ", duplicated_rows$systemID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "tag")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
-    }
-    else if(name == 'attritionPrediction'){
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values for table:", name)
-        cat("\n")
-        cat("for the following ids: ", duplicated_rows$systemID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
+      cols = list("participantID", "session", "tag")
     }
     else{
-      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session")])),]
-      if(dim(duplicated_rows)[1] > 0){
-        cat("there is duplicated values for table:", name)
-        cat("\n")
-        cat("for the following ids: ", duplicated_rows$participantID)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session")]), ] 
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt = cnt + 1
-      }else{
-        cat("no duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]]
-        cnt = cnt + 1
-      }
+      cols = list("participantID", "session")
+    }
+    
+    duplicated_rows = data[[name]][(duplicated(data[[name]][, c(unlist(cols))])),]
+    if(dim(duplicated_rows)[1] > 0){
+      cat("There are duplicated values in the table:", name)
+      tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c(unlist(cols))]), ] 
+      rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+      cnt = cnt + 1
+    }else{
+      cat("No duplicates in the table:", name)
+      cat("\n-------------------------\n")
+      tmp[[cnt]] = data[[name]]
+      cnt = cnt + 1
     }
   }
   
@@ -269,15 +213,15 @@ check_duplication = function(data){
   return(tmp)
 }
 #---------------------------
-# `no_duplicated_data` is a collection of tables without any duplication
-no_duplicated_data = check_duplication(participant_data)
+# `participant_data` is a collection of tables without any duplication
+participant_data = remove_duplicates(participant_data)
 #---------------------------
 
 
 #---------------------------
 #the range of each item in the table is stored in the data_summary
-data_summary = lapply(no_duplicated_data, summary)
-for (i in 1:length(no_duplicated_data)){
+data_summary = lapply(participant_data, summary)
+for (i in 1:length(participant_data)){
   assign(paste(paste("df", i, sep=""), "summary", sep="."), data_summary[[i]])
 }
 data_summary
@@ -286,17 +230,20 @@ data_summary
 
 #---------------------------
 # prefer not to answer coding for each table
-# pna =  -1 or 555
+# pna =  -1 or 555 (default)
 # this function return the participant/system Ids of the row with prefer not to answer value for each table
-pna_function = function(df, pna = 555){
+get_ids_with_pna = function(df, pna = 555){
   tmp_df = df[ , -which(names(df) %in% c("participantID", "systemID", "session"))]
   tmp_cols = apply(tmp_df, 2, function(col) names(which(col == pna)))
+  
+  # TODO: Explain these vars please
   idx_list = list()
   cnt_idx = 1
   par_id_list = list()
   cnt1 = 1
   sys_id_list = list()
   cnt2 = 1
+  
   for(col in tmp_cols){
     for(idx in col){
       idx_list[[cnt_idx]] = idx
@@ -331,23 +278,26 @@ pna_function = function(df, pna = 555){
   # }
 } 
 #---------------------------
-data_pna = lapply(no_duplicated_data, pna_function)
-data_pna
+ids_with_pna = lapply(participant_data, get_ids_with_pna)
+ids_with_pna
 #---------------------------
 
 
 #---------------------------
 # this function return the participant/system Ids with null values in each table
-missing_function = function(df){
+get_ids_with_missing = function(df){
   tmp_df = df[ , -which(names(df) %in% c("participantID", "systemID", "session"))]
   tmp_cols = apply(tmp_df, 2, function(col) names(which(is.na(col))))
   # is.na(x)
+  
+  # TODO: Describe these vars
   idx_list = list()
   cnt_idx = 1
   par_id_list = list()
   cnt1 = 1
   sys_id_list = list()
   cnt2 = 1
+  
   for(col in tmp_cols){
     for(idx in col){
       idx_list[[cnt_idx]] = idx
@@ -382,29 +332,28 @@ missing_function = function(df){
   # }
 } 
 #---------------------------
-data_missing = lapply(no_duplicated_data, missing_function)
-data_missing
+ids_with_missing = lapply(participant_data, get_ids_with_missing)
+ids_with_missing
 #---------------------------
 
 
-
 #---------------------------
-#create an object with the number of taks that should be done per session
+# Create an object with the number of taks that should be done per session
 number_of_tasks = c(2, 14, 8, 5) 
-names(number_of_tasks) = c("Eligibility", "preTest", "firstSession", "secondSession")
+names(number_of_tasks) = c("eligibility", "preTest", "firstSession", "secondSession")
 number_of_tasks #e.g., session eligibility should have 2 different task 
 #---------------------------
-#`session_task_check` function, return if the participant complete a session or it is in the middle of the session
+# function`session_task_check` returns the participant's session status - whether they've completed a session or are in the middle of the session
 session_task_check = function(df, session_name){
   tmp = ddply(df,~systemID+session,summarise,number_of_distinct_tasks=length(unique(task_name)))
   tmp2 = filter(tmp, session == session_name) 
   tmp2$stage = NULL
-  tmp2 = transform(tmp2, stage = ifelse(number_of_distinct_tasks == number_of_tasks[[session_name]], "completed", "middle"))
+  tmp2 = transform(tmp2, stage = ifelse(number_of_distinct_tasks == number_of_tasks[[session_name]], "completed", "in_progress"))
   return(tmp2)
 }
 #---------------------------
 # the second argument can be any session name of the study
 # we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks 
-number_of_distinct_task_for_session = session_task_check(no_duplicated_data$taskLog, "preTest")
+number_of_distinct_task_for_session = session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
 #---------------------------
