@@ -121,11 +121,13 @@ study_ID_function = function(data, study_name){
 }
 #---------------------------
 # the second argument of `study_ID_function` is the study name, so it can be `R01`, `TET`, or `GIDI`
+study_name = "R01"
 study_participants = study_ID_function(new_data, "R01")
 # extract the participant ids of the selected study (here is `R01`)
 participantIDs = study_participants$participantID
 # extract the system ids of the selected study (here is `R01`)
 systemIDs = study_participants$systemID
+cat("number of participant in study", study_name, "is: ", length(participantIDs))
 #---------------------------
 
 #---------------------------
@@ -210,6 +212,40 @@ check_duplication = function(data){
         cnt = cnt + 1
       }
     }
+    else if(name == 'affect'){
+      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session", "tag")])),]
+      if(dim(duplicated_rows)[1] > 0){
+        cat("there is duplicated values for table:", name)
+        cat("\n")
+        cat("for the following ids: ", duplicated_rows$systemID)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "tag")]), ] 
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt = cnt + 1
+      }else{
+        cat("no duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]]
+        cnt = cnt + 1
+      }
+    }
+    else if(name == 'attritionPrediction'){
+      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID")])),]
+      if(dim(duplicated_rows)[1] > 0){
+        cat("there is duplicated values for table:", name)
+        cat("\n")
+        cat("for the following ids: ", duplicated_rows$systemID)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt = cnt + 1
+      }else{
+        cat("no duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]]
+        cnt = cnt + 1
+      }
+    }
     else{
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session")])),]
       if(dim(duplicated_rows)[1] > 0){
@@ -251,7 +287,7 @@ data_summary
 #---------------------------
 # prefer not to answer coding for each table
 # pna =  -1 or 555
-# this function return the participant/system Ids with prefer not to answer in each table
+# this function return the participant/system Ids of the row with prefer not to answer value for each table
 pna_function = function(df, pna = 555){
   tmp_df = df[ , -which(names(df) %in% c("participantID", "systemID", "session"))]
   tmp_cols = apply(tmp_df, 2, function(col) names(which(col == pna)))
@@ -290,12 +326,13 @@ pna_function = function(df, pna = 555){
     }
     
   }
-  else{
-    return(cat("\nNo entries with prefer not to answer = ", pna, " found!\n"))
-  }
+  # else{
+  #   return(cat("\nNo entries with prefer not to answer = ", pna, " found!\n"))
+  # }
 } 
 #---------------------------
 data_pna = lapply(no_duplicated_data, pna_function)
+data_pna
 #---------------------------
 
 
@@ -340,12 +377,13 @@ missing_function = function(df){
     }
     
   }
-  else{
-    return(cat("\nNo entries with missing values found!\n"))
-  }
+  # else{
+  #   return(cat("\nNo entries with missing values found!\n"))
+  # }
 } 
 #---------------------------
 data_missing = lapply(no_duplicated_data, missing_function)
+data_missing
 #---------------------------
 
 
@@ -368,4 +406,5 @@ session_task_check = function(df, session_name){
 # the second argument can be any session name of the study
 # we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks 
 number_of_distinct_task_for_session = session_task_check(no_duplicated_data$taskLog, "preTest")
+number_of_distinct_task_for_session
 #---------------------------
