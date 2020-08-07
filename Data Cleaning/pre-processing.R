@@ -39,7 +39,7 @@ standardize_columns = function(df){
   # Remove admin and test account in the participant table
   if(("admin" %in% df_colnames)&("test_account" %in% df_colnames) ){
     df = df %>% select(participantID = id, everything()) 
-    df = filter(df, test_account == 0 & admin == 0) 
+    # df = filter(df, test_account == 0 & admin == 0) 
   }
   
   # Create variable with consistent session column name
@@ -86,6 +86,12 @@ add_participant_info = function(data, study_name){
     manual = c(43,45,57,63,67,71,82,90,94,96,97,104,108,120,130,131,132,140)
     data$participant = mutate(data$participant, condition_assignment_method = ifelse(participantID %in% manual,"manual","algorithm")) 
   
+    # we don't need this part because we have all coaches as a test_account and we already took care of them
+    # Create a label for coaches :
+    # data$coach_id = NA
+    # coaches = c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 1107, 1111, 1112, 1772)
+    # data$participant = mutate(data$participant, coach_id = ifelse(participantID %in% coaches,"coach","normal")) 
+    
   }
   return(data)
 }
