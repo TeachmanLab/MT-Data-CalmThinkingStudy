@@ -18,14 +18,11 @@ names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', 
 #---------------------------
 
 #---------------------------
-# standard_ID_function, does the following steps
-#1. standard the IDs, study, and session
-#2. remove test and admin users
-#3. standard the data column
-standard_ID_function = function(df){
+# function `standardize_colnames` enforces a standardized column naming scheme across data tables
+#  For instance, `participandID` replaces the columns `participant_id` and `id`
+standardize_columns = function(df){
   df_colnames = colnames(df)
-  
-  # Create variable with consistent participant and study id name
+  #add comments and distinguish between id and participant_id and systemID
   if("participant_id" %in% df_colnames){
     df = df %>% select(participantID = participant_id, everything()) 
   }
@@ -53,7 +50,7 @@ standard_ID_function = function(df){
     df = df %>% select(session = current_session, everything()) 
   }
   
-  # Create variable with consistent date format
+  
   if(("date" %in% df_colnames)){
     df = mutate(df, dateTime = anytime(as.factor(df$date))) 
   }
@@ -70,15 +67,14 @@ standard_ID_function = function(df){
   return(df)
 }
 #---------------------------
-#after apply the `standard_ID_function function`, we restore the data in the new_data
-new_data = lapply(data, standard_ID_function)
+# Standardize column names across dataset
+data = lapply(data, standardize_columns)
 #---------------------------
 
 #---------------------------
-# add_info, does the following steps
-#1. soft and true launch
-#2. algorithm or manual condition assignment
-add_info = function(data, study_name){
+# function `add_participant_info` creates helper columns that explain
+#  launch membership and condition assignment
+add_participant_info = function(data, study_name){
   if(study_name == "R01"){
     
     # Create new variable to differentiate soft and true launch Ps
@@ -94,14 +90,14 @@ add_info = function(data, study_name){
   return(data)
 }
 #---------------------------
-#after apply the `add_info` function, we restore the data in the new_data
-new_data = add_info(new_data, "R01")
+# Add helper columns
+data = add_participant_info(data, "R01")
 #---------------------------
 
-
 #---------------------------
-#extract the users' IDs for each specific study
-study_ID_function = function(data, study_name){
+# Extract the participants for the given study
+# the second argument of `study_ID_function` is the study name, so it can be `R01`, `TET`, or `GIDI`
+get_study_participants = function(data, study_name){
   study = data$study
   participant = data$participant
   systemID_match = select(participant, participantID, systemID)
@@ -120,13 +116,14 @@ study_ID_function = function(data, study_name){
   return(tmp)
 }
 #---------------------------
-# the second argument of `study_ID_function` is the study name, so it can be `R01`, `TET`, or `GIDI`
 study_name = "R01"
-study_participants = study_ID_function(new_data, "R01")
+study_participants = get_study_participants(data, "R01")
+
 # extract the participant ids of the selected study (here is `R01`)
 participantIDs = study_participants$participantID
 # extract the system ids of the selected study (here is `R01`)
 systemIDs = study_participants$systemID
+
 cat("number of participant in study", study_name, "is: ", length(participantIDs))
 #---------------------------
 
@@ -136,7 +133,7 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
   tmp = list()
   
   cnt = 1
-  for(df in new_data){
+  for(df in data){
     if("systemID" %in% colnames(df)){
       df = subset(df, systemID %in% systemIDs)
     }
@@ -151,15 +148,17 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
 }
 #---------------------------
 #restore the data of each tables for the users of the selected study in the participant_data 
-participant_data = select_study_participants_data(new_data, participantIDs, systemIDs, "R01")
+participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
 
 #---------------------------
-#`check_duplication` functions check for the duplication and show which IDs have duplicated values in the corresponding tables
-# returne the data without duplication
-check_duplication = function(data){
+# function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have 
+# duplicated values (across all data tables) and returns the dataset without duplication 
+# return the data with the any duplication
+remove_duplicates = function(data){
   tmp = list()
   cnt = 1
+  data = participant_data
   for(name in names(data)){
     if(name == 'taskLog'){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("systemID","session","task_name","tag")])),]
@@ -269,26 +268,34 @@ check_duplication = function(data){
   return(tmp)
 }
 #---------------------------
-# `no_duplicated_data` is a collection of tables without any duplication
-no_duplicated_data = check_duplication(participant_data)
+# `participant_data_no_duplication` is a collection of tables without any duplication
+# based on the id show the duplication in tables
+participant_data_no_duplication = remove_duplicates(participant_data)
 #---------------------------
 
+
+# -------------- Handle special case of DASS --------------------------------
+# for participant who have duplication in dass21As we keep the last entry
+# eligible = filter(participant_data$dass21AS, session == "ELIGIBLE")
+# eligible = eligible[!rev(duplicated(rev(eligible[, c("participantID")]))),]
+# other  =  filter(participant_data$dass21AS, session != "ELIGIBLE")
+# participant_data$dass21AS = rbind(eligible, other)
+#---------------------------
 
 #---------------------------
 #the range of each item in the table is stored in the data_summary
-data_summary = lapply(no_duplicated_data, summary)
+data_summary = lapply(participant_data, summary)
 for (i in 1:length(no_duplicated_data)){
   assign(paste(paste("df", i, sep=""), "summary", sep="."), data_summary[[i]])
 }
 data_summary
 #---------------------------
 
-
 #---------------------------
 # prefer not to answer coding for each table
 # pna =  -1 or 555
 # this function return the participant/system Ids of the row with prefer not to answer value for each table
-pna_function = function(df, pna = 555){
+get_ids_with_pna = function(df, pna = 555){
   tmp_df = df[ , -which(names(df) %in% c("participantID", "systemID", "session"))]
   tmp_cols = apply(tmp_df, 2, function(col) names(which(col == pna)))
   idx_list = list()
@@ -331,21 +338,22 @@ pna_function = function(df, pna = 555){
   # }
 } 
 #---------------------------
-data_pna = lapply(no_duplicated_data, pna_function)
-data_pna
+ids_with_pna = lapply(participant_data, get_ids_with_pna)
+ids_with_pna
 #---------------------------
-
 
 #---------------------------
 # this function return the participant/system Ids with null values in each table
-missing_function = function(df){
+get_ids_with_missing = function(df){
   tmp_df = df[ , -which(names(df) %in% c("participantID", "systemID", "session"))]
   tmp_cols = apply(tmp_df, 2, function(col) names(which(is.na(col))))
-  # is.na(x)
+  # `idx_list` is a list of row' index that has null value
   idx_list = list()
   cnt_idx = 1
+  # `par_id_list` is a list of participant ids with the null value
   par_id_list = list()
   cnt1 = 1
+  # `sys_id_list` is a list of system ids with the null value
   sys_id_list = list()
   cnt2 = 1
   for(col in tmp_cols){
@@ -382,11 +390,9 @@ missing_function = function(df){
   # }
 } 
 #---------------------------
-data_missing = lapply(no_duplicated_data, missing_function)
-data_missing
+ids_with_missing = lapply(participant_data, get_ids_with_missing )
+ids_with_missing
 #---------------------------
-
-
 
 #---------------------------
 #create an object with the number of taks that should be done per session
@@ -405,6 +411,6 @@ session_task_check = function(df, session_name){
 #---------------------------
 # the second argument can be any session name of the study
 # we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks 
-number_of_distinct_task_for_session = session_task_check(no_duplicated_data$taskLog, "preTest")
+number_of_distinct_task_for_session = session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
 #---------------------------
