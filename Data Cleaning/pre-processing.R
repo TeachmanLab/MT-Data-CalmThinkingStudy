@@ -7,7 +7,7 @@ require(lubridate)
 library(anytime)
 
 #----------------------------------------------------------------------
-raw_data_dir = "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data"
+raw_data_dir = "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data-analysis"
 setwd(raw_data_dir)
 filenames = list.files(raw_data_dir, pattern="*.csv", full.names=FALSE)
 
@@ -20,29 +20,43 @@ names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', 
 #---------------------------
 # function `standardize_colnames` enforces a standardized column naming scheme across data tables
 #  For instance, `participandID` replaces the columns `participant_id` and `id`
+standardize_columns_special_tables = function(data){
+  
+  participant_table = grep("^participant", names(data))
+  data[[names(data)[participant_table][1]]] =
+    data[[names(data)[participant_table][1]]] %>% select(systemID = study_id, participantID = id, everything()) 
+  
+  study_table = grep("^study", names(data))
+  data[[names(data)[study_table][1]]] =
+    data[[names(data)[study_table][1]]] %>% select(systemID = id, everything()) 
+  
+  taskLog_table = grep("^taskLog", names(data))
+  data[[names(data)[taskLog_table][1]]] =
+    data[[names(data)[taskLog_table][1]]] %>% select(systemID = study_id, everything()) 
+  
+  return(data)
+}
+#---------------------------
+#---------------------------
+data = standardize_columns_special_tables(data)
+#---------------------------
+
+
+#---------------------------
 standardize_columns = function(df){
   df_colnames = colnames(df)
-  #add comments and distinguish between id and participant_id and systemID
+  
   if("participant_id" %in% df_colnames){
-    df = df %>% select(participantID = participant_id, everything()) 
-  }
-  if(("study" %in% df_colnames)&("id" %in% df_colnames)){
-    df = df %>% select(systemID = study, participantID = id, everything()) 
-  }
-  if(("study_id" %in% df_colnames)){
-    df = df %>% select(systemID = study_id, everything()) 
-  }
-  if(("study_extension" %in% df_colnames)){
-    df = df %>% select(systemID = id, everything()) 
+      df = df %>% select(participantID = participant_id, everything())
+      }
+  
+  date_columns = grep("^date", df_colnames)
+  if(length(date_columns)!=0){
+    for(i in date_columns){
+      df = mutate(df, dateTime = anytime(as.factor(df[[df_colnames[i]]]))) 
+    }
   }
   
-  # Remove admin and test account in the participant table
-  if(("admin" %in% df_colnames)&("test_account" %in% df_colnames) ){
-    df = df %>% select(participantID = id, everything()) 
-    # df = filter(df, test_account == 0 & admin == 0) 
-  }
-  
-  # Create variable with consistent session column name
   if(("session_name" %in% df_colnames)){
     df = df %>% select(session = session_name, everything()) 
   }
@@ -50,32 +64,23 @@ standardize_columns = function(df){
     df = df %>% select(session = current_session, everything()) 
   }
   
-  
-  if(("date" %in% df_colnames)){
-    df = mutate(df, dateTime = anytime(as.factor(df$date))) 
-  }
-  if(("dateSent" %in% df_colnames)){
-    df = mutate(df, dateTime = anytime(as.factor(df$dateSent))) 
-  }
-  if(("last_login_date" %in% df_colnames)){
-    df = mutate(df, dateTime = anytime(as.factor(df$last_login_date))) 
-  }
-  if(("dateTime" %in% df_colnames)){
-    df = mutate(df, dateTime = anytime(as.factor(df$last_login_date))) 
-  }
-  
   return(df)
 }
+#---------------------------
 #---------------------------
 # Standardize column names across dataset
 data = lapply(data, standardize_columns)
 #---------------------------
+
 
 #---------------------------
 # function `add_participant_info` creates helper columns that explain
 #  launch membership and condition assignment
 add_participant_info = function(data, study_name){
   if(study_name == "R01"){
+    
+    #remove admin and test_account
+    data$participant = filter(data$participant, test_account == 0 & admin == 0) 
     
     # Create new variable to differentiate soft and true launch Ps
     data$participant$launch_type = NA
@@ -96,9 +101,11 @@ add_participant_info = function(data, study_name){
   return(data)
 }
 #---------------------------
+#---------------------------
 # Add helper columns
 data = add_participant_info(data, "R01")
 #---------------------------
+
 
 #---------------------------
 # Extract the participants for the given study
@@ -122,6 +129,7 @@ get_study_participants = function(data, study_name){
   return(tmp)
 }
 #---------------------------
+#---------------------------
 study_name = "R01"
 study_participants = get_study_participants(data, "R01")
 
@@ -132,6 +140,7 @@ systemIDs = study_participants$systemID
 
 cat("number of participant in study", study_name, "is: ", length(participantIDs))
 #---------------------------
+
 
 #---------------------------
 #`select_study_participants_data` function extracts the data of each tables for the users of the selected study
@@ -153,9 +162,11 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
   return(tmp)
 }
 #---------------------------
+#---------------------------
 #restore the data of each tables for the users of the selected study in the participant_data 
 participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
+
 
 #---------------------------
 # function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have 
@@ -234,7 +245,7 @@ remove_duplicates = function(data){
         cnt = cnt + 1
       }
     }
-    else if(name == 'attritionPrediction'){
+    else if((name == 'attritionPrediction') || (name == 'errorLog') || (name == 'smsLog')){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values for table:", name)
@@ -242,6 +253,40 @@ remove_duplicates = function(data){
         cat("for the following ids: ", duplicated_rows$systemID)
         cat("\n-------------------------\n")
         tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt = cnt + 1
+      }else{
+        cat("no duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]]
+        cnt = cnt + 1
+      }
+    }
+    else if(name == 'angularTraning'){
+      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session_counter", "session", "button_pressed", "step_title", "stimulus_name")])),]
+      if(dim(duplicated_rows)[1] > 0){
+        cat("there is duplicated values for table:", name)
+        cat("\n")
+        cat("for the following ids: ", duplicated_rows$participantID)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]][!(duplicated(data[[name]][, c("participantID", "session_counter", "session", "button_pressed", "step_title", "stimulus_name")])),]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt = cnt + 1
+      }else{
+        cat("no duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]]
+        cnt = cnt + 1
+      }
+    }
+    else if(name == 'emailLog'){
+      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session", "email_type", "date_sent")])),]
+      if(dim(duplicated_rows)[1] > 0){
+        cat("there is duplicated values for table:", name)
+        cat("\n")
+        cat("for the following ids: ", duplicated_rows$participantID)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "email_type", "date_sent")]), ] 
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -273,6 +318,7 @@ remove_duplicates = function(data){
   names(tmp) = names(data)
   return(tmp)
 }
+#---------------------------
 #---------------------------
 # `participant_data_no_duplication` is a collection of tables without any duplication
 # based on the id show the duplication in tables
