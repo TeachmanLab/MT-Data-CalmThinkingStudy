@@ -16,6 +16,11 @@ data = lapply(filenames, read.csv) #if you downloaded the data from the server r
 
 names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', fixed=FALSE))[1]}))
 #---------------------------
+cat("the list of tables: ")
+cat("---------------------------\n")
+names(data)
+cat("---------------------------\n")
+#---------------------------
 
 #---------------------------
 # function `standardize_colnames` enforces a standardized column naming scheme across data tables
@@ -91,11 +96,11 @@ add_participant_info = function(data, study_name){
     manual = c(43,45,57,63,67,71,82,90,94,96,97,104,108,120,130,131,132,140)
     data$participant = mutate(data$participant, condition_assignment_method = ifelse(participantID %in% manual,"manual","algorithm")) 
   
-    # we don't need this part because we have all coaches as a test_account and we already took care of them
-    # Create a label for coaches :
-    # data$coach_id = NA
+    # # we don't need this part because we have all coaches as a test_account and we already took care of them
+    # # Create a label for coaches :
+    # data$participant$coach_id = NA
     # coaches = c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 1107, 1111, 1112, 1772)
-    # data$participant = mutate(data$participant, coach_id = ifelse(participantID %in% coaches,"coach","normal")) 
+    # data$participant = mutate(data$participant, coach_id = ifelse(participantID %in% coaches,"coach","normal"))
     
   }
   return(data)
@@ -202,6 +207,23 @@ remove_duplicates = function(data){
         cat("for the following ids: ", duplicated_rows$participantID)
         cat("\n-------------------------\n")
         tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt = cnt + 1
+      }else{
+        cat("no duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]]
+        cnt = cnt + 1
+      }
+    }
+    else if(name == 'jsPsychTrial'){
+      duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "button_pressed", "internal_node_id", "stimulus")])),]
+      if(dim(duplicated_rows)[1] > 0){
+        cat("there is duplicated values for table:", name)
+        cat("\n")
+        cat("for the following ids: ", duplicated_rows$participantID)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][,  c("participantID", "button_pressed", "internal_node_id", "stimulus")]), ] 
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -466,3 +488,32 @@ session_task_check = function(df, session_name){
 number_of_distinct_task_for_session = session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
 #---------------------------
+
+
+#---------------------------
+# dropout
+#claudia was using 'current_task_index' which I didn't find any documentation for that!
+tmp = filter(data$taskLog, task_name == "SESSION_COMPLETE" & systemID %in% participantIDs)
+View(tmp)
+#---------------------------
+lastSessionComp = aggregate(tmp[, c('session', 'task_name')], list(tmp$systemID), tail, 1)
+names(lastSessionComp) = c('systemID','session', 'task_name')
+#---------------------------
+participant_lastSession = left_join(data$participant, lastSessionComp, by="systemID") 
+participant_lastSession = participant_lastSession[,c('participantID', 'systemID', 'active', 'session', 'last_login_date', 'email_reminders', 'phone_reminders')]
+View(participant_lastSession)
+#---------------------------
+participant_lastSession$date = as.Date(participant_lastSession$last_login_date, format = "%Y-%m-%d %H:%M:%S")
+participant_lastSession$dayDiff = difftime(now(), participant_lastSession$date, units = c("days"))
+#---------------------------
+problematicUsers = filter(participant_lastSession, (active == 1) & (session != 'PostFollowUp') & (dayDiff > 21))
+View(problematicUsers)
+
+#---------------------------
+# in the middle of fifth session 
+View(filter(data$participant, participantID == 412))
+View(filter(data$taskLog, systemID == 412)) 
+
+#completed the fifth session but not followup
+View(filter(data$participant, participantID == 577))
+View(filter(data$taskLog, systemID == 577)) #evaluation and assessing program are not done
