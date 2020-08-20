@@ -102,6 +102,19 @@ add_participant_info = function(data, study_name){
     # coaches = c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 1107, 1111, 1112, 1772)
     # data$participant = mutate(data$participant, coach_id = ifelse(participantID %in% coaches,"coach","normal"))
     
+    #special IDs: 
+    #2004: Assigned to R01 condition but has a TET label. This was due to a bug at launch. 
+    #According to a message by Dan, the studyExtension field was not properly being passed through to the data server, 
+    #and this was fixed on 4/7/2020.2004
+    
+    #2005: Assigned to R01 condition but has a TET label. This was due to a bug at launch. According to Dan, 
+    #the studyExtension field was not properly being passed through to the data server, and this was fixed on 4/7/2020.
+    
+    specialIDs = c(2004, 2005)
+    tmp = filter(data$participant, participantID %in% specialIDs)
+    specialIDs_systemIDs = tmp$systemID
+    data$study[which(data$study$systemID %in% specialIDs_systemIDs),]$study_extension = "NULL"
+    
   }
   return(data)
 }
