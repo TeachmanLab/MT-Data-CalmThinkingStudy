@@ -357,3 +357,30 @@ session_task_check = function(df, session_name){
 number_of_distinct_task_for_session = session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
 #---------------------------
+
+
+# TODO: check for the following:
+# 1. Repeated sessions: Look for rows in `taskLog` df with dups of [session, systemid, taskname]
+# Should we retain the most recent? -Anna
+repeated_tasks = data$taskLog[duplicated(data$taskLog[,c('session','systemID', 'task_name')]),]
+repeated_tasks
+
+# 2. Repeated initial screener with diff values. If ineligible -> eligible, drop all. Else, keep most recent
+# Update - no way to tell if they went from ineligible -> eligible, as I think the DASS table only retains the most recent completion record
+# per session, including in eligibility. So, should just drop all p's who repeated the eligibility. - Anna
+repeated_eligible = data$dass21AS[duplicated(data$dass21AS[,c('participantID', 'session')]),]
+
+# 3. Unreasonable reported age ( where current year - data$demographics$birth_year > 105 or current year - data$demographics$birth_year < 18)
+current_year = as.numeric(format(as.Date(Sys.Date(), format="%d/%m/%Y"),"%Y"))
+unreasonable_age <- ifelse(
+  (
+    data$demographics$birth_year != 555) & 
+    (current_year - data$demographics$birth_year > 105 | current_year - data$demographics$birth_year < 18
+  ), 
+  TRUE, 
+  FALSE)
+unreasonable_age <- data$demographics[unreasonable_age,]
+
+
+# 4. People who started in control, then did active sessions later on. Not sure how to check for this :/ 
+

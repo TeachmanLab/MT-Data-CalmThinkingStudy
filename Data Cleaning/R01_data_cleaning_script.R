@@ -1,6 +1,6 @@
 # This is the cleaning script for the Calm Thinking (R01) study (written by Claudia)
 
-setwd("~/data/r01/cleaned") # Set working directory (Will need to change path to folder where the data is stored)
+setwd("~/data/") # Set working directory (Will need to change path to folder where the data is stored)
 # install.packages("dplyr") # Install package (You only need to run this line the first time you set up R)
 # install.packages("anytime")
 
@@ -14,7 +14,7 @@ library(anytime)
 # PARTICIPANT EXPORT table                                                                              #
 #########################################################################################################
 
-participant <- read.csv("participant.csv", header=TRUE) # Read PARTICIPANT table 
+participant <- read.csv("participant_07_21_2020.csv", header=TRUE) # Read PARTICIPANT table 
 participant <- filter(participant, test_account == 0 & admin == 0) # Remove test and admin accounts
 part1 <- participant %>% select(participantID = id, systemID = study_id, everything()) # Create ID variables consistent with all other tables
 
