@@ -233,13 +233,19 @@ updated_participant_data = update_specific_participants(updated_participant_data
 
 
 #---------------------------
-# 1. calculate the duration (days) of last task (inactivity duration)
+# 1. calculate the duration (days) of last task/last session (inactivity duration)
 # 2. add the calculated value as a column in participant table (days_since_task)
 #---------------------------
 add_days_since_task_column = function(data){
   daysSinceTask = as.Date(as.character(Sys.Date()), format = "%Y-%m-%d") -
     as.Date(as.character(data$participant$last_login_date), format="%Y-%m-%d")
+  
+  daysSinceSession = as.Date(as.character(Sys.Date()), format = "%Y-%m-%d") -
+    as.Date(as.character(data$study$last_session_date), format="%Y-%m-%d")
+  
+  
   participant = mutate(data$participant, days_since_task = daysSinceTask)
+  participant = mutate(participant, days_since_session = daysSinceSession)
   data$participant = participant
   return(data)
 }
@@ -251,8 +257,52 @@ names(participant_data_with_inactivity_days$participant)
 #---------------------------
 
 
+#---------------------------
+# 1. add a new column for checking the actual active column and the calculated column
+# 2. update the calculated_active column of those that have the inactivity threshold ~21
+#---------------------------
+calculated_active_retention_clm = function(data, inactivity_threshold){
+  
+  data = participant_data_with_inactivity_days
+  participant_study_table = left_join(data$participant, data$study, by = c("systemID"))
+  
+  waiting_time = c("firstSession" = 5 , "secondSession" = 5, "thirdSession" = 5, 
+                   "fourthSession" = 5)
+  
+  waitingSessionList = names(waiting_time)
+  participant_study_table$calculated_active = 1
+  for(session in waitingSessionList){
+    wait_days = waiting_time[[session]]
+    inactivity_duration = inactivity_threshold + wait_days
 
-
+    participant_study_table[which(participant_study_table$session == session & 
+                                    (participant_study_table$days_since_session > inactivity_duration |
+                                       participant_study_table$days_since_task > inactivity_duration)),]$calculated_active = 0
+  }
+  
+  
+  #after the complete session, participants have followup session which we consider as retention
+  waiting_time_retention = c("COMPLETE" = 60)
+  waitingSessionList = names(waiting_time_retention)
+  for(session in waitingSessionList){
+    wait_days = waiting_time_retention[[session]]
+    inactivity_duration = inactivity_threshold + wait_days
+    
+    participant_study_table$retention = NA
+    participant_study_table[which(participant_study_table$session == session & 
+                                    (participant_study_table$days_since_session > inactivity_duration |
+                                       participant_study_table$days_since_task > inactivity_duration)),]$retention = 1
+  }
+  
+  data$study_participant = participant_study_table
+  return(data)
+}
+#---------------------------
+#---------------------------
+participant_active_retention = calculated_active_retention_clm(participant_data_with_inactivity_days, 21)
+cat("the columns of participant table:")
+table(participant_active_retention$study_participant$calculated_active)
+#---------------------------
 
 
 #---------------------------
@@ -261,7 +311,7 @@ names(participant_data_with_inactivity_days$participant)
 dropout_per_session = function(data, session = ""){
   
   #data = participant_data_with_inactivity_days
-  participant_study_table = left_join(data$participant, data$study, by = c("systemID"))
+  participant_study_table = data$study_participant
   
   #order the sessions of the study
   participant_study_table$session = factor(participant_study_table$session,
@@ -278,6 +328,10 @@ dropout_per_session = function(data, session = ""){
                                dropout = 
                                  factor(ifelse(attrition_participants$session == "COMPLETE" & active == 1, 0, 1)))
   
+  attrition_participants = mutate(attrition_participants, 
+                                  dropout_calculated = 
+                                    factor(ifelse(attrition_participants$session == "COMPLETE" & calculated_active == 1, 0, 1)))
+  
   
   #select data of previous sessions of the selectes session
   #attrition_session_participants = attrition_participants[which(attrition_participants$session <= session),]
@@ -285,24 +339,33 @@ dropout_per_session = function(data, session = ""){
   
   #sessionList = unique(attrition_participants$session)
   dropout_participant = mutate(attrition_participants, 
-                           dropout_column = 
+                           dropout_column_active = 
                              factor(ifelse(attrition_participants$session == session & 
                                              attrition_participants$current_task_index == 0 & 
-                                           active == 0, 
+                                             active == 0, 
                                            1, 0)))
   
-  
-  
+  dropout_participant = mutate(dropout_participant, 
+                               dropout_column_calculated_active = 
+                                 factor(ifelse(dropout_participant$session == session & 
+                                                 dropout_participant$current_task_index == 0 & 
+                                                 calculated_active == 0, 
+                                               1, 0)))
   
   #rename dropout column
-  names(dropout_participant)[names(dropout_participant) == "dropout_column"] = paste("dropout_prior_", session , sep="")
+  names(dropout_participant)[names(dropout_participant) == "dropout_column_active"] = paste("dropout_prior_", session , sep="")
+  names(dropout_participant)[names(dropout_participant) == "dropout_column_calculated_active"] = paste("dropout_calculated_prior_", session , sep="")
   return(dropout_participant)
 }
 #---------------------------
-session_dropout = dropout_per_session(participant_data_with_inactivity_days, session = "secondSession")
+session_dropout = dropout_per_session(participant_active_retention, session = "secondSession")
 cat("the columns of participant table:")
 names(session_dropout)
 table(session_dropout$dropout_prior_secondSession)
+table(session_dropout$dropout_calculated_prior_secondSession)
+
+table(session_dropout$dropout)
+table(session_dropout$dropout_calculated)
 
 write.csv(session_dropout, file = "dropoutBeforeS2.csv", row.names = FALSE)
 
