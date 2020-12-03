@@ -14,7 +14,8 @@ filenames = list.files(raw_data_dir, pattern="*.csv", full.names=FALSE)
 data = lapply(filenames, read.csv) #if you downloaded the data from the server run this
 # data = lapply(filenames, function(i){read.csv(i,  sep="\t", header=TRUE)}) #if you downloaded the data from the MindTrails run this
 
-names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split='_', fixed=FALSE))[1]}))
+split_char = '-'
+names(data) = unlist(lapply(filenames, function(f){unlist(strsplit(f,split=split_char, fixed=FALSE))[1]}))
 #---------------------------
 cat("the list of tables: ")
 cat("---------------------------\n")
