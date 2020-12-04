@@ -36,7 +36,7 @@ standardize_columns_special_tables = function(data){
   data[[names(data)[study_table][1]]] =
     data[[names(data)[study_table][1]]] %>% select(systemID = id, everything()) 
   
-  taskLog_table = grep("^taskLog", names(data))
+  taskLog_table = grep("^task_log", names(data))
   data[[names(data)[taskLog_table][1]]] =
     data[[names(data)[taskLog_table][1]]] %>% select(systemID = study_id, everything()) 
   
@@ -196,7 +196,7 @@ remove_duplicates = function(data){
   cnt = 1
   data = participant_data
   for(name in names(data)){
-    if(name == 'taskLog'){
+    if(name == 'task_log'){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("systemID","session","task_name","tag")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values in the table:", name)
@@ -230,7 +230,7 @@ remove_duplicates = function(data){
         cnt = cnt + 1
       }
     }
-    else if(name == 'jsPsychTrial'){
+    else if(name == 'js_psych_trial'){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "button_pressed", "internal_node_id", "stimulus")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values for table:", name)
@@ -281,7 +281,7 @@ remove_duplicates = function(data){
         cnt = cnt + 1
       }
     }
-    else if((name == 'attritionPrediction') || (name == 'errorLog') || (name == 'smsLog')){
+    else if((name == 'attrition_prediction') || (name == 'error_log') || (name == 'sms_log')){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values for table:", name)
@@ -298,7 +298,7 @@ remove_duplicates = function(data){
         cnt = cnt + 1
       }
     }
-    else if(name == 'angularTraning'){
+    else if(name == 'angular_training'){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session_counter", "session", "button_pressed", "step_title", "stimulus_name")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values for table:", name)
@@ -315,7 +315,7 @@ remove_duplicates = function(data){
         cnt = cnt + 1
       }
     }
-    else if(name == 'emailLog'){
+    else if(name == 'email_log'){
       duplicated_rows = data[[name]][(duplicated(data[[name]][, c("participantID", "session", "email_type", "date_sent")])),]
       if(dim(duplicated_rows)[1] > 0){
         cat("there is duplicated values for table:", name)
