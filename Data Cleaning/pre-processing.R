@@ -190,6 +190,49 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
 participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
 
+# Update active column of some specific participants
+#---------------------------
+update_active_column = function(data){
+  #Participant 891, 1627, 1663, and 1852 were supposed to be labelled 
+  #'active=false' after a period of inactivity, but this switch did not occur in the system. 
+  selected_users = c(891, 1627, 1663, 1852)
+  data$participant[which(data$participant$participantID %in% selected_users),]$active = 0
+  
+  return(data)
+}
+#---------------------------
+#---------------------------
+updated_participant_data = update_active_column(participant_data)
+#---------------------------
+
+
+# special participants
+#---------------------------
+update_specific_participants = function(data){
+  
+  #Participant 1992 only progressed to the early Pre-test phase before the R01 study closed, 
+  #but re-engaged with the program at a later point and got assigned to a TET study 
+  #condition, so we change their progress to what it was in R01 before the switch happened. 
+  #Participants 1992, 2004, and 2005 received 'studyExtension=TET' labels incorrectly as we 
+  #were switching over to the TET study.
+  tmp_systemID = data$participant[which(data$participant$participantID == 1992),]$systemID
+  data$study[which(data$study$systemID == tmp_systemID),]$conditioning = "NONE"
+  data$study[which(data$study$systemID == tmp_systemID),]$session = "preTest"
+  data$study[which(data$study$systemID == tmp_systemID),]$study_extension = ""
+  
+  # special_participant_IDs = c(2004, 2005)
+  # tmp_systemID = data$participant[which(data$participant$participantID %in% special_participant_IDs),]$systemID
+  # data$study[which(data$study$systemID %in% tmp_systemID),]$study_extension = ""
+
+  return(data)
+  
+} 
+#---------------------------
+#---------------------------
+updated_participant_data = update_specific_participants(updated_participant_data)
+#---------------------------
+
+
 
 #---------------------------
 # function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have 
