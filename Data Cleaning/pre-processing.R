@@ -114,7 +114,11 @@ add_participant_info = function(data, study_name){
     specialIDs = c(2004, 2005)
     tmp = filter(data$participant, participantID %in% specialIDs)
     specialIDs_systemIDs = tmp$systemID
-    data$study[which(data$study$systemID %in% specialIDs_systemIDs),]$study_extension = "NULL"
+    if(all(is.na(data$study[which(data$study$systemID %in% specialIDs_systemIDs),]$study_extension))){
+      print("No manual changes needed for the special IDs! We alread took care of it in the server.")
+    }else{
+      data$study[which(data$study$systemID %in% specialIDs_systemIDs),]$study_extension = "NULL"
+    }
     
   }
   return(data)
