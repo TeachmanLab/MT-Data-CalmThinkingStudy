@@ -1,4 +1,4 @@
-setwd("/Users/soniabaee/Documents/Projects/MindTrails/R01/") 
+setwd("/Users/soniabaee/Documents/Projects/MindTrails/R01/")
 library(dplyr) # Load package
 library(reshape2)
 library(plyr)
@@ -30,15 +30,15 @@ standardize_columns_special_tables = function(data){
   
   participant_table = grep("^participant", names(data))
   data[[names(data)[participant_table][1]]] =
-    data[[names(data)[participant_table][1]]] %>% select(systemID = study_id, participantID = id, everything()) 
+    data[[names(data)[participant_table][1]]] %>% select(systemID = study_id, participantID = id, everything())
   
   study_table = grep("^study", names(data))
   data[[names(data)[study_table][1]]] =
-    data[[names(data)[study_table][1]]] %>% select(systemID = id, everything()) 
+    data[[names(data)[study_table][1]]] %>% select(systemID = id, everything())
   
   taskLog_table = grep("^task_log", names(data))
   data[[names(data)[taskLog_table][1]]] =
-    data[[names(data)[taskLog_table][1]]] %>% select(systemID = study_id, everything()) 
+    data[[names(data)[taskLog_table][1]]] %>% select(systemID = study_id, everything())
   
   return(data)
 }
@@ -53,21 +53,21 @@ standardize_columns = function(df){
   df_colnames = colnames(df)
   
   if("participant_id" %in% df_colnames){
-      df = df %>% select(participantID = participant_id, everything())
-      }
+    df = df %>% select(participantID = participant_id, everything())
+  }
   
   date_columns = grep("^date", df_colnames)
   if(length(date_columns)!=0){
     for(i in date_columns){
-      df = mutate(df, dateTime = anytime(as.factor(df[[df_colnames[i]]]))) 
+      df = mutate(df, dateTime = anytime(as.factor(df[[df_colnames[i]]])))
     }
   }
   
   if(("session_name" %in% df_colnames)){
-    df = df %>% select(session = session_name, everything()) 
+    df = df %>% select(session = session_name, everything())
   }
   if(("current_session" %in% df_colnames)){
-    df = df %>% select(session = current_session, everything()) 
+    df = df %>% select(session = current_session, everything())
   }
   
   return(df)
@@ -86,7 +86,7 @@ add_participant_info = function(data, study_name){
   if(study_name == "R01"){
     
     #remove admin and test_account
-    data$participant = filter(data$participant, test_account == 0 & admin == 0) 
+    data$participant = filter(data$participant, test_account == 0 & admin == 0)
     
     # Create new variable to differentiate soft and true launch Ps
     data$participant$launch_type = NA
@@ -95,20 +95,20 @@ add_participant_info = function(data, study_name){
     # Create new variable describing how Ps were assigned to a condition
     data$participant$condition_assignment_method = NA
     manual = c(43,45,57,63,67,71,82,90,94,96,97,104,108,120,130,131,132,140)
-    data$participant = mutate(data$participant, condition_assignment_method = ifelse(participantID %in% manual,"manual","algorithm")) 
-  
+    data$participant = mutate(data$participant, condition_assignment_method = ifelse(participantID %in% manual,"manual","algorithm"))
+    
     # # we don't need this part because we have all coaches as a test_account and we already took care of them
     # # Create a label for coaches :
     # data$participant$coach_id = NA
     # coaches = c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 1107, 1111, 1112, 1772)
     # data$participant = mutate(data$participant, coach_id = ifelse(participantID %in% coaches,"coach","normal"))
     
-    #special IDs: 
-    #2004: Assigned to R01 condition but has a TET label. This was due to a bug at launch. 
-    #According to a message by Dan, the studyExtension field was not properly being passed through to the data server, 
+    #special IDs:
+    #2004: Assigned to R01 condition but has a TET label. This was due to a bug at launch.
+    #According to a message by Dan, the studyExtension field was not properly being passed through to the data server,
     #and this was fixed on 4/7/2020.2004
     
-    #2005: Assigned to R01 condition but has a TET label. This was due to a bug at launch. According to Dan, 
+    #2005: Assigned to R01 condition but has a TET label. This was due to a bug at launch. According to Dan,
     #the studyExtension field was not properly being passed through to the data server, and this was fixed on 4/7/2020.
     
     specialIDs = c(2004, 2005)
@@ -137,8 +137,8 @@ get_study_participants = function(data, study_name){
   study = data$study
   participant = data$participant
   systemID_match = select(participant, participantID, systemID)
-  merge_study_participant_tables = left_join(study, systemID_match, by="systemID") 
-  participant_study_tables = inner_join(participant, merge_study_participant_tables, by=c("participantID","systemID")) 
+  merge_study_participant_tables = left_join(study, systemID_match, by="systemID")
+  participant_study_tables = inner_join(participant, merge_study_participant_tables, by=c("participantID","systemID"))
   tmp = data.frame()
   if(study_name == "TET"){
     tmp = filter(participant_study_tables, study_extension == "TET")
@@ -177,7 +177,7 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
     }
     else if("participantID" %in% colnames(df)){
       df = subset(df, participantID %in% participantIDs)
-    } 
+    }
     tmp[[cnt]] = df
     cnt = cnt + 1
   }
@@ -186,15 +186,15 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
 }
 #---------------------------
 #---------------------------
-#restore the data of each tables for the users of the selected study in the participant_data 
+#restore the data of each tables for the users of the selected study in the participant_data
 participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
 
 # Update active column of some specific participants
 #---------------------------
 update_active_column = function(data){
-  #Participant 891, 1627, 1663, and 1852 were supposed to be labelled 
-  #'active=false' after a period of inactivity, but this switch did not occur in the system. 
+  #Participant 891, 1627, 1663, and 1852 were supposed to be labelled
+  #'active=false' after a period of inactivity, but this switch did not occur in the system.
   selected_users = c(891, 1627, 1663, 1852)
   data$participant[which(data$participant$participantID %in% selected_users),]$active = 0
   
@@ -210,10 +210,10 @@ updated_participant_data = update_active_column(participant_data)
 #---------------------------
 update_specific_participants = function(data){
   
-  #Participant 1992 only progressed to the early Pre-test phase before the R01 study closed, 
-  #but re-engaged with the program at a later point and got assigned to a TET study 
-  #condition, so we change their progress to what it was in R01 before the switch happened. 
-  #Participants 1992, 2004, and 2005 received 'studyExtension=TET' labels incorrectly as we 
+  #Participant 1992 only progressed to the early Pre-test phase before the R01 study closed,
+  #but re-engaged with the program at a later point and got assigned to a TET study
+  #condition, so we change their progress to what it was in R01 before the switch happened.
+  #Participants 1992, 2004, and 2005 received 'studyExtension=TET' labels incorrectly as we
   #were switching over to the TET study.
   tmp_systemID = data$participant[which(data$participant$participantID == 1992),]$systemID
   data$study[which(data$study$systemID == tmp_systemID),]$conditioning = "NONE"
@@ -223,10 +223,10 @@ update_specific_participants = function(data){
   # special_participant_IDs = c(2004, 2005)
   # tmp_systemID = data$participant[which(data$participant$participantID %in% special_participant_IDs),]$systemID
   # data$study[which(data$study$systemID %in% tmp_systemID),]$study_extension = ""
-
+  
   return(data)
   
-} 
+}
 #---------------------------
 #---------------------------
 updated_participant_data = update_specific_participants(updated_participant_data)
@@ -235,8 +235,8 @@ updated_participant_data = update_specific_participants(updated_participant_data
 
 
 #---------------------------
-# function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have 
-# duplicated values (across all data tables) and returns the dataset without duplication 
+# function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have
+# duplicated values (across all data tables) and returns the dataset without duplication
 # return the data with the any duplication
 remove_duplicates = function(data){
   tmp = list()
@@ -250,7 +250,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("For the following ids: ", duplicated_rows$systemID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID","session","task_name","tag")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID","session","task_name","tag")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -267,7 +267,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$participantID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -284,7 +284,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$participantID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][,  c("participantID", "button_pressed", "internal_node_id", "stimulus")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][,  c("participantID", "button_pressed", "internal_node_id", "stimulus")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -301,7 +301,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$systemID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID", "session")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("systemID", "session")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -318,7 +318,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$systemID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "tag")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "tag")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -335,7 +335,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$systemID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -369,7 +369,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$participantID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "email_type", "date_sent")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session", "email_type", "date_sent")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -386,7 +386,7 @@ remove_duplicates = function(data){
         cat("\n")
         cat("for the following ids: ", duplicated_rows$participantID)
         cat("\n-------------------------\n")
-        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session")]), ] 
+        tmp[[cnt]] = data[[name]][!duplicated(data[[name]][, c("participantID", "session")]), ]
         rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
         cnt = cnt + 1
       }else{
@@ -471,7 +471,7 @@ get_ids_with_pna = function(df, pna = 555){
   # else{
   #   return(cat("\nNo entries with prefer not to answer = ", pna, " found!\n"))
   # }
-} 
+}
 #---------------------------
 ids_with_pna = lapply(participant_data, get_ids_with_pna)
 ids_with_pna
@@ -523,7 +523,7 @@ get_ids_with_missing = function(df){
   # else{
   #   return(cat("\nNo entries with missing values found!\n"))
   # }
-} 
+}
 #---------------------------
 ids_with_missing = lapply(participant_data, get_ids_with_missing )
 ids_with_missing
@@ -531,21 +531,21 @@ ids_with_missing
 
 #---------------------------
 #create an object with the number of taks that should be done per session
-number_of_tasks = c(2, 14, 8, 5) 
+number_of_tasks = c(2, 14, 8, 5)
 names(number_of_tasks) = c("Eligibility", "preTest", "firstSession", "secondSession")
-number_of_tasks #e.g., session eligibility should have 2 different task 
+number_of_tasks #e.g., session eligibility should have 2 different task
 #---------------------------
 #`session_task_check` function, return if the participant complete a session or it is in the middle of the session
 session_task_check = function(df, session_name){
   tmp = ddply(df,~systemID+session,summarise,number_of_distinct_tasks=length(unique(task_name)))
-  tmp2 = filter(tmp, session == session_name) 
+  tmp2 = filter(tmp, session == session_name)
   tmp2$stage = NULL
   tmp2 = transform(tmp2, stage = ifelse(number_of_distinct_tasks == number_of_tasks[[session_name]], "completed", "middle"))
   return(tmp2)
 }
 #---------------------------
 # the second argument can be any session name of the study
-# we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks 
+# we can use this `number_of_distinct_task_for_session` variable to make sure, participant didn't skip any tasks
 number_of_distinct_task_for_session = session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
 #---------------------------
@@ -560,7 +560,7 @@ View(tmp)
 lastSessionComp = aggregate(tmp[, c('session', 'task_name')], list(tmp$systemID), tail, 1)
 names(lastSessionComp) = c('systemID','session', 'task_name')
 #---------------------------
-participant_lastSession = left_join(data$participant, lastSessionComp, by="systemID") 
+participant_lastSession = left_join(data$participant, lastSessionComp, by="systemID")
 participant_lastSession = participant_lastSession[,c('participantID', 'systemID', 'active', 'session', 'last_login_date', 'email_reminders', 'phone_reminders')]
 View(participant_lastSession)
 #---------------------------
@@ -571,9 +571,9 @@ problematicUsers = filter(participant_lastSession, (active == 1) & (session != '
 View(problematicUsers)
 
 #---------------------------
-# in the middle of fifth session 
+# in the middle of fifth session
 View(filter(data$participant, participantID == 412))
-View(filter(data$taskLog, systemID == 412)) 
+View(filter(data$taskLog, systemID == 412))
 
 #completed the fifth session but not followup
 View(filter(data$participant, participantID == 577))
