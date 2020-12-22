@@ -33,7 +33,7 @@ data <- lapply(filenames, read.csv)
 
 # data <- lapply(filenames, function(i) {read.csv(i, sep = "\t", header = TRUE)})
 
-split_char <- '-'
+split_char <- "-"
 names(data) <- unlist(lapply(filenames, 
                              function(f) {
                                unlist(strsplit(f, 
@@ -53,9 +53,9 @@ cat("---------------------------\n")
 # ---------------------------------------------------------------------------- #
 
 #---------------------------
-# Function `standardize_colnames` enforces a standardized column naming scheme 
-# across data tables. For instance, `participandID` replaces the columns 
-# `participant_id` and `id`.
+# Function "standardize_colnames" enforces a standardized column naming scheme 
+# across data tables. For instance, "participandID" replaces the columns 
+# "participant_id" and "id".
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
   data[[names(data)[participant_table][1]]] <-
@@ -119,7 +119,7 @@ data <- lapply(data, standardize_columns)
 # ---------------------------------------------------------------------------- #
 
 #---------------------------
-# Function `add_participant_info` creates helper columns that explain
+# Function "add_participant_info" creates helper columns that explain
 # Launch membership and condition assignment
 add_participant_info <- function(data, study_name) {
   if (study_name == "R01") {
@@ -187,8 +187,8 @@ data <- add_participant_info(data, "R01")
 
 #---------------------------
 # Extract the participants for the given study
-# The second argument of `study_ID_function` is the study name, so it can be 
-# `R01`, `TET`, or `GIDI`
+# The second argument of "study_ID_function" is the study name, so it can be 
+# "R01", "TET", or "GIDI"
 get_study_participants <- function(data, study_name) {
   study <- data$study
   participant <- data$participant
@@ -219,9 +219,9 @@ get_study_participants <- function(data, study_name) {
 study_name <- "R01"
 study_participants <- get_study_participants(data, "R01")
 
-# Extract the participant ids of the selected study (here is `R01`)
+# Extract the participant ids of the selected study (here is "R01")
 participantIDs <- study_participants$participantID
-# Extract the system ids of the selected study (here is `R01`)
+# Extract the system ids of the selected study (here is "R01")
 systemIDs <- study_participants$systemID
 
 cat("Number of participant in study", study_name, "is: ", length(participantIDs))
@@ -232,7 +232,7 @@ cat("Number of participant in study", study_name, "is: ", length(participantIDs)
 # ---------------------------------------------------------------------------- #
 
 #---------------------------
-#`select_study_participants_data` function extracts the data of each tables for 
+# "select_study_participants_data" function extracts the data of each tables for 
 # the users of the selected study
 select_study_participants_data <- function(data, 
                                            participant_ids, 
@@ -269,7 +269,7 @@ participant_data <-
 #---------------------------
 update_active_column <- function(data) {
   # Participant 891, 1627, 1663, and 1852 were supposed to be labeled
-  # 'active = false' after a period of inactivity, but this switch did not occur 
+  # "active = false" after a period of inactivity, but this switch did not occur 
   # in the system.
   selected_users <- c(891, 1627, 1663, 1852)
   data$participant[which(data$participant$participantID %in% 
@@ -294,7 +294,7 @@ update_specific_participants <- function(data) {
   # study closed, but re-engaged with the program at a later point and got 
   # assigned to a TET study condition, so we change their progress to what it 
   # was in R01 before the switch happened.
-  # Participants 1992, 2004, and 2005 received 'studyExtension = TET' labels 
+  # Participants 1992, 2004, and 2005 received "studyExtension = TET" labels 
   # incorrectly as we were switching over to the TET study.
   tmp_systemID <- 
     data$participant[which(data$participant$participantID == 1992), ]$systemID
@@ -321,7 +321,7 @@ updated_participant_data <- update_specific_participants(updated_participant_dat
 # ---------------------------------------------------------------------------- #
 
 #---------------------------
-# Function `remove_duplicates` shows which ids (systemID or participantID, 
+# Function "remove_duplicates" shows which ids (systemID or participantID, 
 # depending on the table) have duplicated values (across all data tables) and 
 # returns the dataset without duplication
 remove_duplicates <- function(data) {
@@ -329,7 +329,7 @@ remove_duplicates <- function(data) {
   cnt <- 1
   data <- participant_data
   for (name in names(data)) {
-    if (name == 'task_log') {
+    if (name == "task_log") {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("systemID", 
                                                                    "session", 
                                                                    "task_name", 
@@ -352,7 +352,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'participant') {
+    else if (name == "participant") {
       duplicated_rows <- 
         data[[name]][(duplicated(data[[name]][, c("participantID")])), ]
       if (dim(duplicated_rows)[1] > 0) {
@@ -371,7 +371,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'js_psych_trial') {
+    else if (name == "js_psych_trial") {
       duplicated_rows <- 
         data[[name]][(duplicated(data[[name]][, c("participantID", 
                                                   "button_pressed", 
@@ -396,7 +396,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'study') {
+    else if (name == "study") {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("systemID", 
                                                                    "session")])), ]
       if (dim(duplicated_rows)[1] > 0) {
@@ -415,7 +415,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'affect') {
+    else if (name == "affect") {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participantID", 
                                                                    "session", 
                                                                    "tag")])), ]
@@ -436,7 +436,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if ((name == 'attrition_prediction') || (name == 'error_log') || (name == 'sms_log')) {
+    else if ((name == "attrition_prediction") || (name == "error_log") || (name == "sms_log")) {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participantID")])), ]
       if (dim(duplicated_rows)[1] > 0) {
         cat("There are duplicated values for table:", name)
@@ -453,7 +453,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'angular_training') {
+    else if (name == "angular_training") {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participantID", 
                                                                    "session_counter", 
                                                                    "session", 
@@ -480,7 +480,7 @@ remove_duplicates <- function(data) {
         cnt <- cnt + 1
       }
     }
-    else if (name == 'email_log') {
+    else if (name == "email_log") {
       duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participantID", 
                                                                    "session", 
                                                                    "email_type", 
@@ -529,7 +529,7 @@ remove_duplicates <- function(data) {
 }
 #---------------------------
 #---------------------------
-# `participant_data_no_duplication` is a collection of tables without any duplication
+# "participant_data_no_duplication" is a collection of tables without any duplication
 # based on the id show the duplication in tables
 participant_data_no_duplication <- remove_duplicates(participant_data)
 #---------------------------
@@ -627,13 +627,13 @@ get_ids_with_missing <- function(df) {
                                          "systemID", 
                                          "session"))]
   tmp_cols <- apply(tmp_df, 2, function(col) names(which(is.na(col))))
-  # `idx_list` is a list of row' index that has null value
+  # "idx_list" is a list of row index that has null value
   idx_list <- list()
   cnt_idx <- 1
-  # `par_id_list` is a list of participant ids with the null value
+  # "par_id_list" is a list of participant ids with the null value
   par_id_list <- list()
   cnt1 <- 1
-  # `sys_id_list` is a list of system ids with the null value
+  # "sys_id_list" is a list of system ids with the null value
   sys_id_list <- list()
   cnt2 <- 1
   for (col in tmp_cols) {
@@ -683,7 +683,7 @@ number_of_tasks <- c(2, 14, 8, 5)
 names(number_of_tasks) <- c("Eligibility", "preTest", "firstSession", "secondSession")
 number_of_tasks # e.g., session eligibility should have 2 different tasks
 #---------------------------
-#`session_task_check` function, return if the participant complete a session or 
+# "session_task_check" function, return if the participant complete a session or 
 # it is in the middle of the session
 session_task_check <- function(df, session_name) {
   tmp <- ddply(df, 
@@ -700,7 +700,7 @@ session_task_check <- function(df, session_name) {
 }
 #---------------------------
 # The second argument can be any session name of the study
-# We can use this `number_of_distinct_task_for_session` variable to make sure 
+# We can use this "number_of_distinct_task_for_session" variable to make sure 
 # participant didn't skip any tasks
 number_of_distinct_task_for_session <- 
   session_task_check(participant_data$taskLog, "preTest")
@@ -713,27 +713,27 @@ number_of_distinct_task_for_session
 
 #---------------------------
 # Dropout
-# Claudia was using 'current_task_index'. I didn't find any documentation for that!
+# Claudia was using "current_task_index". I didn't find any documentation for that!
 tmp <- filter(data$taskLog, 
               task_name == "SESSION_COMPLETE" & systemID %in% participantIDs)
 View(tmp)
 #---------------------------
-lastSessionComp <- aggregate(tmp[, c('session', 'task_name')], 
+lastSessionComp <- aggregate(tmp[, c("session", "task_name")], 
                              list(tmp$systemID), 
                              tail, 
                              1)
-names(lastSessionComp) <- c('systemID', 'session', 'task_name')
+names(lastSessionComp) <- c("systemID", "session", "task_name")
 #---------------------------
 participant_lastSession <- left_join(data$participant, 
                                      lastSessionComp, 
                                      by = "systemID")
-participant_lastSession <- participant_lastSession[, c('participantID', 
-                                                       'systemID', 
-                                                       'active', 
-                                                       'session', 
-                                                       'last_login_date', 
-                                                       'email_reminders', 
-                                                       'phone_reminders')]
+participant_lastSession <- participant_lastSession[, c("participantID", 
+                                                       "systemID", 
+                                                       "active", 
+                                                       "session", 
+                                                       "last_login_date", 
+                                                       "email_reminders", 
+                                                       "phone_reminders")]
 View(participant_lastSession)
 #---------------------------
 participant_lastSession$date <- as.Date(participant_lastSession$last_login_date, 
@@ -743,7 +743,7 @@ participant_lastSession$dayDiff <- difftime(now(),
                                             units = c("days"))
 #---------------------------
 problematicUsers <- filter(participant_lastSession, 
-                           (active == 1) & (session != 'PostFollowUp') & (dayDiff > 21))
+                           (active == 1) & (session != "PostFollowUp") & (dayDiff > 21))
 View(problematicUsers)
 
 #---------------------------
