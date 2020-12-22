@@ -66,6 +66,7 @@ names(data)
 # Function "standardize_colnames" enforces a standardized column naming scheme 
 # across data tables. For instance, "participandID" replaces the columns 
 # "participant_id" and "id".
+
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
   data[[names(data)[participant_table][1]]] <-
@@ -86,6 +87,7 @@ standardize_columns_special_tables <- function(data) {
   return(data)
 }
 #---------------------------
+
 #---------------------------
 data <- standardize_columns_special_tables(data)
 #---------------------------
@@ -119,6 +121,7 @@ standardize_columns <- function(df) {
   return(df)
 }
 #---------------------------
+
 #---------------------------
 # Standardize column names across dataset
 data <- lapply(data, standardize_columns)
@@ -131,6 +134,7 @@ data <- lapply(data, standardize_columns)
 #---------------------------
 # Function "add_participant_info" creates helper columns that explain
 # Launch membership and condition assignment
+
 add_participant_info <- function(data, study_name) {
   if (study_name == "R01") {
     
@@ -186,8 +190,10 @@ add_participant_info <- function(data, study_name) {
   return(data)
 }
 #---------------------------
+
 #---------------------------
 # Add helper columns
+
 data <- add_participant_info(data, "R01")
 #---------------------------
 
@@ -199,6 +205,7 @@ data <- add_participant_info(data, "R01")
 # Extract the participants for the given study
 # The second argument of "study_ID_function" is the study name, so it can be 
 # "R01", "TET", or "GIDI"
+
 get_study_participants <- function(data, study_name) {
   study <- data$study
   participant <- data$participant
@@ -225,13 +232,17 @@ get_study_participants <- function(data, study_name) {
   return(tmp)
 }
 #---------------------------
+
 #---------------------------
 study_name <- "R01"
 study_participants <- get_study_participants(data, "R01")
 
 # Extract the participant ids of the selected study (here is "R01")
+
 participantIDs <- study_participants$participantID
+
 # Extract the system ids of the selected study (here is "R01")
+
 systemIDs <- study_participants$systemID
 
 cat("Number of participant in study", study_name, "is: ", length(participantIDs))
@@ -244,6 +255,7 @@ cat("Number of participant in study", study_name, "is: ", length(participantIDs)
 #---------------------------
 # "select_study_participants_data" function extracts the data of each tables for 
 # the users of the selected study
+
 select_study_participants_data <- function(data, 
                                            participant_ids, 
                                            system_ids, 
@@ -265,8 +277,10 @@ select_study_participants_data <- function(data,
   return(tmp)
 }
 #---------------------------
+
 #---------------------------
 # Restore data of each tables for users of selected study in participant_data
+
 participant_data <- 
   select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
@@ -276,11 +290,14 @@ participant_data <-
 # ---------------------------------------------------------------------------- #
 
 # Update active column of some specific participants
+
 #---------------------------
 update_active_column <- function(data) {
+  
   # Participant 891, 1627, 1663, and 1852 were supposed to be labeled
   # "active = false" after a period of inactivity, but this switch did not occur 
   # in the system.
+  
   selected_users <- c(891, 1627, 1663, 1852)
   data$participant[which(data$participant$participantID %in% 
                            selected_users), ]$active <- 0
@@ -288,6 +305,7 @@ update_active_column <- function(data) {
   return(data)
 }
 #---------------------------
+
 #---------------------------
 updated_participant_data <- update_active_column(participant_data)
 #---------------------------
@@ -297,6 +315,7 @@ updated_participant_data <- update_active_column(participant_data)
 # ---------------------------------------------------------------------------- #
 
 # special participants
+
 #---------------------------
 update_specific_participants <- function(data) {
   
@@ -304,8 +323,10 @@ update_specific_participants <- function(data) {
   # study closed, but re-engaged with the program at a later point and got 
   # assigned to a TET study condition, so we change their progress to what it 
   # was in R01 before the switch happened.
+  
   # Participants 1992, 2004, and 2005 received "studyExtension = TET" labels 
   # incorrectly as we were switching over to the TET study.
+  
   tmp_systemID <- 
     data$participant[which(data$participant$participantID == 1992), ]$systemID
   data$study[which(data$study$systemID == tmp_systemID), ]$conditioning <- "NONE"
@@ -322,6 +343,7 @@ update_specific_participants <- function(data) {
   return(data)
 }
 #---------------------------
+
 #---------------------------
 updated_participant_data <- update_specific_participants(updated_participant_data)
 #---------------------------
@@ -334,6 +356,7 @@ updated_participant_data <- update_specific_participants(updated_participant_dat
 # Function "remove_duplicates" shows which ids (systemID or participantID, 
 # depending on the table) have duplicated values (across all data tables) and 
 # returns the dataset without duplication
+
 remove_duplicates <- function(data) {
   tmp <- list()
   cnt <- 1
@@ -538,9 +561,11 @@ remove_duplicates <- function(data) {
   return(tmp)
 }
 #---------------------------
+
 #---------------------------
 # "participant_data_no_duplication" is a collection of tables without any duplication
 # based on the id show the duplication in tables
+
 participant_data_no_duplication <- remove_duplicates(participant_data)
 #---------------------------
 
@@ -549,7 +574,9 @@ participant_data_no_duplication <- remove_duplicates(participant_data)
 # ---------------------------------------------------------------------------- #
 
 # -------------- Handle special case of DASS --------------------------------
+
 # For participant who have duplication in dass21As we keep the last entry
+
 # eligible <- filter(participant_data$dass21AS, session == "ELIGIBLE")
 # eligible <- eligible[!rev(duplicated(rev(eligible[, c("participantID")]))), ]
 # other <- filter(participant_data$dass21AS, session != "ELIGIBLE")
@@ -562,6 +589,7 @@ participant_data_no_duplication <- remove_duplicates(participant_data)
 
 #---------------------------
 # The range of each item in the table is stored in the data_summary
+
 data_summary <- lapply(participant_data, summary)
 for (i in 1:length(no_duplicated_data)) {
   assign(paste(paste("df", i, sep = ""), "summary", sep = "."), data_summary[[i]])
@@ -578,6 +606,7 @@ data_summary
 # pna = -1 or 555
 # This function return the participant/system Ids of the row with prefer not to
 # answer value for each table
+
 get_ids_with_pna <- function(df, pna = 555) {
   tmp_df <- df[, -which(names(df) %in% c("participantID", 
                                          "systemID", 
@@ -632,18 +661,25 @@ ids_with_pna
 
 #---------------------------
 # This function return the participant/system Ids with null values in each table
+
 get_ids_with_missing <- function(df) {
   tmp_df <- df[, -which(names(df) %in% c("participantID", 
                                          "systemID", 
                                          "session"))]
   tmp_cols <- apply(tmp_df, 2, function(col) names(which(is.na(col))))
+  
   # "idx_list" is a list of row index that has null value
+  
   idx_list <- list()
   cnt_idx <- 1
+  
   # "par_id_list" is a list of participant ids with the null value
+  
   par_id_list <- list()
   cnt1 <- 1
+  
   # "sys_id_list" is a list of system ids with the null value
+  
   sys_id_list <- list()
   cnt2 <- 1
   for (col in tmp_cols) {
@@ -689,12 +725,14 @@ ids_with_missing
 
 #---------------------------
 # Create an object with the number of tasks that should be done per session
+
 number_of_tasks <- c(2, 14, 8, 5)
 names(number_of_tasks) <- c("Eligibility", "preTest", "firstSession", "secondSession")
 number_of_tasks # e.g., session eligibility should have 2 different tasks
 #---------------------------
 # "session_task_check" function, return if the participant complete a session or 
 # it is in the middle of the session
+
 session_task_check <- function(df, session_name) {
   tmp <- ddply(df, 
                ~systemID = session, 
@@ -712,6 +750,7 @@ session_task_check <- function(df, session_name) {
 # The second argument can be any session name of the study
 # We can use this "number_of_distinct_task_for_session" variable to make sure 
 # participant didn't skip any tasks
+
 number_of_distinct_task_for_session <- 
   session_task_check(participant_data$taskLog, "preTest")
 number_of_distinct_task_for_session
@@ -724,6 +763,7 @@ number_of_distinct_task_for_session
 #---------------------------
 # Dropout
 # Claudia was using "current_task_index". I didn't find any documentation for that!
+
 tmp <- filter(data$taskLog, 
               task_name == "SESSION_COMPLETE" & systemID %in% participantIDs)
 View(tmp)
@@ -758,9 +798,11 @@ View(problematicUsers)
 
 #---------------------------
 # In the middle of fifth session
+
 View(filter(data$participant, participantID == 412))
 View(filter(data$taskLog, systemID == 412))
 
 # Completed the fifth session but not follow-up
+
 View(filter(data$participant, participantID == 577))
 View(filter(data$taskLog, systemID == 577)) # Evaluation and assessing program are not done
