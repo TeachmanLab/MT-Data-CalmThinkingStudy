@@ -4,34 +4,45 @@
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Notes ----
 # ---------------------------------------------------------------------------- #
 
-setwd("/Users/soniabaee/Documents/Projects/MindTrails/R01/")
+# Before running this script, set your working directory and put the raw data
+# obtained from 1_get_raw_data.ipynb in a folder called "data/raw". The present 
+# script will import the raw data from that folder and output intermediate data
+# in a new folder called "data/intermediate/stage_1_cleaning".
+
+# ---------------------------------------------------------------------------- #
+# Store working directory and load packages ----
+# ---------------------------------------------------------------------------- #
+
+# Store working directory
+
+wd_dir <- getwd()
+
+# Load packages
 
 library(dplyr)
 library(reshape2)
 library(plyr)
 library(data.table)
-require(lubridate)
+library(lubridate)
 library(anytime)
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Import raw data ----
 # ---------------------------------------------------------------------------- #
 
-#----------------------------------------------------------------------
-raw_data_dir <- "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data-analysis"
-setwd(raw_data_dir)
+# Obtain file names of raw CSV data files
+
+raw_data_dir <- paste0(wd_dir, "/data/raw")
 filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
-# If you downloaded the data from the server run this
+# Import data files and store them in a list
 
-data <- lapply(filenames, read.csv)
+data <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
 
-# If you downloaded the data from the MindTrails run this
-
-# data <- lapply(filenames, function(i) {read.csv(i, sep = "\t", header = TRUE)})
+# Name each data file in the list
 
 split_char <- "-"
 names(data) <- unlist(lapply(filenames, 
@@ -41,12 +52,11 @@ names(data) <- unlist(lapply(filenames,
                                                fixed = FALSE))[1]
                              }
                              ))
-#---------------------------
-cat("The list of tables: ")
-cat("---------------------------\n")
+
+# Report the names of the imported tables
+
+cat("The following tables were imported: ")
 names(data)
-cat("---------------------------\n")
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
