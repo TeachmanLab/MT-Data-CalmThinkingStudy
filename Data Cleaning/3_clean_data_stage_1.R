@@ -59,50 +59,61 @@ cat("The following tables were imported: ")
 names(data)
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
-# Function "standardize_colnames" enforces a standardized column naming scheme 
-# across data tables. For instance, "participandID" replaces the columns 
-# "participant_id" and "id".
+# Except where noted below, in the "calm" SQL database, each table has an "id" 
+# column that identifies the rows in that table. By convention, when a table 
+# contains a column that corresponds to the "id" column of another table, the 
+# derived column's name starts with the name of the table whose "id" column it 
+# refers to and ends with "id". For example, "participant_id" refers to "id" in 
+# the "participant" table, and "study_id" refers to "id" in the "study" table.
+
+# Each participant has only one "id" in the "participant" table and only one 
+# "id" in the "study" table, but these ids are not always the same. To make 
+# indexing tables by participant simpler, we rename "id" in the "participant" 
+# table to "participant_id" and rename "id" in the "study" table to "study_id". 
+# We treat "participant_id" as the primary identifier for each participant;
+# once a table is indexed by "participant_id", "study_id" is superfluous.
+
+# The exception to the naming convention above is that for measures that have
+# multiple tables (i.e., one main table and one or more companion tables that
+# contain responses to items in which multiple response options were possible),
+# the "id" variable in the companion table corresponds to the "id" variable in
+# the main table (but is not named "main_table_id" as would be expected by the
+# convention). For example, the "id" column in the "demographics_race" table
+# corresponds to the "id" column in the "demographics" table.
+
+# Define function to rename "id" in "participant" table to "participant_id"
+# and "id" in "study" table to "study_id"
 
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
   data[[names(data)[participant_table][1]]] <-
-    data[[names(data)[participant_table][1]]] %>% select(systemID = study_id,
-                                                         participantID = id, 
+    data[[names(data)[participant_table][1]]] %>% select(participant_id = id,
                                                          everything())
   
   study_table <- grep("^study", names(data))
   data[[names(data)[study_table][1]]] <-
-    data[[names(data)[study_table][1]]] %>% select(systemID = id, 
+    data[[names(data)[study_table][1]]] %>% select(study_id = id,
                                                    everything())
-  
-  taskLog_table <- grep("^task_log", names(data))
-  data[[names(data)[taskLog_table][1]]] <-
-    data[[names(data)[taskLog_table][1]]] %>% select(systemID = study_id, 
-                                                     everything())
   
   return(data)
 }
-#---------------------------
 
-#---------------------------
+# Run function
+
 data <- standardize_columns_special_tables(data)
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Recode date columns and rename "session_name" columns ----
 # ---------------------------------------------------------------------------- #
+
+# TODO (JEREMY TO CONTINUE HERE)
 
 #---------------------------
 standardize_columns <- function(df) {
   df_colnames <- colnames(df)
-  
-  if ("participant_id" %in% df_colnames) {
-    df <- df %>% select(participantID = participant_id, everything())
-  }
   
   date_columns <- grep("^date", df_colnames)
   if (length(date_columns) != 0) {
