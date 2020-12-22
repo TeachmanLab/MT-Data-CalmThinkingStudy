@@ -1,3 +1,12 @@
+# ---------------------------------------------------------------------------- #
+# INSERT TITLE
+# Authors: Sonia Baee and Jeremy W. Eberle
+# ---------------------------------------------------------------------------- #
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
 setwd("/Users/soniabaee/Documents/Projects/MindTrails/R01/")
 library(dplyr) # Load package
 library(reshape2)
@@ -5,6 +14,10 @@ library(plyr)
 library(data.table)
 require(lubridate)
 library(anytime)
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #----------------------------------------------------------------------
 raw_data_dir = "/Users/soniabaee/Documents/Projects/MindTrails/R01/Raw-Data-analysis"
@@ -22,6 +35,10 @@ cat("---------------------------\n")
 names(data)
 cat("---------------------------\n")
 #---------------------------
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # function `standardize_colnames` enforces a standardized column naming scheme across data tables
@@ -47,6 +64,9 @@ standardize_columns_special_tables = function(data){
 data = standardize_columns_special_tables(data)
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 standardize_columns = function(df){
@@ -78,6 +98,9 @@ standardize_columns = function(df){
 data = lapply(data, standardize_columns)
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # function `add_participant_info` creates helper columns that explain
@@ -129,6 +152,9 @@ add_participant_info = function(data, study_name){
 data = add_participant_info(data, "R01")
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # Extract the participants for the given study
@@ -164,6 +190,9 @@ systemIDs = study_participants$systemID
 cat("number of participant in study", study_name, "is: ", length(participantIDs))
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 #`select_study_participants_data` function extracts the data of each tables for the users of the selected study
@@ -190,6 +219,10 @@ select_study_participants_data = function(data, participant_ids, system_ids, stu
 participant_data = select_study_participants_data(data, participantIDs, systemIDs, "R01")
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
 # Update active column of some specific participants
 #---------------------------
 update_active_column = function(data){
@@ -205,6 +238,9 @@ update_active_column = function(data){
 updated_participant_data = update_active_column(participant_data)
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 # special participants
 #---------------------------
@@ -232,7 +268,9 @@ update_specific_participants = function(data){
 updated_participant_data = update_specific_participants(updated_participant_data)
 #---------------------------
 
-
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # function `remove_duplicates` shows which ids (systemID or participantID, depending on the table) have
@@ -408,6 +446,9 @@ remove_duplicates = function(data){
 participant_data_no_duplication = remove_duplicates(participant_data)
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 # -------------- Handle special case of DASS --------------------------------
 # for participant who have duplication in dass21As we keep the last entry
@@ -417,6 +458,10 @@ participant_data_no_duplication = remove_duplicates(participant_data)
 # participant_data$dass21AS = rbind(eligible, other)
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
 #---------------------------
 #the range of each item in the table is stored in the data_summary
 data_summary = lapply(participant_data, summary)
@@ -425,6 +470,10 @@ for (i in 1:length(no_duplicated_data)){
 }
 data_summary
 #---------------------------
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # prefer not to answer coding for each table
@@ -476,6 +525,10 @@ get_ids_with_pna = function(df, pna = 555){
 ids_with_pna = lapply(participant_data, get_ids_with_pna)
 ids_with_pna
 #---------------------------
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # this function return the participant/system Ids with null values in each table
@@ -529,6 +582,10 @@ ids_with_missing = lapply(participant_data, get_ids_with_missing )
 ids_with_missing
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
 #---------------------------
 #create an object with the number of taks that should be done per session
 number_of_tasks = c(2, 14, 8, 5)
@@ -550,6 +607,9 @@ number_of_distinct_task_for_session = session_task_check(participant_data$taskLo
 number_of_distinct_task_for_session
 #---------------------------
 
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
 
 #---------------------------
 # dropout
