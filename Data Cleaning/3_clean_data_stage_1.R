@@ -85,7 +85,9 @@ names(data)
 # corresponds to the "id" column in the "demographics" table.
 
 # Define function to rename "id" in "participant" table to "participant_id"
-# and "id" in "study" table to "study_id"
+# and to rename "id" in "study" table to "study_id". The function is named
+# standardize_columns_special_tables because its scope is limited to only
+# the specific tables that are specified in the function.
 
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
@@ -106,13 +108,84 @@ standardize_columns_special_tables <- function(data) {
 data <- standardize_columns_special_tables(data)
 
 # ---------------------------------------------------------------------------- #
-# Recode date columns and rename "session_name" columns ----
+# Identify and recode date columns ----
 # ---------------------------------------------------------------------------- #
 
-# TODO (JEREMY TO CONTINUE HERE)
+# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
 
-#---------------------------
-standardize_columns <- function(df) {
+
+
+
+
+
+
+
+
+
+
+# Identify columns containing "date" in each table
+
+identify_date_columns <- function(df) {
+  df_colnames <- colnames(df)
+  
+  date_columns <- grep("date", df_colnames)
+  if (length(date_columns) != 0) {
+    df_colnames[date_columns]
+  }
+}
+
+lapply(data, identify_date_columns)
+
+# View structure of columns containing "date" in each table
+
+view_date_str <- function(df, df_name) {
+  print(paste0("Table: ", df_name))
+  cat("\n")
+  
+  df_colnames <- colnames(df)
+  date_columns <- grep("date", df_colnames)
+  
+  if (length(date_columns) != 0) {
+    for (i in date_columns) {
+      print(paste0(df_colnames[i]))
+      str(df[, i])
+      print(paste0("Number NA: ", sum(is.na(df[, i]))))
+      print(paste0("Number blank: ", sum(df[, i] == "")))
+      print(paste0("Number 555: ", sum(df[, i] == 555, na.rm = TRUE)))
+      print("Number of characters: ")
+      print(table(nchar(df[, i])))
+    }
+  } else {
+    print("No columns containing 'date' found.")
+  }
+  
+  cat("----------")
+  cat("\n")
+}
+
+invisible(mapply(view_date_str, df = data, df_name = names(data)))
+
+# Consider recoding columns containing "date"
+
+# TODO: JEREMY TO CONTINUE HERE. NOT SURE THIS SHOULD BE DONE BECAUSE, FOR
+# EXAMPLE, IN TABLES THAT HAVE MULTPLE COLUMNS CONTAINING "DATE" (SEE ABOVE), 
+# THIS FUNCTION OVERWRITES THEM INTO ONLY ONE VARIABLE CALLED dateTime. ALSO
+# NEED TO SPECIFY TIME ZONE (PRESUMABLY THAT OF THE SERVER, BUT WAITING ON DAN) 
+# AND SEE HOW THE ANYTIME FUNCTION WORKS WITH DIFFERENT DATA TYPES (SEE ABOVE).
+# ALSO UNCLEAR DIFFERENT DATE VARIABLES SHOULD BE GIVEN JUST ONE VARIABLE NAME
+# BECAUSE IT SEEMS THEY HAVE DIFFERENT MEANINGS.
+
+
+
+
+
+
+
+
+
+
+
+recode_date <- function(df) {
   df_colnames <- colnames(df)
   
   date_columns <- grep("^date", df_colnames)
@@ -121,6 +194,31 @@ standardize_columns <- function(df) {
       df <- mutate(df, dateTime = anytime(as.factor(df[[df_colnames[i]]])))
     }
   }
+  
+  return(df)
+}
+
+data <- lapply(data, recode_date)
+
+# ---------------------------------------------------------------------------- #
+# Rename "session_name" columns ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: JEREMY TO CHECK THIS. UNCLEAR THAT CURRENT_SESSION SHOULD BE RENAMED
+# THE SAME AS SESSION_NAME AS IT SEEMS TO MEAN SOMETHING DIFFERENT.
+
+
+
+
+
+
+
+
+
+
+
+rename_session <- function(df) {
+  df_colnames <- colnames(df)
   
   if (("session_name" %in% df_colnames)) {
     df <- df %>% select(session = session_name, everything())
@@ -131,12 +229,30 @@ standardize_columns <- function(df) {
   
   return(df)
 }
-#---------------------------
 
-#---------------------------
-# Standardize column names across dataset
-data <- lapply(data, standardize_columns)
-#---------------------------
+data <- lapply(data, rename_session)
+
+
+
+
+
+
+
+
+
+
+
+# TODO: JEREMY TO CHECK EVERYTHING BELOW THIS
+
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
