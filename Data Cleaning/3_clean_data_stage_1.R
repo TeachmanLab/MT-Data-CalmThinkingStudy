@@ -336,54 +336,60 @@ data <- lapply(data, rename_session)
 add_participant_info <- function(data, study_name) {
   if (study_name == "R01") {
     
-    # Remove admin and test_account
+    # Remove admin and test accounts
+    
     data$participant <- filter(data$participant, test_account == 0 & admin == 0)
     
-    # Create new variable to differentiate soft and true launch Ps
+    # Create new variable to differentiate soft and true launch participants
+    
     data$participant$launch_type <- NA
     data$participant <- 
       mutate(data$participant,
-             launch_type = ifelse(participantID >= 159, "TRUE", "SOFT"))
+             launch_type = ifelse(participant_id >= 159, "TRUE", "SOFT"))
     
-    # Create new variable describing how Ps were assigned to a condition
+    # Create new variable describing how participants were assigned to condition
+    
     data$participant$condition_assignment_method <- NA
     manual <- c(43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 108, 120, 130, 
                 131, 132, 140)
     data$participant <- 
       mutate(data$participant, 
-             condition_assignment_method = ifelse(participantID %in% manual, 
+             condition_assignment_method = ifelse(participant_id %in% manual, 
                                                   "manual", "algorithm"))
     
-    # # We don't need this part because we have all coaches as a test_account 
-    # # and we already took care of them
-    # # Create a label for coaches :
-    # data$participant$coach_id <- NA
-    # coaches <- c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 
-    #              1107, 1111, 1112, 1772)
-    # data$participant <- 
-    #   mutate(data$participant, 
-    #          coach_id = ifelse(participantID %in% coaches, "coach", "normal"))
+    # Confirm that accounts for coaches have already been removed (should all be
+    # test accounts, which were removed above)
     
-    # Special IDs:
-    # 2004: Assigned to R01 condition but has a TET label. This was due to a 
-    #       bug at launch. According to a message by Dan, the studyExtension 
-    #       field was not properly being passed through to the data server, and 
-    #       this was fixed on 4/7/2020.
-    # 2005: Assigned to R01 condition but has a TET label. This was due to a 
-    #       bug at launch. According to Dan, the studyExtension field was not 
-    #       properly being passed through to the data server, and this was 
-    #       fixed on 4/7/2020.
+    coaches <- c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 
+                 1107, 1111, 1112, 1772)
     
-    specialIDs <- c(2004, 2005)
-    tmp <- filter(data$participant, participantID %in% specialIDs)
-    specialIDs_systemIDs <- tmp$systemID
-    if (all(is.na(data$study[which(data$study$systemID %in% 
-                                     specialIDs_systemIDs), ]$study_extension))) {
-      print("No manual changes needed for special IDs! Already resolved in server.")
+    if (sum(data$participant$participant_id %in% coaches) != 0) {
+      data$participant <-
+        data$participant[!(data$participant$participant_id %in% coaches), ]
     } else {
-      data$study[which(data$study$systemID %in% specialIDs_systemIDs), ]$study_extension <- ""
+      print("Coaching accounts already removed.")
     }
     
+    # Special IDs
+    
+    # 2004 and 2005: Enrolled in R01 study and assigned to R01 condition but 
+    #                given a TET study extension. This was due to a bug at 
+    #                launch of the TET study. According to a message by Dan 
+    #                Funk, the study_extension field was not properly being 
+    #                passed through to the Data Server. This was fixed on 
+    #                4/7/2020, but the study_extension for these participants
+    #                needs to be changed back to "".
+
+    specialIDs <- c(2004, 2005)
+    tmp <- filter(data$participant, participant_id %in% specialIDs)
+    specialIDs_study_ids <- tmp$study
+    if (all(data$study[data$study$study_id %in% 
+                         specialIDs_study_ids, ]$study_extension == "")) {
+      print("Study extension for special IDs already corrected in server.")
+    } else {
+      data$study[data$study$study_id %in% 
+                   specialIDs_study_ids, ]$study_extension <- ""
+    }
   }
   return(data)
 }
