@@ -59,6 +59,13 @@ cat("The following tables were imported: ")
 names(data)
 
 # ---------------------------------------------------------------------------- #
+# Part I. Database-Wide Data Cleaning ----
+# ---------------------------------------------------------------------------- #
+
+# The following code sections apply to data from every study in the "calm" SQL 
+# database (i.e., R01, TET, GIDI).
+
+# ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
@@ -108,10 +115,28 @@ standardize_columns_special_tables <- function(data) {
 data <- standardize_columns_special_tables(data)
 
 # ---------------------------------------------------------------------------- #
+# Remove admin and test accounts ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: CHECK BELOW
+
+
+
+
+
+
+
+
+
+
+data$participant <- filter(data$participant, test_account == 0 & admin == 0)
+
+# ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+
 
 
 
@@ -220,11 +245,13 @@ data <- lapply(data, recode_date)
 
 
 
+
 # ---------------------------------------------------------------------------- #
 # Identify and rename session columns ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+
 
 
 
@@ -313,102 +340,61 @@ data <- lapply(data, rename_session)
 
 
 
-# TODO: JEREMY TO CHECK EVERYTHING BELOW THIS
-
-
-
-
-
-
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Correct study extensions ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
-# Function "add_participant_info" creates helper columns that explain
-# Launch membership and condition assignment
+# TODO: CHECK BELOW
 
-add_participant_info <- function(data, study_name) {
-  if (study_name == "R01") {
-    
-    # Remove admin and test accounts
-    
-    data$participant <- filter(data$participant, test_account == 0 & admin == 0)
-    
-    # Create new variable to differentiate soft and true launch participants
-    
-    data$participant$launch_type <- NA
-    data$participant <- 
-      mutate(data$participant,
-             launch_type = ifelse(participant_id >= 159, "TRUE", "SOFT"))
-    
-    # Create new variable describing how participants were assigned to condition
-    
-    data$participant$condition_assignment_method <- NA
-    manual <- c(43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 108, 120, 130, 
-                131, 132, 140)
-    data$participant <- 
-      mutate(data$participant, 
-             condition_assignment_method = ifelse(participant_id %in% manual, 
-                                                  "manual", "algorithm"))
-    
-    # Confirm that accounts for coaches have already been removed (should all be
-    # test accounts, which were removed above)
-    
-    coaches <- c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 
-                 1107, 1111, 1112, 1772)
-    
-    if (sum(data$participant$participant_id %in% coaches) != 0) {
-      data$participant <-
-        data$participant[!(data$participant$participant_id %in% coaches), ]
-    } else {
-      print("Coaching accounts already removed.")
-    }
-    
-    # Special IDs
-    
-    # 2004 and 2005: Enrolled in R01 study and assigned to R01 condition but 
-    #                given a TET study extension. This was due to a bug at 
-    #                launch of the TET study. According to a message by Dan 
-    #                Funk, the study_extension field was not properly being 
-    #                passed through to the Data Server. This was fixed on 
-    #                4/7/2020, but the study_extension for these participants
-    #                needs to be changed back to "".
 
-    specialIDs <- c(2004, 2005)
-    tmp <- filter(data$participant, participant_id %in% specialIDs)
-    specialIDs_study_ids <- tmp$study
-    if (all(data$study[data$study$study_id %in% 
-                         specialIDs_study_ids, ]$study_extension == "")) {
-      print("Study extension for special IDs already corrected in server.")
-    } else {
-      data$study[data$study$study_id %in% 
-                   specialIDs_study_ids, ]$study_extension <- ""
-    }
-  }
-  return(data)
+
+
+
+
+
+
+
+
+# 2004 and 2005: Enrolled in R01 study and assigned to R01 condition but 
+#                given a TET study extension. This was due to a bug at 
+#                launch of the TET study. According to a message by Dan 
+#                Funk, the study_extension field was not properly being 
+#                passed through to the Data Server. This was fixed on 
+#                4/7/2020, but the study_extension for these participants
+#                needs to be changed back to "".
+
+specialIDs <- c(2004, 2005)
+tmp <- filter(data$participant, participant_id %in% specialIDs)
+specialIDs_study_ids <- tmp$study
+if (all(data$study[data$study$study_id %in% 
+                   specialIDs_study_ids, ]$study_extension == "")) {
+  print("Study extension for special IDs already corrected in server.")
+} else {
+  data$study[data$study$study_id %in% 
+               specialIDs_study_ids, ]$study_extension <- ""
 }
-#---------------------------
-
-#---------------------------
-# Add helper columns
-
-data <- add_participant_info(data, "R01")
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Part II. Extract Data for Desired Study ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
-# Extract the participants for the given study
-# The second argument of "study_ID_function" is the study name, so it can be 
-# "R01", "TET", or "GIDI"
+# ---------------------------------------------------------------------------- #
+# Extract participant data ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: CHECK BELOW
+
+
+
+
+
+
+
+
+
+
+# Extract the participants for the given study. The second argument of the
+# function is study_name, which can be "R01", "TET", or "GIDI"
 
 get_study_participants <- function(data, study_name) {
   study <- data$study
@@ -435,9 +421,7 @@ get_study_participants <- function(data, study_name) {
   }
   return(tmp)
 }
-#---------------------------
 
-#---------------------------
 study_name <- "R01"
 study_participants <- get_study_participants(data, "R01")
 
@@ -449,15 +433,24 @@ participantIDs <- study_participants$participantID
 
 systemIDs <- study_participants$systemID
 
-cat("Number of participant in study", study_name, "is: ", length(participantIDs))
-#---------------------------
+cat("Number of participants in study", study_name, ": ", length(participantIDs))
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Extract all data ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
-# "select_study_participants_data" function extracts the data of each tables for 
+# TODO: CHECK BELOW
+
+
+
+
+
+
+
+
+
+
+# "select_study_participants_data" function extracts the data of each table for 
 # the users of the selected study
 
 select_study_participants_data <- function(data, 
@@ -480,22 +473,151 @@ select_study_participants_data <- function(data,
   names(tmp) <- names(data)
   return(tmp)
 }
-#---------------------------
 
-#---------------------------
-# Restore data of each tables for users of selected study in participant_data
+# Restore data of each table for users of selected study in participant_data
 
 participant_data <- 
   select_study_participants_data(data, participantIDs, systemIDs, "R01")
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
+# Part III. R01-Specific Data Cleaning ----
 # ---------------------------------------------------------------------------- #
+
+# The following code sections are specific to data for the R01 study. The code
+# may not be relevant to the TET and GIDI studies and will need to be revised
+# for those studies as needed.
+
+# ---------------------------------------------------------------------------- #
+# Add participant information ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+
+
+
+
+
+
+
+
+
+
+# Function "add_participant_info" creates helper columns that explain
+# launch membership and condition assignment
+
+add_participant_info <- function(data, study_name) {
+  if (study_name == "R01") {
+    
+    # Create new variable describing how participants were assigned to condition
+    
+    data$participant$condition_assignment_method <- NA
+    manual <- c(43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 108, 120, 130, 
+                131, 132, 140)
+    data$participant <- 
+      mutate(data$participant, 
+             condition_assignment_method = ifelse(participant_id %in% manual, 
+                                                  "manual", "algorithm"))
+    
+    # Create new variable to differentiate soft and true launch participants
+    
+    data$participant$launch_type <- NA
+    data$participant <- 
+      mutate(data$participant,
+             launch_type = ifelse(participant_id >= 159, "TRUE", "SOFT"))
+    
+    # TODO: Add indicator coaching_account (see previous version of code)
+    
+  }
+  return(data)
+}
+
+data <- add_participant_info(data, "R01")
+
+# ---------------------------------------------------------------------------- #
+# Exclude participants ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Exclude soft-launch participants
+
+
+
+
+
+
+
+
+
+
+# Confirm that accounts for coaches have already been removed (should all be
+# test accounts, which were removed above)
+
+coaches <- c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 906, 1103, 
+             1107, 1111, 1112, 1772)
+
+if (sum(data$participant$participant_id %in% coaches) != 0) {
+  data$participant <-
+    data$participant[!(data$participant$participant_id %in% coaches), ]
+} else {
+  print("Coaching accounts already removed.")
+}
+
+# ---------------------------------------------------------------------------- #
+# Edit participant information: Participant spanning two studies ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: CHECK BELOW
+
+
+
+
+
+
+
+
+
+
+# Participant 1992 only progressed to the early preTest phase before the R01 
+# study closed, but re-engaged with the program at a later point and got 
+# assigned to a TET study condition, so we change their progress to what it 
+# was in R01 before the switch happened.
+
+# TODO: task_log shows that participant 1992 completed their first preTest 
+# task (Credibility) on 4/15/2020, the day after TET launched on 4/14/2020.
+# This means that they did not even progress to preTest before TET launched.
+# Jeremy to ensure all their data after Eligibility is removed for R01 data
+# cleaning. The code below does not appear to actually remove any data.
+
+# TODO: Add an IF statement so the code below only applies to R01 data. For
+# TET data the participant's information should not be changed.
+
+update_specific_participants <- function(data) {
+  tmp_study_id <- 
+    data$participant[which(data$participant$participant_id == 1992), ]$study_id
+  data$study[which(data$study$study_id == tmp_study_id), ]$conditioning <- "NONE"
+  data$study[which(data$study$study_id == tmp_study_id), ]$session <- "preTest"
+  
+  return(data)
+}
+
+updated_participant_data <- update_specific_participants(updated_participant_data)
+
+# ---------------------------------------------------------------------------- #
+# Edit participant information: Inaccurate active column ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: CHECK BELOW
+
+
+
+
+
+
+
+
+
 
 # Update active column of some specific participants
 
-#---------------------------
 update_active_column <- function(data) {
   
   # Participant 891, 1627, 1663, and 1852 were supposed to be labeled
@@ -508,55 +630,33 @@ update_active_column <- function(data) {
   
   return(data)
 }
-#---------------------------
 
-#---------------------------
 updated_participant_data <- update_active_column(participant_data)
-#---------------------------
+
+
+
+
+
+
+
+
+
+
+# TODO: JEREMY TO CHECK EVERYTHING BELOW THIS
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
 
-# special participants
-
-#---------------------------
-update_specific_participants <- function(data) {
-  
-  # Participant 1992 only progressed to the early Pre-test phase before the R01 
-  # study closed, but re-engaged with the program at a later point and got 
-  # assigned to a TET study condition, so we change their progress to what it 
-  # was in R01 before the switch happened.
-  
-  # Participants 1992, 2004, and 2005 received "studyExtension = TET" labels 
-  # incorrectly as we were switching over to the TET study.
-  
-  tmp_systemID <- 
-    data$participant[which(data$participant$participantID == 1992), ]$systemID
-  data$study[which(data$study$systemID == tmp_systemID), ]$conditioning <- "NONE"
-  data$study[which(data$study$systemID == tmp_systemID), ]$session <- "preTest"
-  data$study[which(data$study$systemID == tmp_systemID), ]$study_extension <- ""
-  
-  # special_participant_IDs <- c(2004, 2005)
-  # tmp_systemID <- 
-  #   data$participant[which(data$participant$participantID %in% 
-  #                            special_participant_IDs), ]$systemID
-  # data$study[which(data$study$systemID %in% 
-  #                    tmp_systemID), ]$study_extension <- ""
-  
-  return(data)
-}
-#---------------------------
-
-#---------------------------
-updated_participant_data <- update_specific_participants(updated_participant_data)
-#---------------------------
-
-# ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
-# ---------------------------------------------------------------------------- #
-
-#---------------------------
 # Function "remove_duplicates" shows which ids (systemID or participantID, 
 # depending on the table) have duplicated values (across all data tables) and 
 # returns the dataset without duplication
@@ -764,20 +864,17 @@ remove_duplicates <- function(data) {
   names(tmp) <- names(data)
   return(tmp)
 }
-#---------------------------
 
-#---------------------------
 # "participant_data_no_duplication" is a collection of tables without any duplication
 # based on the id show the duplication in tables
 
 participant_data_no_duplication <- remove_duplicates(participant_data)
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
 
-# -------------- Handle special case of DASS --------------------------------
+# Handle special case of DASS
 
 # For participant who have duplication in dass21As we keep the last entry
 
@@ -785,27 +882,24 @@ participant_data_no_duplication <- remove_duplicates(participant_data)
 # eligible <- eligible[!rev(duplicated(rev(eligible[, c("participantID")]))), ]
 # other <- filter(participant_data$dass21AS, session != "ELIGIBLE")
 # participant_data$dass21AS <- rbind(eligible, other)
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
 # The range of each item in the table is stored in the data_summary
 
 data_summary <- lapply(participant_data, summary)
 for (i in 1:length(no_duplicated_data)) {
   assign(paste(paste("df", i, sep = ""), "summary", sep = "."), data_summary[[i]])
 }
+
 data_summary
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
 # Prefer not to answer coding for each table
 # pna = -1 or 555
 # This function return the participant/system Ids of the row with prefer not to
@@ -854,16 +948,14 @@ get_ids_with_pna <- function(df, pna = 555) {
   #   return(cat("\nNo entries with prefer not to answer = ", pna, " found!\n"))
   # }
 }
-#---------------------------
+
 ids_with_pna <- lapply(participant_data, get_ids_with_pna)
 ids_with_pna
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
 
-#---------------------------
 # This function return the participant/system Ids with null values in each table
 
 get_ids_with_missing <- function(df) {
@@ -918,10 +1010,9 @@ get_ids_with_missing <- function(df) {
   #   return(cat("\nNo entries with missing values found!\n"))
   # }
 }
-#---------------------------
+
 ids_with_missing <- lapply(participant_data, get_ids_with_missing )
 ids_with_missing
-#---------------------------
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
