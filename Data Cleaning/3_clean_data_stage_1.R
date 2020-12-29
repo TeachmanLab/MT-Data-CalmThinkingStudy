@@ -155,7 +155,7 @@ view_date_str <- function(df, df_name) {
       print(table(nchar(df[, i])))
     }
   } else {
-    print("No columns containing 'date' found.")
+    print('No columns containing "date" found.')
   }
   
   cat("----------")
@@ -221,11 +221,10 @@ data <- lapply(data, recode_date)
 
 
 # ---------------------------------------------------------------------------- #
-# Rename "session_name" columns ----
+# Identify and rename session columns ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: JEREMY TO CHECK THIS. UNCLEAR THAT CURRENT_SESSION SHOULD BE RENAMED
-# THE SAME AS SESSION_NAME AS IT SEEMS TO MEAN SOMETHING DIFFERENT.
+# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
 
 
 
@@ -236,6 +235,58 @@ data <- lapply(data, recode_date)
 
 
 
+# Identify columns containing "session" in each table
+
+identify_session_columns <- function(df) {
+  df_colnames <- colnames(df)
+  
+  session_columns <- grep("session", df_colnames)
+  if (length(session_columns) != 0) {
+    df_colnames[session_columns]
+  }
+}
+
+lapply(data, identify_session_columns)
+
+# View structure of columns containing "session" in each table
+
+view_session_str <- function(df, df_name) {
+  print(paste0("Table: ", df_name))
+  cat("\n")
+  
+  df_colnames <- colnames(df)
+  session_columns <- grep("session", df_colnames)
+  
+  if (length(session_columns) != 0) {
+    for (i in session_columns) {
+      print(paste0(df_colnames[i]))
+      str(df[, i])
+      print(paste0("Number NA: ", sum(is.na(df[, i]))))
+      print(paste0("Number blank: ", sum(df[, i] == "")))
+      print(paste0("Number 555: ", sum(df[, i] == 555, na.rm = TRUE)))
+      print("Number of characters: ")
+      print(table(nchar(df[, i])))
+    }
+  } else {
+    print('No columns containing "session" found.')
+  }
+  
+  cat("----------")
+  cat("\n")
+}
+
+invisible(mapply(view_session_str, df = data, df_name = names(data)))
+
+# Consider renaming "session", "current_session", and "session_name" columns
+
+# TODO: JEREMY TO CHECK THIS AFTER REVIEWING THE REST OF THE SCRIPT. UNCLEAR 
+# THAT SESSION, CURRENT_SESSION, AND SESSION_NAME SHOULD BE RENAMED TO THE 
+# SAME THING AS THEY SEEM TO REFER TO DIFFERENT THINGS AND THEY CAN TAKE ON
+# DIFFERENT VALUES. SESSION_NAME ALSO SEEMS TO CONTAIN TWO KINDS OF INFO IN
+# SOME TABLES (I.E., BOTH TIME POINT AND COMPLETION STATUS IN ACTION_LOG AND
+# TASK_LOG; BOTH TIME POINT AND GIFT CARD AWARD STATUS IN GIFT_LOG). IT MAY
+# BE BETTER TO STORE EACH PIECE OF INFO IN A SEPARATE VARIABLE. SEE FILE
+# "2020.12.29 Checking Session Variables.txt" FOR MORE DETAILS.
 
 rename_session <- function(df) {
   df_colnames <- colnames(df)
