@@ -39,7 +39,7 @@ library(anytime)
 identify_columns <- function(df, grep_pattern) {
   df_colnames <- colnames(df)
   
-  selected_columns <- grep("id", df_colnames)
+  selected_columns <- grep(grep_pattern, df_colnames)
   if (length(selected_columns) != 0) {
     df_colnames[selected_columns]
   }
@@ -71,7 +71,7 @@ names(data) <- unlist(lapply(filenames,
 
 # Report the names of the imported tables
 
-cat("The following tables were imported: ")
+cat("Imported tables: ")
 names(data)
 
 # ---------------------------------------------------------------------------- #
@@ -199,9 +199,19 @@ data$task_log <- merge(data$task_log,
                        by = "study_id", 
                        all.x = TRUE)
 
-# TODO: NEED TO CHECK WHAT IMPORT_LOG, RANDOM_CONDITION, AND VISIT TABLES ARE
-# AND WHETHER THEY ARE ALSO PARTICIPANT SPECIFIC ASKED DAN ABOUT THESE TABLES
-# ON 12/30/20.
+# TODO: ADD PARTICIPANT_ID TO SUPPORT TABLES (E.G., DEMOGRAPHICS_RACE) TOO
+
+
+
+
+
+
+
+
+
+
+# TODO: IF VISIT TABLE IS RETAINED (SEE "REMOVING IRRELEVANT TABLES" ABOVE),
+# NEED TO SEE IF IT IS PARTICIPANT SPECIFIC. ASKED DAN ABOUT IT ON 12/30/20.
 
 
 
@@ -216,7 +226,34 @@ data$task_log <- merge(data$task_log,
 # Remove admin and test accounts ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
+# Identify participant_ids that are not admin or test accounts
+
+admin_test_account_ids <- 
+  data$participant[data$participant$admin == 1 |
+                     data$participant$test_account == 1, ]$participant_id
+
+# Define function that removes in each table rows indexed by participant_ids of 
+# admin and test accounts
+
+remove_admin_test_accounts <- function(data, admin_test_account_ids) {
+  tmp <- list()
+  
+  cnt <- 1
+  for (df in data) {
+    if ("participant_id" %in% colnames(df)) {
+      df <- subset(df, !(participant_id %in% admin_test_account_ids))
+    }
+    tmp[[cnt]] <- df
+    cnt <- cnt + 1
+  }
+  names(tmp) <- names(data)
+  return(tmp)
+}
+
+data <- remove_admin_test_accounts(data, admin_test_account_ids)
+
+# TODO: ENSURE IT APPLIES TO SUPPORT TABLES (E.G., DEMOGRAPHICS_RACE) TOO AFTER
+# PARTICIPANT_ID IS ADDED TO THOSE TABLES ABOVE
 
 
 
@@ -227,7 +264,16 @@ data$task_log <- merge(data$task_log,
 
 
 
-data$participant <- filter(data$participant, test_account == 0 & admin == 0)
+# TODO: IF VISIT TABLE IS RETAINED (SEE ABOVE), ENSURE THAT ADMIN AND TEST
+# ACCOUNTS ARE REMOVED FROM IT TOO (SHOULD BE DONE IF PARTICIPANT_ID IS ADDED
+# TO THE TABLE ABOVE).
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
