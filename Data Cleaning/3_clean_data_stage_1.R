@@ -82,6 +82,26 @@ names(data)
 # database (i.e., R01, TET, GIDI).
 
 # ---------------------------------------------------------------------------- #
+# Remove irrelevant tables ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: CONSIDER REMOVING TABLES THAT ARE (A) BLANK ("coach_log", "data", 
+# "evaluation_how_learn", "media", "missing_data_log", "stimuli", "trial", 
+# and "verification_code") OR (B) IRRELEVANT TO R01, TET, OR GIDI (MAYBE
+# "visit". "random_condition" SEEMS TO APPLY ONLY TO TET, IN WHICH CASE IT
+# CAN BE REMOVED DURING R01-SPECIFIC DATA CLEANING BELOW. ASKED DAN ABOUT
+# BLANK AND IRRELEVANT TABLES ON 12/30/20.
+
+
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
@@ -141,9 +161,26 @@ data <- standardize_columns_special_tables(data)
 
 lapply(data, identify_columns, grep_pattern = "id")
 
-# Add participant_id to "study" and "task_log" tables
+# Add participant_id to "study" and "task_log" tables. These are the only tables
+# that are participant specific but currently indexed by study_id instead of by
+# participant_id.
 
-# TODO
+participant_id_study_id_match <- 
+  select(data$participant, participant_id, study_id)
+
+data$study <- merge(data$study,
+                    participant_id_study_id_match,
+                    by = "study_id", 
+                    all.x = TRUE)
+
+data$task_log <- merge(data$task_log,
+                       participant_id_study_id_match,
+                       by = "study_id", 
+                       all.x = TRUE)
+
+# TODO: NEED TO CHECK WHAT IMPORT_LOG, RANDOM_CONDITION, AND VISIT TABLES ARE
+# AND WHETHER THEY ARE ALSO PARTICIPANT SPECIFIC ASKED DAN ABOUT THESE TABLES
+# ON 12/30/20.
 
 
 
@@ -412,24 +449,19 @@ if (all(data$study[data$study$study_id %in%
 
 
 
-
-
-
-
-
 # Extract the participants for the given study. The second argument of the
 # function is study_name, which can be "R01", "TET", or "GIDI"
 
 get_study_participants <- function(data, study_name) {
   study <- data$study
   participant <- data$participant
-  systemID_match <- select(participant, participantID, systemID)
+  systemID_match <- select(participant, participant_id, study_id)
   merge_study_participant_tables <- left_join(study, 
                                               systemID_match, 
-                                              by = "systemID")
+                                              by = "study_id")
   participant_study_tables <- inner_join(participant, 
                                          merge_study_participant_tables, 
-                                         by = c("participantID", "systemID"))
+                                         by = c("participant_id", "study_id"))
   tmp <- data.frame()
   if (study_name == "TET") {
     tmp <- filter(participant_study_tables, 
@@ -447,7 +479,7 @@ get_study_participants <- function(data, study_name) {
 }
 
 study_name <- "R01"
-study_participants <- get_study_participants(data, "R01")
+study_participants <- get_study_participants(data, study_name)
 
 # Extract the participant ids of the selected study (here is "R01")
 
