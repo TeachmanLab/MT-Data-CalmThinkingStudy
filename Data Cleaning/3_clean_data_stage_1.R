@@ -85,12 +85,30 @@ names(data)
 # Remove irrelevant tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CONSIDER REMOVING TABLES THAT ARE (A) BLANK ("coach_log", "data", 
-# "evaluation_how_learn", "media", "missing_data_log", "stimuli", "trial", 
-# and "verification_code") OR (B) IRRELEVANT TO R01, TET, OR GIDI (MAYBE
-# "visit". "random_condition" SEEMS TO APPLY ONLY TO TET, IN WHICH CASE IT
-# CAN BE REMOVED DURING R01-SPECIFIC DATA CLEANING BELOW. ASKED DAN ABOUT
-# BLANK AND IRRELEVANT TABLES ON 12/30/20.
+# The following tables are vestiges of earlier studies and not used in the R01,
+# TET, or GIDI studies and contain no data. They can be removed.
+
+unused_tables <- c("coach_log", "data", "media", "missing_data_log", "stimuli", 
+                  "trial", "verification_code")
+
+# The "evaluation_how_learn" table was not used in the R01, TET, or GIDI studies
+# because its "how_learn" item was moved to the demographics measure before the
+# R01 study launch. The item is called "ptp_reason" in the "demographics" table.
+# The "evaluation_how_learn" table contains no data and can be removed.
+
+unused_tables <- c(unused_tables, "evaluation_how_learn")
+
+# The following tables are used internally by the MindTrails system and contain
+# no information relevant to individuals' participation in the R01, TET, or GIDI
+# studies. Although they have data, they can be removed.
+
+system_tables <- c("export_log", "id_gen", "import_log", "password_token",
+                   "random_condition")
+
+# TODO: DECIDE WHETHER TO RETAIN "js_psych_trial", "sms_log", AND "visit"
+# TABLES, WHICH CONTAIN INFORMATION ABOUT USER ACTIVITY DURING RECOGNITION
+# RATINGS MEASURE, TEXT MESSAGES SENT TO USERS, AND WHETHER USERS OPENED AN
+# EMAIL, RESPECTIVELY. ASKED DAN IF WE CAN TRUST THE DATA ON 12/30/20.
 
 
 
@@ -100,6 +118,9 @@ names(data)
 
 
 
+# Remove tables
+
+data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
