@@ -30,6 +30,22 @@ library(lubridate)
 library(anytime)
 
 # ---------------------------------------------------------------------------- #
+# Define functions used throughout script ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to identify columns matching a grep pattern in a data frame.
+# When used with lapply, function can be applied to all data frames in a list.
+
+identify_columns <- function(df, grep_pattern) {
+  df_colnames <- colnames(df)
+  
+  selected_columns <- grep("id", df_colnames)
+  if (length(selected_columns) != 0) {
+    df_colnames[selected_columns]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
 # Import raw data ----
 # ---------------------------------------------------------------------------- #
 
@@ -69,7 +85,7 @@ names(data)
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-# Except where noted below, in the "calm" SQL database, each table has an "id" 
+# Except where noted below, in the "calm" database each table has an "id" 
 # column that identifies the rows in that table. By convention, when a table 
 # contains a column that corresponds to the "id" column of another table, the 
 # derived column's name starts with the name of the table whose "id" column it 
@@ -96,6 +112,8 @@ names(data)
 # standardize_columns_special_tables because its scope is limited to only
 # the specific tables that are specified in the function.
 
+# TODO: CONSIDER RENAMING THIS FUNCTION RENAME_ID_COLUMNS
+
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
   data[[names(data)[participant_table][1]]] <-
@@ -113,6 +131,28 @@ standardize_columns_special_tables <- function(data) {
 # Run function
 
 data <- standardize_columns_special_tables(data)
+
+# ---------------------------------------------------------------------------- #
+# Add participant_id to all participant-specific tables ----
+# ---------------------------------------------------------------------------- #
+
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "id" in each table
+
+lapply(data, identify_columns, grep_pattern = "id")
+
+# Add participant_id to "study" and "task_log" tables
+
+# TODO
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Remove admin and test accounts ----
@@ -147,18 +187,10 @@ data$participant <- filter(data$participant, test_account == 0 & admin == 0)
 
 
 
-# Identify columns containing "date" in each table
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "date" in each table
 
-identify_date_columns <- function(df) {
-  df_colnames <- colnames(df)
-  
-  date_columns <- grep("date", df_colnames)
-  if (length(date_columns) != 0) {
-    df_colnames[date_columns]
-  }
-}
-
-lapply(data, identify_date_columns)
+lapply(data, identify_columns, grep_pattern = "date")
 
 # View structure of columns containing "date" in each table
 
@@ -262,18 +294,10 @@ data <- lapply(data, recode_date)
 
 
 
-# Identify columns containing "session" in each table
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "session" in each table
 
-identify_session_columns <- function(df) {
-  df_colnames <- colnames(df)
-  
-  session_columns <- grep("session", df_colnames)
-  if (length(session_columns) != 0) {
-    df_colnames[session_columns]
-  }
-}
-
-lapply(data, identify_session_columns)
+lapply(data, identify_columns, grep_pattern = "session")
 
 # View structure of columns containing "session" in each table
 
