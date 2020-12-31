@@ -269,18 +269,16 @@ session_review_support_table <- "session_review_distractions"
 # tables to add "participant_id" to each support table based on the "id"
 
 add_participant_id <- function(data, id_match, support_tables) {
-  tmp <- vector("list", length(data))
-
+  output <- vector("list", length(data))
   for (i in 1:length(data)) {
     if (names(data)[[i]] %in% support_tables) {
-      tmp[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
+      output[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
     } else {
-      tmp[[i]] <- data[[i]]
+      output[[i]] <- data[[i]]
     }
   }
-  
-  names(tmp) <- names(data)
-  return(tmp)
+  names(output) <- names(data)
+  return(output)
 }
 
 # Run the function for each set of support tables
@@ -319,6 +317,22 @@ admin_test_account_ids <-
 # admin and test accounts
 
 remove_admin_test_accounts <- function(data, admin_test_account_ids) {
+  output <- vector("list", length(data))
+  
+  for (i in length(data)) {
+    if ("participant_id" %in% colnames(data[[i]])) {
+      output[[i]] <- subset(data[[i]], 
+                          !(participant_id %in% admin_test_account_ids))
+    } else {
+      output[[i]] <- data[[i]]
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+remove_admin_test_accounts <- function(data, admin_test_account_ids) {
   tmp <- list()
   
   cnt <- 1
@@ -338,18 +352,6 @@ data <- remove_admin_test_accounts(data, admin_test_account_ids)
 # TODO: ENSURE IT APPLIES TO SUPPORT TABLES (E.G., DEMOGRAPHICS_RACE) TOO AFTER
 # PARTICIPANT_ID IS ADDED TO THOSE TABLES ABOVE
 
-
-
-
-
-
-
-
-
-
-# TODO: IF VISIT TABLE IS RETAINED (SEE ABOVE), ENSURE THAT ADMIN AND TEST
-# ACCOUNTS ARE REMOVED FROM IT TOO (SHOULD BE DONE IF PARTICIPANT_ID IS ADDED
-# TO THE TABLE ABOVE).
 
 
 
