@@ -319,7 +319,7 @@ admin_test_account_ids <-
 remove_admin_test_accounts <- function(data, admin_test_account_ids) {
   output <- vector("list", length(data))
   
-  for (i in length(data)) {
+  for (i in 1:length(data)) {
     if ("participant_id" %in% colnames(data[[i]])) {
       output[[i]] <- subset(data[[i]], 
                           !(participant_id %in% admin_test_account_ids))
@@ -332,33 +332,7 @@ remove_admin_test_accounts <- function(data, admin_test_account_ids) {
   return(output)
 }
 
-remove_admin_test_accounts <- function(data, admin_test_account_ids) {
-  tmp <- list()
-  
-  cnt <- 1
-  for (df in data) {
-    if ("participant_id" %in% colnames(df)) {
-      df <- subset(df, !(participant_id %in% admin_test_account_ids))
-    }
-    tmp[[cnt]] <- df
-    cnt <- cnt + 1
-  }
-  names(tmp) <- names(data)
-  return(tmp)
-}
-
 data <- remove_admin_test_accounts(data, admin_test_account_ids)
-
-# TODO: ENSURE IT APPLIES TO SUPPORT TABLES (E.G., DEMOGRAPHICS_RACE) TOO AFTER
-# PARTICIPANT_ID IS ADDED TO THOSE TABLES ABOVE
-
-
-
-
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
@@ -557,34 +531,21 @@ data <- lapply(data, rename_session)
 # Correct study extensions ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
-
-
-
-
-
-
-
-
-
-
-# 2004 and 2005: Enrolled in R01 study and assigned to R01 condition but 
-#                given a TET study extension. This was due to a bug at 
-#                launch of the TET study. According to a message by Dan 
-#                Funk, the study_extension field was not properly being 
-#                passed through to the Data Server. This was fixed on 
-#                4/7/2020, but the study_extension for these participants
-#                needs to be changed back to "".
+# Participants 2004 and 2005 enrolled in R01 study and were assigned to R01 
+# condition but were given a TET study extension. This was due to a bug at 
+# launch of the TET study. According to Dan Funk, the "study_extension" field
+# was not properly being passed through to the Data Server. This was fixed on 
+# 4/7/2020, but the "study_extension" for these participants needs to be 
+# changed back to "".
 
 specialIDs <- c(2004, 2005)
-tmp <- filter(data$participant, participant_id %in% specialIDs)
-specialIDs_study_ids <- tmp$study
-if (all(data$study[data$study$study_id %in% 
-                   specialIDs_study_ids, ]$study_extension == "")) {
+
+if (all(data$study[data$study$participant_id %in% 
+                   specialIDs, ]$study_extension == "")) {
   print("Study extension for special IDs already corrected in server.")
 } else {
-  data$study[data$study$study_id %in% 
-               specialIDs_study_ids, ]$study_extension <- ""
+  data$study[data$study$participant_id %in%
+             specialIDs, ]$study_extension <- ""
 }
 
 # ---------------------------------------------------------------------------- #
