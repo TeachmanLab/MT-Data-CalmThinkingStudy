@@ -271,8 +271,8 @@ session_review_support_table <- "session_review_distractions"
 # tables to add "participant_id" to each support table based on the "id"
 
 add_participant_id <- function(data, id_match, support_tables) {
-  tmp <- vector("list", length(data))
-  
+  tmp <- list()
+
   for (i in 1:length(data)) {
     if (names(data)[[i]] %in% support_tables) {
       tmp[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
