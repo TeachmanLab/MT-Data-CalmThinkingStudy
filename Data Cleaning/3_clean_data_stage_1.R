@@ -552,7 +552,10 @@ if (all(data$study[data$study$participant_id %in%
 # Arrange columns and sort tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: MAKE BASIC COLUMNS SPECIFIC AND SORT TABLES IN CONSISTENT WAY
+# TODO: MAKE BASIC COLUMNS SPECIFIC AND SORT TABLES IN CONSISTENT WAY. CONSIDER
+# STARTING WITH PARTICIPANT_ID, STUDY_ID (IF PRESENT), AND THEN ID (IF PRESENT).
+# ALSO CONSIDER REMOVING X. SKIP THIS TASK FOR NOW AS COLUMNS MAY CHANGE BELOW.
+
 
 
 
@@ -571,21 +574,21 @@ if (all(data$study[data$study$participant_id %in%
 # Extract participant data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
+# TODO: CHECK BELOW. CAN JUST USE MERGE FUNCTION.
 
 
 
 
 
-# Extract the participants for the given study. The second argument of the
-# function is study_name, which can be "R01", "TET", or "GIDI"
+# Extract the participants for the desired study. The second argument of the
+# function, "study_name", can be "R01", "TET", or "GIDI".
 
 get_study_participants <- function(data, study_name) {
   study <- data$study
   participant <- data$participant
-  systemID_match <- select(participant, participant_id, study_id)
+  participant_id_study_id_match <- select(participant, participant_id, study_id)
   merge_study_participant_tables <- left_join(study, 
-                                              systemID_match, 
+                                              participant_id_study_id_match, 
                                               by = "study_id")
   participant_study_tables <- inner_join(participant, 
                                          merge_study_participant_tables, 
