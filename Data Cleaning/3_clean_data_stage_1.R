@@ -103,17 +103,15 @@ unused_tables <- c(unused_tables, "evaluation_how_learn")
 # studies. Although they have data, they can be removed.
 
 system_tables <- c("export_log", "id_gen", "import_log", "password_token",
-                   "random_condition")
+                   "random_condition", "visit")
 
-# TODO: DECIDE WHETHER TO RETAIN "js_psych_trial", "sms_log", AND "visit"
-# TABLES, WHICH CONTAIN INFORMATION ABOUT USER ACTIVITY DURING RECOGNITION
-# RATINGS MEASURE, TEXT MESSAGES SENT TO USERS, AND WHETHER USERS OPENED AN
-# EMAIL, RESPECTIVELY. ASKED DAN IF WE CAN TRUST THE DATA ON 12/30/20. DAN
-# SAID THAT WE CAN TRUST "sms_log", THAT "js_psych_trial" MAY CAUSE SOME
-# CONFUSION BECAUSE WE SWITCHED TO "angular_training" FOR RR USER ACTIVITY
-# DATA IN 7/2020 (6 R01 PARTIICPNATS HAVE RR DATA THERE) AND THAT "visit"
-# TABLE MAY NOT BE USED BY ANYONE BUT IS "MODERATELY TRUSTABLE." ASKED HIM
-# ON 12/31/2020 WHAT "id" IN "visit" REFERS TO.
+# TODO: DECIDE WHETHER TO RETAIN "js_psych_trial", WHICH CONTAINs INFORMATION 
+# ABOUT USER ACTIVITY DURING RR MEASURE. DAN SAID RETAINING "js_psych_trial" MAY
+# CAUSE CONFUSION BECAUSE WE SWITCHED TO "angular_training" FOR RR USER ACTIVITY
+# DATA IN 7/2020 (6 R01 PARTIICPNATS HAVE RR DATA THERE). WILL ASK REST OF TEAM
+# FOR INPUT ABOUT WHETHER TO RETAIN THIS TABLE WITH CLEAR DOCUMENTATION IN CODE
+# BOOK THAT ITS DATA IS NOT COMPARABLE TO RR USER DATA IN "angular_training" OR
+# TO REMOVE THIS TABLE (AND RR USER DATA IN "angular_training" FROM PIPELINE).
 
 
 
@@ -306,18 +304,6 @@ data <- add_participant_id(data = data,
 data <- add_participant_id(data = data,
                            id_match = participant_id_session_review_id_match,
                            support_tables = session_review_support_table)
-
-# TODO: IF VISIT TABLE IS RETAINED (SEE "REMOVING IRRELEVANT TABLES" ABOVE),
-# NEED TO SEE IF IT IS PARTICIPANT SPECIFIC. ASKED DAN ABOUT IT ON 12/30/20.
-
-
-
-
-
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Remove admin and test accounts ----
