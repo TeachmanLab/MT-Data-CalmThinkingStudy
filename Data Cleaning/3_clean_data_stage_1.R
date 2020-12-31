@@ -122,6 +122,18 @@ system_tables <- c("export_log", "id_gen", "import_log", "password_token",
 
 data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
+# TODO: ONCE THIS SECTION IS COMPLETE, CONSIDER EXPORTING AN R OBJECT WITH THE
+# RESULTING TABLES AND LOADING IT BACK AGAIN TO SAVE TIME
+
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -153,7 +165,17 @@ data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 # standardize_columns_special_tables because its scope is limited to only
 # the specific tables that are specified in the function.
 
-# TODO: CONSIDER RENAMING THIS FUNCTION RENAME_ID_COLUMNS
+# TODO: CONSIDER RENAMING THIS FUNCTION RENAME_ID_COLUMNS DEPENDING ON WHAT
+# YOU DECIDE TO DO FOR DATE AND SESSION COLUMNS BELOW
+
+
+
+
+
+
+
+
+
 
 standardize_columns_special_tables <- function(data) {
   participant_table <- grep("^participant", names(data))
@@ -182,9 +204,8 @@ data <- standardize_columns_special_tables(data)
 
 lapply(data, identify_columns, grep_pattern = "id")
 
-# Add participant_id to "study" and "task_log" tables. These are the only tables
-# that are participant specific but currently indexed by study_id instead of by
-# participant_id.
+# Add participant_id to "study" and "task_log" tables. These are participant-
+# specific tables but are currently indexed by study_id, not participant_id.
 
 participant_id_study_id_match <- 
   select(data$participant, participant_id, study_id)
@@ -199,7 +220,53 @@ data$task_log <- merge(data$task_log,
                        by = "study_id", 
                        all.x = TRUE)
 
-# TODO: ADD PARTICIPANT_ID TO SUPPORT TABLES (E.G., DEMOGRAPHICS_RACE) TOO
+# Add "participant_id" to support tables, which are currently indexed by the 
+# "id" column of the main table they support. First, for each main table,
+# select its "participant_id" and "id" columns and list its support tables.
+
+participant_id_demographics_id_match <- 
+  select(data$demographics, participant_id, id)
+
+demographics_support_table <- "demographics_race"
+
+participant_id_evaluation_id_match <- 
+  select(data$evaluation, participant_id, id)
+
+evaluation_support_tables <- c("evaluation_coach_help_topics",
+                               "evaluation_devices",
+                               "evaluation_how_learn",
+                               "evaluation_places",
+                               "evaluation_preferred_platform",
+                               "evaluation_reasons_control")
+
+participant_id_mental_health_history_id_match <- 
+  select(data$mental_health_history, participant_id, id)
+
+mental_health_history_support_tables <- c("mental_health_change_help",
+                                          "mental_health_disorders",
+                                          "mental_health_help",
+                                          "mental_health_why_no_help")
+
+participant_id_reasons_for_ending_id_match <- 
+  select(data$reasons_for_ending, participant_id, id)
+
+reasons_for_ending_support_tables <- c("reasons_for_ending_change_med",
+                                       "reasons_for_ending_device_use",
+                                       "reasons_for_ending_location",
+                                       "reasons_for_ending_reasons")
+
+participant_id_session_review_id_match <- 
+  select(data$session_review, participant_id, id)
+
+session_review_support_table <- "session_review_distractions"
+
+# Now define a function that uses the selected "participant_id" and "id" 
+# columns from each main table and the list of the main table's support 
+# tables to add "participant_id" to each support table based on the "id"
+
+# TODO: FIX THIS FUNCTION. IT SEEMS TO WORK FOR "session_review_distractions" 
+# BUT NOT FOR ANYTHING ELSE. ONCE FIXED, RENAME DATA2 TO DATA BELOW AND TAKE
+# OUT ALL THE LINES THAT REPORT THE NAMES OF COLUMNS BEFORE AND AFTER.
 
 
 
@@ -209,6 +276,55 @@ data$task_log <- merge(data$task_log,
 
 
 
+add_participant_id <- function(data, id_match, support_tables) {
+  tmp <- list()
+
+  cnt <- 1
+  for (name in names(data)) {
+    if (name %in% support_tables) {
+      tmp[[cnt]] <- merge(data[[name]], id_match, by = "id", all.x = TRUE)
+      cnt <- cnt + 1
+    } else {
+      tmp[[cnt]] <- data[[name]]
+      cnt <- cnt + 1
+    }
+  }
+  names(tmp) <- names(data)
+  return(tmp)
+}
+
+# Run the function for each set of support tables
+
+data2 <- add_participant_id(data = data,
+                            id_match = participant_id_demographics_id_match,
+                            support_tables = demographics_support_table)
+
+data2 <- add_participant_id(data = data,
+                            id_match = participant_id_evaluation_id_match,
+                            support_tables = evaluation_support_tables)
+
+data2 <- add_participant_id(data = data,
+                            id_match = participant_id_mental_health_history_id_match,
+                            support_tables = mental_health_history_support_tables)
+
+data2 <- add_participant_id(data = data,
+                            id_match = participant_id_reasons_for_ending_id_match,
+                            support_tables = reasons_for_ending_support_tables)
+
+data2 <- add_participant_id(data = data,
+                            id_match = participant_id_session_review_id_match,
+                            support_tables = session_review_support_table)
+
+names(data$demographics_race)
+names(data2$demographics_race)
+names(data$evaluation_coach_help_topics)
+names(data2$evaluation_coach_help_topics)
+names(data$mental_health_change_help)
+names(data2$mental_health_change_help)
+names(data$reasons_for_ending_change_med)
+names(data2$reasons_for_ending_change_med)
+names(data$session_review_distractions)
+names(data2$session_review_distractions)
 
 # TODO: IF VISIT TABLE IS RETAINED (SEE "REMOVING IRRELEVANT TABLES" ABOVE),
 # NEED TO SEE IF IT IS PARTICIPANT SPECIFIC. ASKED DAN ABOUT IT ON 12/30/20.
@@ -501,6 +617,21 @@ if (all(data$study[data$study$study_id %in%
   data$study[data$study$study_id %in% 
                specialIDs_study_ids, ]$study_extension <- ""
 }
+
+# ---------------------------------------------------------------------------- #
+# Arrange columns and sort tables ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: MAKE BASIC COLUMNS SPECIFIC AND SORT TABLES IN CONSISTENT WAY
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Part II. Extract Data for Desired Study ----
