@@ -270,67 +270,42 @@ session_review_support_table <- "session_review_distractions"
 # columns from each main table and the list of the main table's support 
 # tables to add "participant_id" to each support table based on the "id"
 
-# TODO: FIX THIS FUNCTION. IT SEEMS TO WORK FOR "session_review_distractions" 
-# BUT NOT FOR ANYTHING ELSE. ONCE FIXED, RENAME DATA2 TO DATA BELOW AND TAKE
-# OUT ALL THE LINES THAT REPORT THE NAMES OF COLUMNS BEFORE AND AFTER.
-
-
-
-
-
-
-
-
-
 add_participant_id <- function(data, id_match, support_tables) {
   tmp <- list()
-
-  cnt <- 1
-  for (name in names(data)) {
-    if (name %in% support_tables) {
-      tmp[[cnt]] <- merge(data[[name]], id_match, by = "id", all.x = TRUE)
-      cnt <- cnt + 1
+  
+  for (i in 1:length(data)) {
+    if (names(data)[[i]] %in% support_tables) {
+      tmp[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
     } else {
-      tmp[[cnt]] <- data[[name]]
-      cnt <- cnt + 1
+      tmp[[i]] <- data[[i]]
     }
   }
+  
   names(tmp) <- names(data)
   return(tmp)
 }
 
 # Run the function for each set of support tables
 
-data2 <- add_participant_id(data = data,
-                            id_match = participant_id_demographics_id_match,
-                            support_tables = demographics_support_table)
+data <- add_participant_id(data = data,
+                           id_match = participant_id_demographics_id_match,
+                           support_tables = demographics_support_table)
 
-data2 <- add_participant_id(data = data,
-                            id_match = participant_id_evaluation_id_match,
-                            support_tables = evaluation_support_tables)
+data <- add_participant_id(data = data,
+                           id_match = participant_id_evaluation_id_match,
+                           support_tables = evaluation_support_tables)
 
-data2 <- add_participant_id(data = data,
-                            id_match = participant_id_mental_health_history_id_match,
-                            support_tables = mental_health_history_support_tables)
+data <- add_participant_id(data = data,
+                           id_match = participant_id_mental_health_history_id_match,
+                           support_tables = mental_health_history_support_tables)
 
-data2 <- add_participant_id(data = data,
-                            id_match = participant_id_reasons_for_ending_id_match,
-                            support_tables = reasons_for_ending_support_tables)
+data <- add_participant_id(data = data,
+                           id_match = participant_id_reasons_for_ending_id_match,
+                           support_tables = reasons_for_ending_support_tables)
 
-data2 <- add_participant_id(data = data,
-                            id_match = participant_id_session_review_id_match,
-                            support_tables = session_review_support_table)
-
-names(data$demographics_race)
-names(data2$demographics_race)
-names(data$evaluation_coach_help_topics)
-names(data2$evaluation_coach_help_topics)
-names(data$mental_health_change_help)
-names(data2$mental_health_change_help)
-names(data$reasons_for_ending_change_med)
-names(data2$reasons_for_ending_change_med)
-names(data$session_review_distractions)
-names(data2$session_review_distractions)
+data <- add_participant_id(data = data,
+                           id_match = participant_id_session_review_id_match,
+                           support_tables = session_review_support_table)
 
 # TODO: IF VISIT TABLE IS RETAINED (SEE "REMOVING IRRELEVANT TABLES" ABOVE),
 # NEED TO SEE IF IT IS PARTICIPANT SPECIFIC. ASKED DAN ABOUT IT ON 12/30/20.
