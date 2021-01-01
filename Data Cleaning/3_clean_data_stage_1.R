@@ -571,56 +571,51 @@ if (all(data$study[data$study$participant_id %in%
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-# Extract participant data ----
+# Extract data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW. CAN JUST USE MERGE FUNCTION.
+# TODO: DEAL WITH THE FACT THAT THE X COLUMN IS REPEATED IN THE MERGED TABLES
+# AND WITH THE FACT THAT "receive_gift_cards" HAS DIFFERENT VALUES.
 
 
 
 
 
-# Extract the participants for the desired study. The second argument of the
-# function, "study_name", can be "R01", "TET", or "GIDI".
 
-get_study_participants <- function(data, study_name) {
-  study <- data$study
+
+
+# Define function to merge "participant" and "study" tables for easy reference 
+# and extract data for participants in the desired study. The second argument 
+# of the function ("study_name") can be "R01", "TET", or "GIDI".
+
+get_participant_study_data <- function(data, study_name) {
   participant <- data$participant
-  participant_id_study_id_match <- select(participant, participant_id, study_id)
-  merge_study_participant_tables <- left_join(study, 
-                                              participant_id_study_id_match, 
-                                              by = "study_id")
-  participant_study_tables <- inner_join(participant, 
-                                         merge_study_participant_tables, 
-                                         by = c("participant_id", "study_id"))
-  tmp <- data.frame()
-  if (study_name == "TET") {
-    tmp <- filter(participant_study_tables, 
-                  study_extension == "TET")
+  study <- data$study
+  participant_study <- inner_join(participant, 
+                                  study, 
+                                  by = c("participant_id", "study_id"))
+  if (study_name == "R01") {
+    tmp <- filter(participant_study, study_extension == "")
+  } else if (study_name == "TET") {
+    tmp <- filter(participant_study, study_extension == "TET")
+  } else if (study_name == "GIDI") {
+    tmp <- filter(participant_study, study_extension == "GIDI")
   }
-  else if (study_name == "GIDI") {
-    tmp <- filter(participant_study_tables, 
-                  study_extension == "GIDI")
-  }
-  else if (study_name == "R01") {
-    tmp <- filter(participant_study_tables, 
-                  (study_extension != "TET") & (study_extension != "GIDI"))
-  }
-  return(tmp)
 }
 
+# Run function for "R01" study
+
 study_name <- "R01"
-study_participants <- get_study_participants(data, study_name)
+participant_study_data <- get_participant_study_data(data, study_name)
 
-# Extract the participant ids of the selected study (here is "R01")
+# Identify participant_ids in study
 
-participantIDs <- study_participants$participantID
+participant_ids <- participant_study_data$participant_id
 
-# Extract the system ids of the selected study (here is "R01")
+# Report number of participants enrolled in study
 
-systemIDs <- study_participants$systemID
-
-cat("Number of participants in study", study_name, ": ", length(participantIDs))
+cat("Number of participants enrolled in", study_name, "study:", 
+    length(participant_ids))
 
 # ---------------------------------------------------------------------------- #
 # Extract all data ----
