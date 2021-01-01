@@ -137,7 +137,6 @@ data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
 
 
-
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -165,39 +164,18 @@ data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 # corresponds to the "id" column in the "demographics" table.
 
 # Define function to rename "id" in "participant" table to "participant_id"
-# and to rename "id" in "study" table to "study_id". The function is named
-# standardize_columns_special_tables because its scope is limited to only
-# the specific tables that are specified in the function.
+# and to rename "id" in "study" table to "study_id".
 
-# TODO: CONSIDER RENAMING THIS FUNCTION RENAME_ID_COLUMNS DEPENDING ON WHAT
-# YOU DECIDE TO DO FOR DATE AND SESSION COLUMNS BELOW
-
-
-
-
-
-
-
-
-
-
-standardize_columns_special_tables <- function(data) {
-  participant_table <- grep("^participant", names(data))
-  data[[names(data)[participant_table][1]]] <-
-    data[[names(data)[participant_table][1]]] %>% select(participant_id = id,
-                                                         everything())
-  
-  study_table <- grep("^study", names(data))
-  data[[names(data)[study_table][1]]] <-
-    data[[names(data)[study_table][1]]] %>% select(study_id = id,
-                                                   everything())
-  
+rename_id_columns <- function(data) {
+  data$participant <- data$participant %>% select(participant_id = id,
+                                                  everything())
+  data$study <- data$study %>% select(study_id = id, everything())
   return(data)
 }
 
 # Run function
 
-data <- standardize_columns_special_tables(data)
+data <- rename_id_columns(data)
 
 # ---------------------------------------------------------------------------- #
 # Add participant_id to all participant-specific tables ----
@@ -517,6 +495,13 @@ rename_session <- function(df) {
 
 data <- lapply(data, rename_session)
 
+# ---------------------------------------------------------------------------- #
+# Check for repeated columns across tables ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Check for columns that are repeated across tables to ensure that they
+# have the same values (e.g., "receive_gift_cards" appears in "participant"
+# and "study" tables but has different values per participant_id).
 
 
 
@@ -576,6 +561,7 @@ if (all(data$study[data$study$participant_id %in%
 
 # TODO: DEAL WITH THE FACT THAT THE X COLUMN IS REPEATED IN THE MERGED TABLES
 # AND WITH THE FACT THAT "receive_gift_cards" HAS DIFFERENT VALUES.
+
 
 
 
