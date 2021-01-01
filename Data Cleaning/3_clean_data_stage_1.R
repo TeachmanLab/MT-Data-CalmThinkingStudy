@@ -500,8 +500,7 @@ data <- lapply(data, rename_session)
 # ---------------------------------------------------------------------------- #
 
 # TODO: Check for columns that are repeated across tables to ensure that they
-# have the same values (e.g., "receive_gift_cards" appears in "participant"
-# and "study" tables but has different values per participant_id).
+# have the same values.
 
 
 
