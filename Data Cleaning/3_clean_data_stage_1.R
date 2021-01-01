@@ -550,11 +550,11 @@ if (all(data$study[data$study$participant_id %in%
 
 
 # ---------------------------------------------------------------------------- #
-# Part II. Extract Data for Desired Study ----
+# Part II. Filter Data for Desired Study ----
 # ---------------------------------------------------------------------------- #
 
 # ---------------------------------------------------------------------------- #
-# Extract data from "participant" and "study" tables ----
+# Filter data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF SO,
@@ -570,10 +570,10 @@ if (all(data$study[data$study$participant_id %in%
 
 
 # Define function to merge "participant" and "study" tables for easy reference 
-# and extract data for participants in the desired study. The second argument 
+# and filter data for participants in the desired study. The second argument 
 # of the function ("study_name") can be "R01", "TET", or "GIDI".
 
-get_participant_study_data <- function(data, study_name) {
+filter_participant_study_data <- function(data, study_name) {
   participant_table <- data$participant
   study_table <- data$study
   participant_study_tables <- inner_join(participant_table, 
@@ -588,10 +588,10 @@ get_participant_study_data <- function(data, study_name) {
   }
 }
 
-# Run function for "R01" study
+# Run function for desired study
 
 study_name <- "R01"
-participant_study_data <- get_participant_study_data(data, study_name)
+participant_study_data <- filter_participant_study_data(data, study_name)
 
 # Identify participant_ids in study
 
@@ -603,10 +603,11 @@ cat("Number of participants enrolled in", study_name, "study:",
     length(participant_ids))
 
 # ---------------------------------------------------------------------------- #
-# Extract all data ----
+# Filter all data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
+# TODO: IF SONIA DOES NOT ACTUALLY CARE ABOUT MERGED TABLE ABOVE, THEN REMOVE
+# THE SECTION ABOVE AND GET RELEVANT PARTICIPANT_IDS IN THIS FUNCTION DIRECTLY
 
 
 
@@ -617,34 +618,25 @@ cat("Number of participants enrolled in", study_name, "study:",
 
 
 
-# "select_study_participants_data" function extracts the data of each table for 
-# the users of the selected study
+# Define function to filter all data for participants in the desired study
+# based on participant_ids obtained above
 
-select_study_participants_data <- function(data, 
-                                           participant_ids, 
-                                           system_ids, 
-                                           study_name = "R01") {
-  tmp <- list()
+filter_all_data <- function(data, participant_ids) {
+  output <- vector("list", length(data))
   
-  cnt <- 1
-  for (df in data) {
-    if ("systemID" %in% colnames(df)) {
-      df <- subset(df, systemID %in% systemIDs)
+  for (i in 1:length(data)) {
+    if ("participant_id" %in% colnames(data[[i]])) {
+      output[[i]] <- subset(data[[i]], participant_id %in% participant_ids)
+    } else {
+      output[[i]] <- data[[i]]
     }
-    else if ("participantID" %in% colnames(df)) {
-      df <- subset(df, participantID %in% participantIDs)
-    }
-    tmp[[cnt]] <- df
-    cnt <- cnt + 1
   }
-  names(tmp) <- names(data)
-  return(tmp)
+  
+  names(output) <- names(data)
+  return(output)
 }
 
-# Restore data of each table for users of selected study in participant_data
-
-participant_data <- 
-  select_study_participants_data(data, participantIDs, systemIDs, "R01")
+data <- filter_all_data(data, participant_ids)
 
 # ---------------------------------------------------------------------------- #
 # Part III. R01-Specific Data Cleaning ----
