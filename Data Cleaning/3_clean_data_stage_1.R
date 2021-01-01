@@ -248,6 +248,7 @@ session_review_support_table <- "session_review_distractions"
 
 add_participant_id <- function(data, id_match, support_tables) {
   output <- vector("list", length(data))
+  
   for (i in 1:length(data)) {
     if (names(data)[[i]] %in% support_tables) {
       output[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
@@ -255,6 +256,7 @@ add_participant_id <- function(data, id_match, support_tables) {
       output[[i]] <- data[[i]]
     }
   }
+  
   names(output) <- names(data)
   return(output)
 }
@@ -500,7 +502,8 @@ data <- lapply(data, rename_session)
 # ---------------------------------------------------------------------------- #
 
 # TODO: Check for columns that are repeated across tables to ensure that they
-# have the same values.
+# have the same values (e.g., "receive_gift_cards" appears in "participant"
+# and "study" tables but has different values).
 
 
 
@@ -557,9 +560,9 @@ if (all(data$study[data$study$participant_id %in%
 # Filter data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF SO,
-# THEN REMOVE THE DUPLICATE COLUMNS FOR X AND RECEIVE_GIFT_CARDS. IF NOT,
+# TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF NOT,
 # THEN JUST EXTRACT THE PARTICIPANT_IDS AND GET RID OF THE MERGED TABLE.
+
 
 
 
