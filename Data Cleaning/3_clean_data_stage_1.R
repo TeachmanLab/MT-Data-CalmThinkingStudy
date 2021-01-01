@@ -549,7 +549,6 @@ if (all(data$study[data$study$participant_id %in%
 
 
 
-
 # ---------------------------------------------------------------------------- #
 # Part II. Extract Data for Desired Study ----
 # ---------------------------------------------------------------------------- #
@@ -558,8 +557,9 @@ if (all(data$study[data$study$participant_id %in%
 # Extract data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: DEAL WITH THE FACT THAT THE X COLUMN IS REPEATED IN THE MERGED TABLES
-# AND WITH THE FACT THAT "receive_gift_cards" HAS DIFFERENT VALUES.
+# TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF SO,
+# THEN REMOVE THE DUPLICATE COLUMNS FOR X AND RECEIVE_GIFT_CARDS. IF NOT,
+# THEN JUST EXTRACT THE PARTICIPANT_IDS AND GET RID OF THE MERGED TABLE.
 
 
 
@@ -574,17 +574,17 @@ if (all(data$study[data$study$participant_id %in%
 # of the function ("study_name") can be "R01", "TET", or "GIDI".
 
 get_participant_study_data <- function(data, study_name) {
-  participant <- data$participant
-  study <- data$study
-  participant_study <- inner_join(participant, 
-                                  study, 
-                                  by = c("participant_id", "study_id"))
+  participant_table <- data$participant
+  study_table <- data$study
+  participant_study_tables <- inner_join(participant_table, 
+                                         study_table, 
+                                         by = c("participant_id", "study_id"))
   if (study_name == "R01") {
-    tmp <- filter(participant_study, study_extension == "")
+    tmp <- filter(participant_study_tables, study_extension == "")
   } else if (study_name == "TET") {
-    tmp <- filter(participant_study, study_extension == "TET")
+    tmp <- filter(participant_study_tables, study_extension == "TET")
   } else if (study_name == "GIDI") {
-    tmp <- filter(participant_study, study_extension == "GIDI")
+    tmp <- filter(participant_study_tables, study_extension == "GIDI")
   }
 }
 
