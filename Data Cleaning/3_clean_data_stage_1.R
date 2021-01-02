@@ -312,6 +312,8 @@ remove_admin_test_accounts <- function(data, admin_test_account_ids) {
   return(output)
 }
 
+# Run function
+
 data <- remove_admin_test_accounts(data, admin_test_account_ids)
 
 # ---------------------------------------------------------------------------- #
@@ -501,8 +503,35 @@ data <- lapply(data, rename_session)
 # Check for repeated columns across tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Check for columns that are repeated across tables to ensure that they
-# have the same values (e.g., "receive_gift_cards" appears in "participant"
+# Define function that identifies column names that are repeated across tables
+
+find_repeated_column_names <- function(data, ignored_columns) {
+
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      if (!(names(data[[i]][j]) %in% ignored_columns)) {
+        for (k in 1:length(data)) {
+          if ((i != k) &
+              names(data[[i]][j]) %in% names(data[[k]])) {
+            print(paste0(names(data[i]), ": ", names(data[[i]][j]),
+                         "     is also in     ", names(data[k])))
+          }
+        }
+      }
+    }
+  }
+}
+
+# Run function
+
+ignored_columns <- c("participant_id", "study_id", "X", "id", "date", "session", 
+                     "tag", "time_on_page", "date_sent")
+
+find_repeated_column_names(data, ignored_columns)
+
+# TODO: REVIEW THE OUTPUT ABOVE AND ENSURE ANY SHARED COLUMN NAMES THAT ARE
+# EXPECTED TO HAVE THE SAME VALUES DO INDEED HAVE THE SAME VALUES FOR A GIVEN
+# PARTICIPANT_ID (e.g., "receive_gift_cards" appears in "participant"
 # and "study" tables but has different values).
 
 
@@ -638,6 +667,8 @@ filter_all_data <- function(data, participant_ids) {
   names(output) <- names(data)
   return(output)
 }
+
+# Run function
 
 data <- filter_all_data(data, participant_ids)
 
