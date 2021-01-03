@@ -503,7 +503,9 @@ data <- lapply(data, rename_session)
 # Check for repeated columns across tables ----
 # ---------------------------------------------------------------------------- #
 
-# Define function that identifies column names that are repeated across tables
+# Define function that identifies column names that are repeated across tables.
+# This is used to identify potential columns to check as to whether their values
+# are the same for a given "participant_id" across tables.
 
 find_repeated_column_names <- function(data, ignored_columns) {
 
@@ -522,17 +524,205 @@ find_repeated_column_names <- function(data, ignored_columns) {
   }
 }
 
-# Run function
+# Define system-related columns to be ignored. Note: The meanings and possible 
+# values of some of these columns differ across tables.
 
-ignored_columns <- c("participant_id", "study_id", "X", "id", "date", "session", 
-                     "tag", "time_on_page", "date_sent")
+key_columns <- c("participant_id", "study_id", "id", "X")
+timepoint_columns <- c("session", "session_name", "tag")
+date_columns <- c("date", "date_created", "date_sent")
+duration_columns <- c("time_on_page")
+log_columns <- c("device", "exception", "successful")
+
+# Define columns that have the same names across the indicated tables but that
+# have different or potentially different meanings or possible values
+
+js_psych_trial_angular_training_columns <- c("button_pressed", "correct", "rt", 
+                                             "rt_first_react", "stimulus", 
+                                             "time_elapsed", "trial_type")
+
+session_review_evaluation_columns <- "distracted"
+
+session_review_reasons_for_ending_columns <- "location"
+
+evaluation_reasons_for_ending_columns <- c("easy", "focused", "helpful", 
+                                           "interest", "privacy",
+                                           "understand_training")
+
+reasons_for_ending_covid19_columns <- "work"
+
+anxiety_triggers_covid19_columns <- "thoughts"
+
+# Collect all columns to be ignored
+
+ignored_columns <- c(key_columns, timepoint_columns, date_columns,
+                     duration_columns, log_columns,
+                     js_psych_trial_angular_training_columns,
+                     session_review_evaluation_columns,
+                     session_review_reasons_for_ending_columns,
+                     evaluation_reasons_for_ending_columns,
+                     reasons_for_ending_covid19_columns,
+                     anxiety_triggers_covid19_columns)
+
+# Run function
 
 find_repeated_column_names(data, ignored_columns)
 
-# TODO: REVIEW THE OUTPUT ABOVE AND ENSURE ANY SHARED COLUMN NAMES THAT ARE
-# EXPECTED TO HAVE THE SAME VALUES DO INDEED HAVE THE SAME VALUES FOR A GIVEN
-# PARTICIPANT_ID (e.g., "receive_gift_cards" appears in "participant"
-# and "study" tables but has different values).
+# TODO: REVIEW THE OUTPUT FOR REMAINING COLUMNS ABOVE AND ENSURE ANY SHARED 
+# COLUMN NAMES THAT ARE EXPECTED TO HAVE THE SAME VALUES DO INDEED HAVE THE 
+# SAME VALUES FOR A GIVEN PARTICIPANT_ID. REMAINING COLUMNS:
+
+# [1] "action_log: task_name     is also in     task_log"
+
+# TODO: WAITING FOR HENRY TO COMPLETE CODEBOOK BEFORE ADDRESSING THIS. ASKED HIM 
+# TO COMPLETE CODEBOOK ON 1/3/2021.
+
+
+
+
+
+
+
+
+
+
+# [1] "angular_training: conditioning     is also in     study"
+
+# TODO: IN PROGRESS. NOT SURE WHY "CONDITIONING" IS BLANK IN SOME ROWS OF
+# "ANGULAR_TRAINING". ASKED HENRY/DAN IF THEY KNOWS WHY on 1/3/2021.
+
+temp1 <- data$angular_training[data$angular_training$conditioning == "", ]
+View(temp1)
+write.csv(temp1, 
+          "./temp_cleaning/1_angular_training_rows_with_blank_conditioning.csv",
+          row.names = FALSE)
+
+test <- data$angular_training[data$angular_training$conditioning == "", ]$participant_id
+temp2 <- data$angular_training[data$angular_training$participant_id %in% test, ]
+row.names(temp2) <- 1:nrow(temp2)
+View(temp2)
+write.csv(temp2, 
+          "./temp_cleaning/2_angular_training_participants_with_blank_conditioning_row.csv",
+          row.names = FALSE)
+head(which(temp$conditioning == ""))
+
+# TODO: IN PROGRESS. CHECK THAT "CONDITIONING" IN "ANGULAR_TRAINING" OTHERWISE 
+# MAKES SENSE WITH "CONDITIONING" IN "STUDY".
+
+test2 <- data$angular_training[data$angular_training$conditioning != "", ]
+test3 <- test2[, c("participant_id", "conditioning", "session")]
+nrow(unique(test3))
+length(unique(test3$participant_id))
+test4 <- unique(test3)
+test4 <- test4[order(test4$participant_id), ]
+View(test4)
+
+
+
+
+
+
+
+
+
+
+# [1] "dass21_as: over18     is also in     participant"
+
+# TODO: IN PROGRESS. FIGURE OUT WHERE "over18" in "participant" comes from. 
+# Should it be the same as "over18" in "dass21_as"? ASKED HENRY/DAN WHERE IT 
+# COMES FROM ON 1/3/2021.
+
+table(data$participant$over18)
+
+table(data$dass21_as[data$dass21_as$participant_id %in% data$participant$participant_id &
+                       data$dass21_as$session == "ELIGIBLE", ]$over18)
+
+
+
+
+
+
+
+
+
+
+# [1] "dass21_as: session_id     is also in     oa"
+
+# TODO. IN PROGRESS. SEEMS THE SAME BUT DOUBLE CHECK.
+
+View(data$dass21_as)
+table(data$oa$session_id)
+
+sum(data$oa$session_id == "")
+sum(data$dass21_as$session_id == "")
+
+oa_test <- data$oa[data$oa$session == "ELIGIBLE", ]
+dass_test <- data$dass21_as[data$dass21_as$session == "ELIGIBLE", ]
+
+setdiff(oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_id, 
+        dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id)
+setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id,
+        oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_id)
+
+
+
+
+
+
+
+
+
+
+# [1] "participant: receive_gift_cards     is also in     study"
+
+# TODO: IN PROGRESS. ASKED HENRY AND DAN WHY THE VALUES FOR THIS COLUMN DO NOT 
+# MATCH ON 1/2/2021.
+
+
+
+
+
+
+
+
+
+
+# [1] "participant: return_date     is also in     return_intention"
+
+# TODO. "return_date" in "participant" is blank, whereas it has data in
+# "return_intention". Consider removing unused columns at some point.
+
+
+
+
+
+
+
+
+
+
+# [1] "participant: timezone     is also in     return_intention"
+
+# TODO. IN PROGRESS. ASKED Dan/Henry how "timezone" in "participant" is supposed 
+# to relate to "timezone" in "return_intention" if at all.
+
+table(data$participant$timezone)
+table(data$return_intention$timezone)
+
+
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Deidentify data ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Ensure data are deidentified (e.g., remove phone numbers from "sms_log"
+# "exception" column)
 
 
 
