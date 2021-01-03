@@ -721,8 +721,52 @@ table(data$return_intention$timezone)
 # Deidentify data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Ensure data are deidentified (e.g., remove phone numbers from "sms_log"
-# "exception" column)
+# TODO: Manually inspect columns and determine which ones contain identifiers
+
+
+
+
+
+
+
+
+
+
+# Remove phone numbers from "exception" column of "sms_log"
+
+# TODO: FIX CODE BELOW. IT SEEMS TO REWRITE THE ENTIRE EXCEPTION COLUMN.
+
+ignored_values <- c("A 'To' phone number is required.",
+                    "Authenticate",
+                    "The message From/To pair violates a blacklist rule.")
+
+temp <- data$sms_log[data$sms_log$exception != "" &
+                       !(data$sms_log$exception %in% ignored_values), ]
+temp <- temp[order(temp$exception), ]
+View(temp)
+
+data$sms_log[grep("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:",
+                  data$sms_log$exception), "exception"] <- 
+  "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED"
+
+data$sms_log[grep("The 'To' number", data$sms_log$exception) &
+               grep("is not a valid phone number.", data$sms_log$exception), "exception"] <- 
+  "The 'To' number REDACTED is not a valid phone number."
+
+data$sms_log[grep("To number", data$sms_log$exception) &
+               grep("is not a mobile number", data$sms_log$exception), "exception"] <- 
+  "To number: REDACTED, is not a mobile number"
+
+deidentified_values <- 
+  c("Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED",
+    "The 'To' number REDACTED is not a valid phone number.",
+    "To number: REDACTED, is not a mobile number")
+
+temp2 <- data$sms_log[data$sms_log$exception != "" &
+                    !(data$sms_log$exception %in% ignored_values) &
+                    !(data$sms_log$exception %in% deidentified_values), ]
+temp2 <- temp2[order(temp2$exception), ]
+View(temp2)
 
 
 
@@ -780,7 +824,8 @@ if (all(data$study[data$study$participant_id %in%
 # ---------------------------------------------------------------------------- #
 
 # TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF NOT,
-# THEN JUST EXTRACT THE PARTICIPANT_IDS AND GET RID OF THE MERGED TABLE.
+# THEN JUST EXTRACT THE PARTICIPANT_IDS AND GET RID OF THE MERGED TABLE. ASKED
+# HER ON 1/1/2021.
 
 
 
