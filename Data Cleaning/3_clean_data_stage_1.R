@@ -734,7 +734,8 @@ table(data$return_intention$timezone)
 
 # Remove phone numbers from "exception" column of "sms_log"
 
-# TODO: FIX CODE BELOW. IT SEEMS TO REWRITE THE ENTIRE EXCEPTION COLUMN.
+# TODO: FIX CODE BELOW. IT SEEMS TO REWRITE THE ENTIRE EXCEPTION COLUMN AT THE
+# SECOND STEP.
 
 ignored_values <- c("A 'To' phone number is required.",
                     "Authenticate",
