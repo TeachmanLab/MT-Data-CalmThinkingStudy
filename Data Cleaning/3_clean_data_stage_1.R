@@ -533,12 +533,28 @@ date_columns <- c("date", "date_created", "date_sent")
 duration_columns <- c("time_on_page")
 log_columns <- c("device", "exception", "successful")
 
-# Define columns that have the same names across the indicated tables but that
-# have different or potentially different meanings or possible values
+# Define other columns that have the same names across the indicated tables but 
+# that have different meanings or possible values
+
+# "receive_gift_cards" in "participant" means that the participant is eligible
+# to receive gift cards (i.e., has supplied and verified their phone number),
+# whereas the same column in "study" means that the participant is assigned to
+# a study condition that will be awarded gift cards.
+
+participant_study_columns <- "receive_gift_cards"
+
+# "js_psych_trial" contains user activity for the Recognition Ratings measure
+# until early July 2020, whereas "angular_training" contains user activity for 
+# the Recognition Ratings measure after that. In addition, "angular_training" 
+# contains all user activity for training. Because the "js_psych_trial" and
+# "angular_training" tables represent different ways of tracking user activity, 
+# their shared column names are not necessarily comparable.
 
 js_psych_trial_angular_training_columns <- c("button_pressed", "correct", "rt", 
                                              "rt_first_react", "stimulus", 
                                              "time_elapsed", "trial_type")
+
+# The following shared column names represent different items across tables.
 
 session_review_evaluation_columns <- "distracted"
 
@@ -552,16 +568,25 @@ reasons_for_ending_covid19_columns <- "work"
 
 anxiety_triggers_covid19_columns <- "thoughts"
 
+# "timezone" in "participant" is the timezone gleaned from the participant's web
+# browser and serves as the default timezone presented in the "return_intention"
+# measure. However, in the "return_intention" measure participants can change the
+# default timezone, giving "timezone" in "return_intention" a different meaning.
+
+participant_return_intention_columns <- "timezone"
+
 # Collect all columns to be ignored
 
 ignored_columns <- c(key_columns, timepoint_columns, date_columns,
                      duration_columns, log_columns,
+                     participant_study_columns,
                      js_psych_trial_angular_training_columns,
                      session_review_evaluation_columns,
                      session_review_reasons_for_ending_columns,
                      evaluation_reasons_for_ending_columns,
                      reasons_for_ending_covid19_columns,
-                     anxiety_triggers_covid19_columns)
+                     anxiety_triggers_covid19_columns,
+                     participant_return_intention_columns)
 
 # Run function
 
@@ -588,7 +613,7 @@ find_repeated_column_names(data, ignored_columns)
 # [1] "angular_training: conditioning     is also in     study"
 
 # TODO: IN PROGRESS. NOT SURE WHY "CONDITIONING" IS BLANK IN SOME ROWS OF
-# "ANGULAR_TRAINING". ASKED HENRY/DAN IF THEY KNOWS WHY on 1/3/2021.
+# "ANGULAR_TRAINING". ASKED HENRY/DAN IF THEY KNOW WHY on 1/3/2021.
 
 temp1 <- data$angular_training[data$angular_training$conditioning == "", ]
 View(temp1)
@@ -672,41 +697,10 @@ setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$sessio
 
 
 
-# [1] "participant: receive_gift_cards     is also in     study"
-
-# TODO: IN PROGRESS. ASKED HENRY AND DAN WHY THE VALUES FOR THIS COLUMN DO NOT 
-# MATCH ON 1/2/2021.
-
-
-
-
-
-
-
-
-
-
 # [1] "participant: return_date     is also in     return_intention"
 
 # TODO. "return_date" in "participant" is blank, whereas it has data in
 # "return_intention". Consider removing unused columns at some point.
-
-
-
-
-
-
-
-
-
-
-# [1] "participant: timezone     is also in     return_intention"
-
-# TODO. IN PROGRESS. ASKED Dan/Henry how "timezone" in "participant" is supposed 
-# to relate to "timezone" in "return_intention" if at all.
-
-table(data$participant$timezone)
-table(data$return_intention$timezone)
 
 
 
