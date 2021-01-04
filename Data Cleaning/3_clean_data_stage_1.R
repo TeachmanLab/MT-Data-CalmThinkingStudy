@@ -728,9 +728,6 @@ setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$sessio
 
 # Remove phone numbers from "exception" column of "sms_log"
 
-# TODO: FIX CODE BELOW. IT SEEMS TO REWRITE THE ENTIRE EXCEPTION COLUMN AT THE
-# SECOND STEP.
-
 ignored_values <- c("A 'To' phone number is required.",
                     "Authenticate",
                     "The message From/To pair violates a blacklist rule.")
@@ -740,16 +737,19 @@ temp <- data$sms_log[data$sms_log$exception != "" &
 temp <- temp[order(temp$exception), ]
 View(temp)
 
-data$sms_log[grep("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:",
-                  data$sms_log$exception), "exception"] <- 
+data$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
+                   data$sms_log$exception), ]$exception <-
   "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED"
 
-data$sms_log[grep("The 'To' number", data$sms_log$exception) &
-               grep("is not a valid phone number.", data$sms_log$exception), "exception"] <- 
+data$sms_log[grepl("The 'To' number", 
+                   data$sms_log$exception) &
+               grepl("is not a valid phone number.", 
+                     data$sms_log$exception), ]$exception <-
   "The 'To' number REDACTED is not a valid phone number."
 
-data$sms_log[grep("To number", data$sms_log$exception) &
-               grep("is not a mobile number", data$sms_log$exception), "exception"] <- 
+data$sms_log[grepl("To number", data$sms_log$exception) &
+               grepl("is not a mobile number", 
+                     data$sms_log$exception), ]$exception <- 
   "To number: REDACTED, is not a mobile number"
 
 deidentified_values <- 
@@ -762,15 +762,6 @@ temp2 <- data$sms_log[data$sms_log$exception != "" &
                     !(data$sms_log$exception %in% deidentified_values), ]
 temp2 <- temp2[order(temp2$exception), ]
 View(temp2)
-
-
-
-
-
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Correct study extensions ----
