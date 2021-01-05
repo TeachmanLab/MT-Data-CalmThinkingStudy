@@ -13,26 +13,50 @@
 # in a new folder called "data/intermediate/stage_1_cleaning".
 
 # ---------------------------------------------------------------------------- #
-# Store working directory and load packages ----
+# Store working directory, install correct R version, load packages ----
 # ---------------------------------------------------------------------------- #
 
 # Store working directory
 
 wd_dir <- getwd()
 
-# Load packages
+# Run the code below to ensure you are running the same version of R used at the 
+# time the script was written ("R_version"). If you need to install a previous 
+# version, see https://cran.r-project.org/bin/windows/base/old/
 
-# TODO: Asked Sonia on 1/4/2021 if we can load "data.table" first because it is
-# not a "tidyverse" package and load "plyr" before "dplyr". Also, at the end of
-# data cleaning figure out whether all of these packages are actually used; we 
-# may be able to remove some of them.
+R_version <- "R version 4.0.3 (2020-10-10)"
+R.Version()$version.string == R_version
 
-library(dplyr)
-library(reshape2)
-library(plyr)
-library(data.table)
-library(lubridate)
-library(anytime)
+# Load packages using "groundhog", which installs and loads the most recent
+# versions of packages available on the specified date ("groundhog_day"). This 
+# is important for reproducibility so that everyone running the script is using
+# the same versions of packages used at the time the script was written.
+
+# Note that packages may take longer to load the first time you load them with
+# "groundhog.library". This is because you may not have the correct versions of 
+# the packages installed based on the "groundhog_day". After "groundhog.library"
+# automatically installs the correct versions alongside other versions you may 
+# have installed, it will load the packages more quickly.
+
+# If in the process of loading packages with "groundhog.library" for the first 
+# time the console states that you first need to install "Rtools", follow steps 
+# here (https://cran.r-project.org/bin/windows/Rtools/) for installing "Rtools" 
+# and putting "Rtools" on the PATH. Then try loading the packages again.
+
+library(groundhog)
+groundhog_day <- "2021-01-01"
+
+groundhog.library(data.table, groundhog_day)
+groundhog.library(plyr, groundhog_day)
+groundhog.library(dplyr, groundhog_day)
+groundhog.library(reshape2, groundhog_day)
+groundhog.library(lubridate, groundhog_day)
+groundhog.library(anytime, groundhog_day)
+
+# TODO: At the end of data cleaning figure out whether all of these packages 
+# are actually used; we may be able to remove some of them. For example, when
+# loading "plyr" above you have to restart R before it works; do we really
+# need "plyr"? Maybe it can be removed.
 
 
 
