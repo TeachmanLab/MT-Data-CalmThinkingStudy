@@ -20,12 +20,17 @@
 
 wd_dir <- getwd()
 
-# Run the code below to ensure you are running the same version of R used at the 
-# time the script was written ("R_version"). If you need to install a previous 
-# version, see https://cran.r-project.org/bin/windows/base/old/
+# Run the code below to ensure you are running the same version of R used at the
+# time the script was written. If you need to install a previous version, go to
+# https://cran.r-project.org/bin/windows/base/old/
 
-R_version <- "R version 4.0.3 (2020-10-10)"
-R.Version()$version.string == R_version
+script_R_version <- "R version 4.0.3 (2020-10-10)"
+current_R_version <- R.Version()$version.string
+
+if(current_R_version != script_R_version) {
+  warning(paste0("This script is based on ", script_R_version,
+                 ". You are running ", current_R_version, "."))
+}
 
 # Load packages using "groundhog", which installs and loads the most recent
 # versions of packages available on the specified date ("groundhog_day"). This 
