@@ -22,12 +22,26 @@ wd_dir <- getwd()
 
 # Load packages
 
+# TODO: Asked Sonia on 1/4/2021 if we can load "data.table" first because it is
+# not a "tidyverse" package and load "plyr" before "dplyr". Also, at the end of
+# data cleaning figure out whether all of these packages are actually used; we 
+# may be able to remove some of them.
+
 library(dplyr)
 library(reshape2)
 library(plyr)
 library(data.table)
 library(lubridate)
 library(anytime)
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Define functions used throughout script ----
@@ -105,13 +119,13 @@ unused_tables <- c(unused_tables, "evaluation_how_learn")
 system_tables <- c("export_log", "id_gen", "import_log", "password_token",
                    "random_condition", "visit")
 
-# TODO: DECIDE WHETHER TO RETAIN "js_psych_trial", WHICH CONTAINs INFORMATION 
-# ABOUT USER ACTIVITY DURING RR MEASURE. DAN SAID RETAINING "js_psych_trial" MAY
-# CAUSE CONFUSION BECAUSE WE SWITCHED TO "angular_training" FOR RR USER ACTIVITY
-# DATA IN 7/2020 (6 R01 PARTIICPNATS HAVE RR DATA THERE). WILL ASK REST OF TEAM
-# FOR INPUT ABOUT WHETHER TO RETAIN THIS TABLE WITH CLEAR DOCUMENTATION IN CODE
-# BOOK THAT ITS DATA IS NOT COMPARABLE TO RR USER DATA IN "angular_training" OR
-# TO REMOVE THIS TABLE (AND RR USER DATA IN "angular_training" FROM PIPELINE).
+# TODO: Decide whether to retain "js_psych_trial", which contains information 
+# about user activity during RR measure. Dan said retaining "js_psych_trial" may
+# cause confusion because we switched to "angular_training" for RR user activity
+# data in 7/2020 (6 r01 partiicpnats have RR data there). Will ask rest of team
+# for input about whether to retain this table with clear documentation in code
+# book that its data is not comparable to RR user data in "angular_training" or
+# to remove this table (and RR user data in "angular_training" from pipeline).
 
 
 
@@ -126,8 +140,8 @@ system_tables <- c("export_log", "id_gen", "import_log", "password_token",
 
 data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
-# TODO: ONCE THIS SECTION IS COMPLETE, CONSIDER EXPORTING AN R OBJECT WITH THE
-# RESULTING TABLES AND LOADING IT BACK AGAIN TO SAVE TIME
+# TODO: Once this section is complete, consider exporting an R object with the
+# resulting tables and loading it back again to save time
 
 
 
@@ -320,7 +334,7 @@ data <- remove_admin_test_accounts(data, admin_test_account_ids)
 # Identify and recode date columns ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+# TODO: Add explanation once approach is finalized
 
 
 
@@ -368,35 +382,35 @@ invisible(mapply(view_date_str, df = data, df_name = names(data)))
 
 # Consider recoding columns containing "date"
 
-# TODO: THERE ARE SEVERAL ISSUES WITH THE FUNCTION recode_date BELOW. JEREMY
-# TO RETURN TO THESE ISSUES AFTER REVIEWING THE REST OF THE SCRIPT (SEE FILE
-# "2020.12.28 Checking Date Variables.txt" FOR MORE DETAILS ON THESE ISSUES).
+# TODO: There are several issues with the function "recode_date" below. Jeremy
+# to return to these issues after reviewing the rest of the script (see file
+# "2020.12.28 checking date variables.txt" for more details on these issues).
 
-# 1. THE FUNCTION recode_date BELOW ONLY APPLIES TO VARIABLES THAT START WITH
-# "date". THERE ARE OTHER DATE VARIABLES THAT DO NOT START WITH "date" BUT DO
-# CONTAIN THE WORD "date" (SEE FUNCTION identify_date_columns ABOVE). HOWEVER,
-# NOTE THAT SOME VARIABLES (I.E., THOSE IN THE COVID19 TABLE DO NOT APPEAR TO
-# BE TIMESTAMPS; RATHER, THEY APPEAR TO BE USER-SPECIFIED DATES); TAKE CARE IN
-# DECIDING WHETTHER AND HOW THESE VARIABLES ARE RECODED (IT MAY BE
-# APPROPRIATE TO RECODE THEM AS THOUGH THEY ARE TIMESTAMPS).
-# 2. IN TABLES THAT HAVE MULTPLE COLUMNS CONTAINING "DATE" (SEE FUNCTION
-# identify_date_columns ABOVE), THE FUNCTION recode_date BELOW CREATES ONLY
-# ONE VARIABLE CALLED dateTime. THUS, NOT ALL DATE VARIABLES ARE RECODED.
-# INSTEAD, THE FUNCTION recode_date BELOW SHOULD RECODE EACH DATE VARIABLE IN 
-# A WAY THAT RETAINS THE ORIGINAL VARIABLE NAMES.
-# 3. IN VARIABLES THAT HAVE SOME BLANKS (I.E., VALUES OF ""; SEE FUNCTION
-# view_date_str ABOVE), THE ANYTIME FUNCTION IN THE FUNCTION recode_date BELOW 
-# SOMEHOW GENERATES DATES/TIMES FOR THE BLANKS, RATHER THAN LEAVING THEM BLANK.
-# IT ALSO CHANGES THE VALUES OF THE DATES/TIMES IN THE ORIGINAL VARIABLE. THUS,
-# THE DATA ARE CHANGED IN A WAY THAT MAY BE INACCURATE.
-# 4. IN VARIABLES THAT HAVE SOME VALUES OF 555 (SEE FUNCTION view_date_str
-# ABOVE), THE ANYTIME FUNCTION IN THE FUNCTION recode_date BELOW CHANGES THE
-# VALUES TO NA. THIS IS NOT A BIG DEAL, BUT IT WOULD BE BETTER TO LEAVE THE
-# VALUES AS 555 SO THAT THEY CAN BE EXPLICITLY RECODED TO NA ELSEWHERE. THIS
-# WAY VALUES ARE NOT RECODED WITHOUT US BEING EXPLICITLY AWARE OF IT.
-# 5. THE TIMEZONE USED BY THE ANYTIME FUNCTION NEEDS TO BE CHECKED. DAN TOLD
-# JEREMY ON 12/28/2020 THAT ALL DATES IN THE DATABASE ARE IN EST.
-# 6. IT'S UNCLEAR WHY WE NEED TO USE THE ANYTIME FUNCTION IN THE FIRST PLACE.
+# 1. The function "recode_date" below only applies to variables that start with
+# "date". There are other date variables that do not start with "date" but do
+# contain the word "date" (see function "identify_date_columns" above). However,
+# note that some variables (i.e., Those in the "covid19" table do not appear to
+# be timestamps; rather, they appear to be user-specified dates); take care in
+# deciding whetther and how these variables are recoded (it may be
+# appropriate to recode them as though they are timestamps).
+# 2. In tables that have multple columns containing "date" (see function
+# "identify_date_columns" above), the function "recode_date" below creates only
+# one variable called "datetime". Thus, not all date variables are recoded.
+# Instead, the function "recode_date" below should recode each date variable in 
+# a way that retains the original variable names.
+# 3. In variables that have some blanks (i.e., Values of ""; see function
+# "view_date_str" above), the "anytime" function in the function "recode_date" below 
+# somehow generates dates/times for the blanks, rather than leaving them blank.
+# It also changes the values of the dates/times in the original variable. Thus,
+# the data are changed in a way that may be inaccurate.
+# 4. In variables that have some values of 555 (see function "view_date_str"
+# above), the "anytime" function in the function "recode_date" below changes the
+# values to NA. This is not a big deal, but it would be better to leave the
+# values as 555 so that they can be explicitly recoded to NA elsewhere. This
+# way values are not recoded without us being explicitly aware of it.
+# 5. The timezone used by the "anytime" function needs to be checked. Dan told
+# Jeremy on 12/28/2020 that all dates in the database are in EST.
+# 6. It's unclear why we need to use the "anytime" function in the first place.
 
 recode_date <- function(df) {
   df_colnames <- colnames(df)
@@ -427,7 +441,7 @@ data <- lapply(data, recode_date)
 # Identify and rename session columns ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+# TODO: Add explanation once approach is finalized
 
 
 
@@ -475,14 +489,14 @@ invisible(mapply(view_session_str, df = data, df_name = names(data)))
 
 # Consider renaming "session", "current_session", and "session_name" columns
 
-# TODO: JEREMY TO CHECK THIS AFTER REVIEWING THE REST OF THE SCRIPT. UNCLEAR 
-# THAT SESSION, CURRENT_SESSION, AND SESSION_NAME SHOULD BE RENAMED TO THE 
-# SAME THING AS THEY SEEM TO REFER TO DIFFERENT THINGS AND THEY CAN TAKE ON
-# DIFFERENT VALUES. SESSION_NAME ALSO SEEMS TO CONTAIN TWO KINDS OF INFO IN
-# SOME TABLES (I.E., BOTH TIME POINT AND COMPLETION STATUS IN ACTION_LOG AND
-# TASK_LOG; BOTH TIME POINT AND GIFT CARD AWARD STATUS IN GIFT_LOG). IT MAY
-# BE BETTER TO STORE EACH PIECE OF INFO IN A SEPARATE VARIABLE. SEE FILE
-# "2020.12.29 Checking Session Variables.txt" FOR MORE DETAILS.
+# TODO: Jeremy to check this after reviewing the rest of the script. Unclear 
+# that "session", "current_session", and "session_name" should be renamed to the 
+# same thing as they seem to refer to different things and they can take on
+# different values. "session_name" also seems to contain two kinds of info in
+# some tables (i.e., Both time point and completion status in "action_log" and
+# "task_log"; both time point and gift card award status in "gift_log"). It may
+# be better to store each piece of info in a separate variable. See file
+# "2020.12.29 checking session variables.txt" for more details.
 
 rename_session <- function(df) {
   df_colnames <- colnames(df)
@@ -592,14 +606,14 @@ ignored_columns <- c(key_columns, timepoint_columns, date_columns,
 
 find_repeated_column_names(data, ignored_columns)
 
-# TODO: REVIEW THE OUTPUT FOR REMAINING COLUMNS ABOVE AND ENSURE ANY SHARED 
-# COLUMN NAMES THAT ARE EXPECTED TO HAVE THE SAME VALUES DO INDEED HAVE THE 
-# SAME VALUES FOR A GIVEN PARTICIPANT_ID. REMAINING COLUMNS:
+# TODO: Review the output for remaining columns above and ensure any shared 
+# column names that are expected to have the same values do indeed have the 
+# same values for a given "participant_id". Remaining columns:
 
 # [1] "action_log: task_name     is also in     task_log"
 
-# TODO: WAITING FOR HENRY TO COMPLETE CODEBOOK BEFORE ADDRESSING THIS. ASKED HIM 
-# TO COMPLETE CODEBOOK ON 1/3/2021.
+# TODO: Waiting for Henry to complete codebook before addressing this. Asked him 
+# to complete codebook on 1/3/2021.
 
 
 
@@ -612,8 +626,8 @@ find_repeated_column_names(data, ignored_columns)
 
 # [1] "angular_training: conditioning     is also in     study"
 
-# TODO: IN PROGRESS. NOT SURE WHY "CONDITIONING" IS BLANK IN SOME ROWS OF
-# "ANGULAR_TRAINING". ASKED HENRY/DAN IF THEY KNOW WHY on 1/3/2021.
+# TODO: In progress. Not sure why "conditioning" is blank in some rows of
+# "angular_training". Asked Henry/Dan if they know why on 1/3/2021.
 
 temp1 <- data$angular_training[data$angular_training$conditioning == "", ]
 View(temp1)
@@ -630,8 +644,8 @@ write.csv(temp2,
           row.names = FALSE)
 head(which(temp$conditioning == ""))
 
-# TODO: IN PROGRESS. CHECK THAT "CONDITIONING" IN "ANGULAR_TRAINING" OTHERWISE 
-# MAKES SENSE WITH "CONDITIONING" IN "STUDY".
+# TODO: In progress. Check that "conditioning" in "angular_training" otherwise 
+# makes sense with "conditioning" in "study".
 
 test2 <- data$angular_training[data$angular_training$conditioning != "", ]
 test3 <- test2[, c("participant_id", "conditioning", "session")]
@@ -652,14 +666,21 @@ View(test4)
 
 # [1] "dass21_as: over18     is also in     participant"
 
-# TODO: IN PROGRESS. FIGURE OUT WHERE "over18" in "participant" comes from. 
-# Should it be the same as "over18" in "dass21_as"? ASKED HENRY/DAN WHERE IT 
-# COMES FROM ON 1/3/2021.
+# TODO: In progress. Figure out where "over18" in "participant" comes from. 
+# Should it be the same as "over18" in "dass21_as"? Asked Henry/Dan where it 
+# comes from on 1/3/2021.
 
 table(data$participant$over18)
 
 table(data$dass21_as[data$dass21_as$participant_id %in% data$participant$participant_id &
                        data$dass21_as$session == "ELIGIBLE", ]$over18)
+
+View(data$dass21_as[data$dass21_as$session == "ELIGIBLE", ])
+
+summary <- (data$dass21_as[data$dass21_as$session == "" | 
+                            data$dass21_as$session == "ELIGIBLE", ]) %>%
+  group_by(participant_id, session) %>% dplyr::summarise(count = n())
+View(summary)
 
 
 
@@ -672,7 +693,7 @@ table(data$dass21_as[data$dass21_as$participant_id %in% data$participant$partici
 
 # [1] "dass21_as: session_id     is also in     oa"
 
-# TODO. IN PROGRESS. SEEMS THE SAME BUT DOUBLE CHECK.
+# TODO. In progress. Seems the same but double check.
 
 View(data$dass21_as)
 table(data$oa$session_id)
@@ -788,9 +809,9 @@ if (all(data$study[data$study$participant_id %in%
 # Arrange columns and sort tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: MAKE BASIC COLUMNS SPECIFIC AND SORT TABLES IN CONSISTENT WAY. CONSIDER
-# STARTING WITH PARTICIPANT_ID, STUDY_ID (IF PRESENT), AND THEN ID (IF PRESENT).
-# ALSO CONSIDER REMOVING X. SKIP THIS TASK FOR NOW AS COLUMNS MAY CHANGE BELOW.
+# TODO: Make basic columns specific and sort tables in consistent way. Consider
+# starting with participant_id, study_id (if present), and then id (if present).
+# Also consider removing "X". Skip this task for now as columns may change below.
 
 
 
@@ -809,9 +830,9 @@ if (all(data$study[data$study$participant_id %in%
 # Filter data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: SEE IF SONIA ACTUALLY WANTS THE TABLES MERGED FOR REFERENCE. IF NOT,
-# THEN JUST EXTRACT THE PARTICIPANT_IDS AND GET RID OF THE MERGED TABLE. ASKED
-# HER ON 1/1/2021.
+# TODO: See if Sonia actually wants the tables merged for reference. If not,
+# then just extract the participant_ids and get rid of the merged table. Asked
+# her on 1/1/2021.
 
 
 
@@ -859,8 +880,8 @@ cat("Number of participants enrolled in", study_name, "study:",
 # Filter all data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: IF SONIA DOES NOT ACTUALLY CARE ABOUT MERGED TABLE ABOVE, THEN REMOVE
-# THE SECTION ABOVE AND GET RELEVANT PARTICIPANT_IDS IN THIS FUNCTION DIRECTLY
+# TODO: If Sonia does not actually care about merged table above, then remove
+# the section above and get relevant participant_ids in this function directly
 
 
 
@@ -905,7 +926,7 @@ data <- filter_all_data(data, participant_ids)
 # Add participant information ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: ADD EXPLANATION ONCE APPROACH IS FINALIZED
+# TODO: Add explanation once approach is finalized
 
 
 
@@ -940,6 +961,15 @@ add_participant_info <- function(data, study_name) {
              launch_type = ifelse(participant_id >= 159, "TRUE", "SOFT"))
     
     # TODO: Add indicator coaching_account (see previous version of code)
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
   }
   return(data)
@@ -979,7 +1009,7 @@ if (sum(data$participant$participant_id %in% coaches) != 0) {
 # Edit participant information: Participant spanning two studies ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
+# TODO: Check below
 
 
 
@@ -1019,7 +1049,7 @@ updated_participant_data <- update_specific_participants(updated_participant_dat
 # Edit participant information: Inaccurate active column ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: CHECK BELOW
+# TODO: Check below
 
 
 
@@ -1056,7 +1086,7 @@ updated_participant_data <- update_active_column(participant_data)
 
 
 
-# TODO: JEREMY TO CHECK EVERYTHING BELOW THIS
+# TODO: Jeremy to check everything below this
 
 
 
