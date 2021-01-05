@@ -180,6 +180,7 @@ data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
 
 
+
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -358,6 +359,85 @@ remove_admin_test_accounts <- function(data, admin_test_account_ids) {
 # Run function
 
 data <- remove_admin_test_accounts(data, admin_test_account_ids)
+
+# ---------------------------------------------------------------------------- #
+# Remove irrelevant columns ----
+# ---------------------------------------------------------------------------- #
+
+# Identify columns whose rows are all blank (interpreted by R as NA) or, if 
+# column is of class type "character", whose rows are all "". Do this after
+# removing admin and test accounts because some columns may have been used
+# during testing but not during the study itself.
+
+find_blank_columns <- function(data, ignored_columns) {
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      if (!(names(data[[i]][j]) %in% ignored_columns)) {
+        if (all(is.na(data[[i]][[j]]))) {
+          cat(paste0(names(data[i]), ": ", names(data[[i]][j]),
+                       "     , class ", class(data[[i]][[j]]), ",",
+                       "     has all rows == NA", "\n"))
+        } else if (all(data[[i]][[j]] == "")) {
+          cat(paste0(names(data[i]), ": ", names(data[[i]][j]),
+                       "     , class ", class(data[[i]][[j]]), ",",
+                       '     has all rows == ""', "\n"))
+        }
+      }
+    }
+  }
+}
+
+# TODO: Define columns to ignore on a per-table basis and add this functionality
+# into the function above.
+
+ignored_columns <- NULL
+
+
+
+
+
+
+
+
+
+
+# Run function
+
+find_blank_columns(data, ignored_columns)
+
+
+
+
+
+
+
+
+
+
+# TODO: Remove "over18" from "participant" table. Dan said that for the R01 we
+# moved this item to the DASS-21 page (and thus to "dass21_as") and that the 
+# "over18" column in the "participant" table should be disregarded.
+
+
+
+
+
+
+
+
+
+
+# TODO. "return_date" in "participant" is blank, whereas it has data in
+# "return_intention".
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
@@ -541,27 +621,6 @@ rename_session <- function(df) {
 }
 
 data <- lapply(data, rename_session)
-
-# ---------------------------------------------------------------------------- #
-# Remove unused columns ----
-# ---------------------------------------------------------------------------- #
-
-# TODO: Remove "over18" from "participant" table. Dan said that for the R01 we
-# moved this item to the DASS-21 page (and thus to "dass21_as") and that the 
-# "over18" column in the "participant" table should be disregarded.
-
-
-
-
-
-
-
-
-
-
-# TODO. "return_date" in "participant" is blank, whereas it has data in
-# "return_intention". Check for other blank columns and ask Dan if they can
-# be removed because they are no longer in use.
 
 
 
