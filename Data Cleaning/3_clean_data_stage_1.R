@@ -543,6 +543,36 @@ rename_session <- function(df) {
 data <- lapply(data, rename_session)
 
 # ---------------------------------------------------------------------------- #
+# Remove unused columns ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Remove "over18" from "participant" table. Dan said that for the R01 we
+# moved this item to the DASS-21 page (and thus to "dass21_as") and that the 
+# "over18" column in the "participant" table should be disregarded.
+
+
+
+
+
+
+
+
+
+
+# TODO. "return_date" in "participant" is blank, whereas it has data in
+# "return_intention". Check for other blank columns and ask Dan if they can
+# be removed because they are no longer in use.
+
+
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
 # Check for repeated columns across tables ----
 # ---------------------------------------------------------------------------- #
 
@@ -692,34 +722,6 @@ View(test4)
 
 
 
-
-# [1] "dass21_as: over18     is also in     participant"
-
-# TODO: In progress. Figure out where "over18" in "participant" comes from. 
-# Should it be the same as "over18" in "dass21_as"? Asked Henry/Dan where it 
-# comes from on 1/3/2021.
-
-table(data$participant$over18)
-
-table(data$dass21_as[data$dass21_as$participant_id %in% data$participant$participant_id &
-                       data$dass21_as$session == "ELIGIBLE", ]$over18)
-
-View(data$dass21_as[data$dass21_as$session == "ELIGIBLE", ])
-
-summary <- (data$dass21_as[data$dass21_as$session == "" | 
-                            data$dass21_as$session == "ELIGIBLE", ]) %>%
-  group_by(participant_id, session) %>% dplyr::summarise(count = n())
-View(summary)
-
-
-
-
-
-
-
-
-
-
 # [1] "dass21_as: session_id     is also in     oa"
 
 # TODO. In progress. Seems the same but double check.
@@ -737,20 +739,6 @@ setdiff(oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_
         dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id)
 setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id,
         oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_id)
-
-
-
-
-
-
-
-
-
-
-# [1] "participant: return_date     is also in     return_intention"
-
-# TODO. "return_date" in "participant" is blank, whereas it has data in
-# "return_intention". Consider removing unused columns at some point.
 
 
 
