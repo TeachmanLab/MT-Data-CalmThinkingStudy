@@ -148,6 +148,19 @@ unused_tables <- c(unused_tables, "evaluation_how_learn")
 system_tables <- c("export_log", "id_gen", "import_log", "password_token",
                    "random_condition", "visit")
 
+# TODO: Consider removing "imagery_prime" and "impact_anxious_imagery". They
+# have some data but codebook says they are unused. Asked Dan on 1/7/21 if he
+# agrees that they are unused.
+
+
+
+
+
+
+
+
+
+
 # TODO: Decide whether to retain "js_psych_trial", which contains information 
 # about user activity during RR measure. Dan said retaining "js_psych_trial" may
 # cause confusion because we switched to "angular_training" for RR user activity
@@ -395,14 +408,80 @@ find_blank_columns <- function(data, ignored_columns) {
 # as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
 # to be ignored, specify NULL without quotes (i.e., "ignored_columns <- NULL").
 
-ignored_columns <- NULL
+# The "tag" columns in the following tables are not used in the R01, TET, or 
+# GIDI studies and contain no data. They can be removed.
+
+unused_columns <- paste0(c("angular_training", "anxiety_identity", 
+                           "anxiety_triggers", "assessing_program", 
+                           "bbsiq", "cc", "coach_prompt", "comorbid", 
+                           "covid19", "credibility", "dass21_as", 
+                           "demographics", "evaluation", "help_seeking",
+                           "js_psych_trial", "mechanisms",
+                           "mental_health_history", "oa", 
+                           "return_intention", "rr", "session_review", 
+                           "technology_use", "wellness"),
+                         "$tag")
+
+# The following "how_learn"-related columns are not used in the R01, TET, or
+# GIDI studies and contain no data. They can be removed.
+
+unused_columns <- c(unused_columns, "evaluation$how_learn_other",
+                    "evaluation$how_learn_other_link")
+
+# The following columns are also not used in the R01, TET, or GIDI studies and
+# contain no data. They can be removed.
+
+unused_columns <- c(unused_columns, "angular_training$study",
+                    "reasons_for_ending$other_why_in_control")
+
+# TODO: Asked Dan on 1/7/21 about the following columns, which are not in the
+# codebook and may also be unused
+
+# gidi$tag     , class logical,     has all rows == NA
+# action_log$action_value     , class logical,     has all rows == NA
+# mental_health_history$other_help_text     , class logical,     has all rows == NA
+# sms_log$type     , class logical,     has all rows == NA
+
+
+
+
+
+
+
+
+
+# TODO: Asked Dan on 1/7/21 about the following columns, which were likely
+# redacted or may be unused
+
+# participant$email     , class character,     has all rows == ""
+# participant$full_name     , class character,     has all rows == ""
+# participant$password     , class character,     has all rows == ""
+# participant$phone     , class numeric,     has all rows == NA
+# participant$random_token     , class logical,     has all rows == NA
+# participant$return_date     , class logical,     has all rows == NA
+# participant$coached_by_id     , class logical,     has all rows == NA
+# participant$password_token_id     , class numeric,     has all rows == NA
+# participant$verification_code_id     , class logical,     has all rows == NA
+# participant$first_coaching_format     , class logical,     has all rows == NA
+
+
+
+
+
+
+
+
+
+
+# Collect all columns to be ignored
+
+ignored_columns <- c(unused_columns)
 
 # Run function
 
 find_blank_columns(data, ignored_columns)
 
-# TODO: Review output of function above and figure out which columns are unused
-# by study design.
+# TODO: Remove unused columns identified above
 
 
 
