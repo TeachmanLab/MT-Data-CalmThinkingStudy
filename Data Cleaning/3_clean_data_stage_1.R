@@ -369,37 +369,22 @@ data <- remove_admin_test_accounts(data, admin_test_account_ids)
 # removing admin and test accounts because some columns may have been used
 # during testing but not during the study itself.
 
-# TODO: Fix function below. Seems not to ignore the columns specified
-# (specifying "js_psych_trial$tag" and "action_log$action_value" just for 
-# testing for now).
-
-
-
-
-
-
-
-
-
-
 find_blank_columns <- function(data, ignored_columns) {
-  table_of_column <- gsub("\\$.*", "", ignored_columns)
-  column_of_table <- gsub(".*\\$", "", ignored_columns)
-  
   for (i in 1:length(data)) {
     for (j in 1:length(data[[i]])) {
-      for (k in 1:length(ignored_columns)) {
-        if (names(data[i]) != table_of_column[k] &
-            names(data[[i]][j]) != column_of_table[k]) {
-          if (all(is.na(data[[i]][[j]]))) {
-            cat(paste0(names(data[i]), ": ", names(data[[i]][j]),
-                       "     , class ", class(data[[i]][[j]]), ",",
-                       "     has all rows == NA", "\n"))
-          } else if (all(data[[i]][[j]] == "")) {
-            cat(paste0(names(data[i]), ": ", names(data[[i]][j]),
-                       "     , class ", class(data[[i]][[j]]), ",",
-                       '     has all rows == ""', "\n"))
-          }
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (!(table_i_column_j_name %in% ignored_columns)) {
+        if (all(is.na(data[[i]][[j]]))) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     "     has all rows == NA", "\n"))
+        } else if (all(data[[i]][[j]] == "")) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     '     has all rows == ""', "\n"))
         }
       }
     }
@@ -410,12 +395,14 @@ find_blank_columns <- function(data, ignored_columns) {
 # as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
 # to be ignored, specify NULL without quotes (i.e., "ignored_columns <- NULL").
 
-ignored_columns <- c("js_psych_trial$tag", "action_log$action_value")
+ignored_columns <- NULL
 
 # Run function
 
 find_blank_columns(data, ignored_columns)
 
+# TODO: Review output of function above and figure out which columns are unused
+# by study design.
 
 
 
