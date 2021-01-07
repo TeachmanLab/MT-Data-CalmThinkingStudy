@@ -141,25 +141,19 @@ unused_tables <- c("coach_log", "data", "media", "missing_data_log", "stimuli",
 
 unused_tables <- c(unused_tables, "evaluation_how_learn")
 
+# The following tables are vestiges of earlier studies and not used in the R01,
+# TET, or GIDI studies. Although they contain data, after removing admin and
+# test accounts they contain no data corresponding to a "participant_id" (the
+# rows that have data have a blank "participant_id"). They can be removed.
+
+unused_tables <- c(unused_tables, "imagery_prime", "impact_anxious_imagery")
+
 # The following tables are used internally by the MindTrails system and contain
 # no information relevant to individuals' participation in the R01, TET, or GIDI
 # studies. Although they have data, they can be removed.
 
 system_tables <- c("export_log", "id_gen", "import_log", "password_token",
                    "random_condition", "visit")
-
-# TODO: Consider removing "imagery_prime" and "impact_anxious_imagery". They
-# have some data but codebook says they are unused. Asked Dan on 1/7/21 if he
-# agrees that they are unused.
-
-
-
-
-
-
-
-
-
 
 # TODO: Decide whether to retain "js_psych_trial", which contains information 
 # about user activity during RR measure. Dan said retaining "js_psych_trial" may
@@ -422,8 +416,11 @@ unused_columns <- paste0(c("angular_training", "anxiety_identity",
                            "technology_use", "wellness"),
                          "$tag")
 
-# The following "how_learn"-related columns are not used in the R01, TET, or
-# GIDI studies and contain no data. They can be removed.
+# The following "how_learn_other" columns in "evaluation" are not used in the 
+# R01, TET, or GIDI studies and because the "how_learn_other" item was moved to 
+# the demographics measure before R01 study launch. The item is called 
+# "ptp_reason_other" in the "demographics" table. The two columns below contain
+# no data and can be removed.
 
 unused_columns <- c(unused_columns, "evaluation$how_learn_other",
                     "evaluation$how_learn_other_link")
