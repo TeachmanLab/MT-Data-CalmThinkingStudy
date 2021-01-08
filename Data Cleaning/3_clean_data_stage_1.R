@@ -490,7 +490,10 @@ ignored_columns <- c(unused_columns)
 
 find_blank_columns(data, ignored_columns)
 
-# TODO: Remove unused columns identified above
+# Define function to remove irrelevant columns
+
+# TODO: Fix function below. Says there are undefined columns selected. May
+# have something to do with the line with the NULL.
 
 
 
@@ -501,18 +504,45 @@ find_blank_columns(data, ignored_columns)
 
 
 
-# TODO: Remove "over18" from "participant" table. Dan said that for the R01 we
+remove_columns <- function(data, columns_to_remove) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (table_i_column_j_name %in% columns_to_remove) {
+        data[[i]][j] <- NULL
+        output[[i]] <- data[[i]]
+      } else {
+        output[[i]] <- data[[i]]
+      }
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Specify a character vector of columns to be removed, with each column listed
+# as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
+# to be removed, specify NULL without quotes (i.e., "columns_to_remove <- NULL").
+
+# Unused columns defined above can be removed
+
+columns_to_remove <- unused_columns
+
+# Remove "over18" from "participant" table. Dan Funk said that for the R01 we
 # moved this item to the DASS-21 page (and thus to "dass21_as") and that the 
 # "over18" column in the "participant" table should be disregarded.
 
+columns_to_remove <- c(columns_to_remove, "participant$over18")
 
+# Run function
 
-
-
-
-
-
-
+data <- remove_columns(data, columns_to_remove)
 
 # ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
@@ -722,7 +752,7 @@ find_repeated_column_names <- function(data, ignored_columns) {
         for (k in 1:length(data)) {
           if ((i != k) &
               names(data[[i]][j]) %in% names(data[[k]])) {
-            print(paste0(names(data[i]), ": ", names(data[[i]][j]),
+            print(paste0(names(data[i]), "$", names(data[[i]][j]),
                          "     is also in     ", names(data[k])))
           }
         }
