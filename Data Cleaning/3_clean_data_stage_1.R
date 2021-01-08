@@ -409,7 +409,7 @@ unused_columns <- paste0(c("angular_training", "anxiety_identity",
                            "anxiety_triggers", "assessing_program", 
                            "bbsiq", "cc", "coach_prompt", "comorbid", 
                            "covid19", "credibility", "dass21_as", 
-                           "demographics", "evaluation", "help_seeking",
+                           "demographics", "evaluation", "gidi", "help_seeking",
                            "js_psych_trial", "mechanisms",
                            "mental_health_history", "oa", 
                            "return_intention", "rr", "session_review", 
@@ -429,15 +429,28 @@ unused_columns <- c(unused_columns, "evaluation$how_learn_other",
 # contain no data. They can be removed.
 
 unused_columns <- c(unused_columns, "angular_training$study",
+                    "mental_health_history$other_help_text",
+                    "participant$return_date",
                     "reasons_for_ending$other_why_in_control")
 
-# TODO: Asked Dan on 1/7/21 about the following columns, which are not in the
-# codebook and may also be unused
+# TODO: Asked Dan on 1/7/21 about the following column, which is not in the
+# codebook and may be unused
 
-# gidi$tag     , class logical,     has all rows == NA
-# action_log$action_value     , class logical,     has all rows == NA
-# mental_health_history$other_help_text     , class logical,     has all rows == NA
 # sms_log$type     , class logical,     has all rows == NA
+
+
+
+
+
+
+
+
+
+
+# TODO: Waiting to address this until Henry updates the codebook
+
+# action_log$action_value     , class logical,     has all rows == NA
+
 
 
 
@@ -455,7 +468,6 @@ unused_columns <- c(unused_columns, "angular_training$study",
 # participant$password     , class character,     has all rows == ""
 # participant$phone     , class numeric,     has all rows == NA
 # participant$random_token     , class logical,     has all rows == NA
-# participant$return_date     , class logical,     has all rows == NA
 # participant$coached_by_id     , class logical,     has all rows == NA
 # participant$password_token_id     , class numeric,     has all rows == NA
 # participant$verification_code_id     , class logical,     has all rows == NA
@@ -492,18 +504,6 @@ find_blank_columns(data, ignored_columns)
 # TODO: Remove "over18" from "participant" table. Dan said that for the R01 we
 # moved this item to the DASS-21 page (and thus to "dass21_as") and that the 
 # "over18" column in the "participant" table should be disregarded.
-
-
-
-
-
-
-
-
-
-
-# TODO. "return_date" in "participant" is blank, whereas it has data in
-# "return_intention".
 
 
 
