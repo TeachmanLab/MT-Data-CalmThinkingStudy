@@ -3,14 +3,26 @@
 # Authors: Sonia Baee and Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
+# TODO: Consider where in data cleaning pipeline it makes the most sense to
+# restructure data
+
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
-# Before running this script, set your working directory and put the raw data
-# obtained from 1_get_raw_data.ipynb in a folder called "data/raw". The present 
-# script will import the raw data from that folder and output intermediate data
-# in a new folder called "data/intermediate/stage_1_cleaning".
+# Before running this script, set your working directory. The present script 
+# will import the deidentified data obtained from "2_deidentify_data.R" (which
+# was outputted in the "data/intermediate/deidentified" folder) and output
+# intermediate data in a new folder called "data/intermediate/stage_1_cleaning".
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -89,17 +101,19 @@ identify_columns <- function(df, grep_pattern) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Import raw data ----
+# Import deidentified data ----
 # ---------------------------------------------------------------------------- #
 
-# Obtain file names of raw CSV data files
+# Obtain file names of deidentified CSV data files
 
-raw_data_dir <- paste0(wd_dir, "/data/raw")
-filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
+deidentified_data_dir <- paste0(wd_dir, "/data/intermediate/deidentified")
+filenames <- list.files(deidentified_data_dir, 
+                        pattern = "*.csv", 
+                        full.names = FALSE)
 
 # Import data files and store them in a list
 
-data <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
+data <- lapply(paste0(deidentified_data_dir, "/", filenames), read.csv)
 
 # Name each data file in the list
 
@@ -912,58 +926,6 @@ setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$sessio
 
 
 
-
-# ---------------------------------------------------------------------------- #
-# Deidentify data ----
-# ---------------------------------------------------------------------------- #
-
-# TODO: Manually inspect columns and determine which ones contain identifiers
-
-
-
-
-
-
-
-
-
-
-# Remove phone numbers from "exception" column of "sms_log"
-
-ignored_values <- c("A 'To' phone number is required.",
-                    "Authenticate",
-                    "The message From/To pair violates a blacklist rule.")
-
-temp <- data$sms_log[data$sms_log$exception != "" &
-                       !(data$sms_log$exception %in% ignored_values), ]
-temp <- temp[order(temp$exception), ]
-View(temp)
-
-data$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
-                   data$sms_log$exception), ]$exception <-
-  "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED"
-
-data$sms_log[grepl("The 'To' number", 
-                   data$sms_log$exception) &
-               grepl("is not a valid phone number.", 
-                     data$sms_log$exception), ]$exception <-
-  "The 'To' number REDACTED is not a valid phone number."
-
-data$sms_log[grepl("To number", data$sms_log$exception) &
-               grepl("is not a mobile number", 
-                     data$sms_log$exception), ]$exception <- 
-  "To number: REDACTED, is not a mobile number"
-
-deidentified_values <- 
-  c("Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED",
-    "The 'To' number REDACTED is not a valid phone number.",
-    "To number: REDACTED, is not a mobile number")
-
-temp2 <- data$sms_log[data$sms_log$exception != "" &
-                    !(data$sms_log$exception %in% ignored_values) &
-                    !(data$sms_log$exception %in% deidentified_values), ]
-temp2 <- temp2[order(temp2$exception), ]
-View(temp2)
 
 # ---------------------------------------------------------------------------- #
 # Correct study extensions ----
