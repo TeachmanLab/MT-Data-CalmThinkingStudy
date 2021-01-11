@@ -114,7 +114,23 @@ names(data)
 # Determine which columns contain identifiers ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Inspect columns and determine which ones contain identifiers
+# TODO: Manually inspect columns and determine which ones may have identifiers
+
+# Consider "button_pressed" column of "angular_training". Maybe filter by 
+# "trial_type"
+
+# consider various dates
+
+# Consider "compare_to_others" and "worth_per_week" of "assessing_program"
+
+# Consider "difficult_to_understand", "other_feedback", and 
+# "technical_difficulties" of "coach_prompt"
+
+# Consider "news" and "social_media" of "covid19"
+
+# Consider "session_id" in "dass21_as"
+
+# TODO: Keep looking. Asked Dan for report of free-response columns on 1/11/20.
 
 
 
