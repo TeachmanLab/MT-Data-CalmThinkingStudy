@@ -19,6 +19,11 @@
 # on redacted raw data files in addition to unredacted raw data files. In this
 # way, the script reflects exactly what was redacted.
 
+# Scope: This script is based on data dumped from "calm" database on the Data
+# Server ("teachmanlab") on 12/3/2020. The script may need to be updated when
+# applied to data downloaded after this date, as there may have been changes
+# to the database or newly collected data not accounted for by this script.
+
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
 # ---------------------------------------------------------------------------- #

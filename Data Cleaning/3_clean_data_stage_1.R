@@ -20,9 +20,11 @@
 # ---------------------------------------------------------------------------- #
 
 # Before running this script, set your working directory. The present script 
-# will import the deidentified data obtained from "2_deidentify_data.R" (which
-# was outputted in the "data/intermediate/deidentified" folder) and output
-# intermediate data in a new folder called "data/intermediate/stage_1_cleaning".
+# will import deidentified raw data obtained from "2_deidentify_data.R" (which 
+# outputted redacted raw data files in the "data/raw" folder with "-redacted" 
+# appended to the original file name for raw data files that needed redaction) 
+# and output intermediate data in a new folder called 
+# "data/intermediate/stage_1_cleaning".
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -101,19 +103,17 @@ identify_columns <- function(df, grep_pattern) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Import deidentified data ----
+# Import deidentified raw data ----
 # ---------------------------------------------------------------------------- #
 
-# Obtain file names of deidentified CSV data files
+# Obtain file names of CSV data files
 
-deidentified_data_dir <- paste0(wd_dir, "/data/intermediate/deidentified")
-filenames <- list.files(deidentified_data_dir, 
-                        pattern = "*.csv", 
-                        full.names = FALSE)
+raw_data_dir <- paste0(wd_dir, "/data/raw")
+filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
 # Import data files and store them in a list
 
-data <- lapply(paste0(deidentified_data_dir, "/", filenames), read.csv)
+data <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
 
 # Name each data file in the list
 
