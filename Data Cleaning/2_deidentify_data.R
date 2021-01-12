@@ -8,9 +8,16 @@
 # ---------------------------------------------------------------------------- #
 
 # Before running this script, set your working directory and put the raw data
-# obtained from "1_get_raw_data.ipynb" in a folder called "data/raw". The present 
-# script will import the raw data from that folder and output intermediate data
-# in a new folder called "data/intermediate/deidentified".
+# obtained from "1_get_raw_data.ipynb" in a folder called "data/raw". The 
+# script will import the raw data from that folder and, for files that require
+# redaction, output the redacted files into the same folder with "-redacted"
+# appended to the file name. The unredacted file can then be manually deleted.
+
+# Rather than changing the structure of the raw data files, the present script 
+# is designed to label instances of redaction with "REDACTED". Because it does
+# not change the structure of the raw data files, the present script should run
+# on redacted raw data files in addition to unredacted raw data files. In this
+# way, the script reflects exactly what was redacted.
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -186,13 +193,10 @@ View(temp2)
 # Save deidentified data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Save deidentified data following folder structure at top of script
+# Save redacted "sms_log". Remember to manually delete the original file.
 
+sms_log_redacted_filename <- paste0(gsub("*.csv", "",
+                                     filenames[grep("sms_log", filenames)]),
+                                     "-redacted.csv")
 
-
-
-
-
-
-
-
+write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename))
