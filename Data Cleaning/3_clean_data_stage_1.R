@@ -444,22 +444,10 @@ unused_columns <- c(unused_columns, "evaluation$how_learn_other",
 
 unused_columns <- c(unused_columns, "angular_training$study",
                     "mental_health_history$other_help_text",
+                    "participant$random_token",
                     "participant$return_date",
-                    "reasons_for_ending$other_why_in_control")
-
-# TODO: Asked Dan on 1/7/21 about the following column, which is not in the
-# codebook and may be unused
-
-# sms_log$type     , class logical,     has all rows == NA
-
-
-
-
-
-
-
-
-
+                    "reasons_for_ending$other_why_in_control",
+                    "sms_log$type")
 
 # TODO: Waiting to address this until Henry updates the codebook
 
@@ -474,18 +462,50 @@ unused_columns <- c(unused_columns, "angular_training$study",
 
 
 
-# TODO: Asked Dan on 1/7/21 about the following columns, which were likely
-# redacted or may be unused
+# TODO: Dan said that the following columns are redacted and should be. Indicate
+# that these are redacted.
 
 # participant$email     , class character,     has all rows == ""
 # participant$full_name     , class character,     has all rows == ""
 # participant$password     , class character,     has all rows == ""
 # participant$phone     , class numeric,     has all rows == NA
-# participant$random_token     , class logical,     has all rows == NA
-# participant$coached_by_id     , class logical,     has all rows == NA
 # participant$password_token_id     , class numeric,     has all rows == NA
 # participant$verification_code_id     , class logical,     has all rows == NA
+
+
+
+
+
+
+
+
+
+
+
+# TODO: Dan said that the following columns are redacted but shouldn't be. They
+# could be useful for analysis. Indicate this.
+
+# participant$coached_by_id     , class logical,     has all rows == NA
 # participant$first_coaching_format     , class logical,     has all rows == NA
+
+
+
+
+
+
+
+
+
+# TODO: Dan did not mention the following columns having data in "participant"
+# but they do. Asked him on 1/11/21 if they should. All rows are the same (odd).
+
+# attrition_risk = every row is 0
+# award_country_code = every row is US
+# blacklist = every row is 0
+# can_text_message = every row is 0
+# coaching = every row is 0
+# verified = every row is 0
+# wants_coaching = every row is 0
 
 
 
