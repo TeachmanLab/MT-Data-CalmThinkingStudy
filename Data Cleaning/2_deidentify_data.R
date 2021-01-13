@@ -170,23 +170,23 @@ View(temp)
 
 data$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
                    data$sms_log$exception), ]$exception <-
-  "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED"
+  "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: [REDACTED]"
 
 data$sms_log[grepl("The 'To' number", 
                    data$sms_log$exception) &
                grepl("is not a valid phone number.", 
                      data$sms_log$exception), ]$exception <-
-  "The 'To' number REDACTED is not a valid phone number."
+  "The 'To' number [REDACTED] is not a valid phone number."
 
 data$sms_log[grepl("To number", data$sms_log$exception) &
                grepl("is not a mobile number", 
                      data$sms_log$exception), ]$exception <- 
-  "To number: REDACTED, is not a mobile number"
+  "To number: [REDACTED], is not a mobile number"
 
 deidentified_values <- 
-  c("Permission to send an SMS has not been enabled for the region indicated by the 'To' number: REDACTED",
-    "The 'To' number REDACTED is not a valid phone number.",
-    "To number: REDACTED, is not a mobile number")
+  c("Permission to send an SMS has not been enabled for the region indicated by the 'To' number: [REDACTED]",
+    "The 'To' number [REDACTED] is not a valid phone number.",
+    "To number: [REDACTED], is not a mobile number")
 
 temp2 <- data$sms_log[data$sms_log$exception != "" &
                         !(data$sms_log$exception %in% ignored_values) &
@@ -197,6 +197,18 @@ View(temp2)
 # ---------------------------------------------------------------------------- #
 # Save deidentified data ----
 # ---------------------------------------------------------------------------- #
+
+# TODO: Handle this better for the case that "-redacted.csv" is already in the
+# file name. Currently it would save the file as "-redacted-redacted.csv"
+
+
+
+
+
+
+
+
+
 
 # Save redacted "sms_log". Remember to manually delete the original file.
 
