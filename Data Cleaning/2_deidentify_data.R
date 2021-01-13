@@ -128,10 +128,19 @@ names(data)
 
 # TODO: Manually inspect columns and determine which ones may have identifiers
 
+# Check "email", "full_name", "password", "phone" in "participant" after
+# removing admin and test accounts (currently some data, likely for those)
+
+# Consider various dates
+
+# Consider "order_id" in "gift_log". Asked Dan/Henry about it on 1/12/20. Note
+# that "order_id" also appears in "error" column of "import_log".
+# Consider "session_id" in "dass21_as". Asked Dan about it on 1/13/2021.
+# Consider "session_id" in "oa". Asked Dan about it on 1/13/2021.
+# Consider "user_agent" in "task_log". Asked Dan about it on 1/13/2021.
+
 # Consider "button_pressed" column of "angular_training". Maybe filter by 
 # "trial_type"
-
-# consider various dates
 
 # Consider "compare_to_others" and "worth_per_week" of "assessing_program"
 
@@ -140,33 +149,24 @@ names(data)
 
 # Consider "news" and "social_media" of "covid19"
 
-# Consider "session_id" in "dass21_as"
-
 # Consider "ptp_reason_other" in "demographics"
 
 # Consider "other_place", "other_reason_control", "problems_desc",
 # "other_coaching", and "other_help_topic" in "evaluation"
-
-# Consider "order_id" in "gift_log". Asked Dan/Henry about it on 1/12/20. Note
-# that "order_id" also appears in "error" column of "import_log".
 
 # Consider "other" in "help_seeking"
 
 # Consider "change_help_text", "help_other_text", "other_disorder", and
 # "other_why_no_help" in "mental_health_history"
 
-# Consider "session_id" in "oa"
-
-# Check "email", "full_name", "password", "phone" in "participant" after
-# removing admin and test accounts (currently some data, likely for those)
-
 # Consider "end_other_desc", "change_med_desc", "control_desc", and 
 # "location_desc" in "reasons_for_ending"
 
 # Consider "not_return_reasons" in "return_intention"
 
-# TODO: Keep looking, continuing with "session_review_distractions". Asked Dan 
-# for report of free-response columns on 1/11/20.
+# Consider "other_distraction" and "other_location_desc" in "session_review"
+
+# TODO: Asked Dan for report of free-response columns on 1/11/20.
 
 
 
@@ -223,7 +223,8 @@ View(temp2)
 # ---------------------------------------------------------------------------- #
 
 # TODO: Handle this better for the case that "-redacted.csv" is already in the
-# file name. Currently it would save the file as "-redacted-redacted.csv"
+# file name. Currently it would save the file as "-redacted-redacted.csv".
+# Also, note that it currently also saves the column X named by R.
 
 
 
@@ -240,4 +241,5 @@ sms_log_redacted_filename <- paste0(gsub("*.csv", "",
                                      filenames[grep("sms_log", filenames)]),
                                      "-redacted.csv")
 
-write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename))
+write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
+          row.names = FALSE)
