@@ -142,7 +142,31 @@ names(data)
 
 # Consider "session_id" in "dass21_as"
 
-# TODO: Keep looking. Asked Dan for report of free-response columns on 1/11/20.
+# Consider "ptp_reason_other" in "demographics"
+
+# Consider "other_place", "other_reason_control", "problems_desc",
+# "other_coaching", and "other_help_topic" in "evaluation"
+
+# Consider "order_id" in "gift_log". Asked Dan/Henry about it on 1/12/20. Note
+# that "order_id" also appears in "error" column of "import_log".
+
+# Consider "other" in "help_seeking"
+
+# Consider "change_help_text", "help_other_text", "other_disorder", and
+# "other_why_no_help" in "mental_health_history"
+
+# Consider "session_id" in "oa"
+
+# Check "email", "full_name", "password", "phone" in "participant" after
+# removing admin and test accounts (currently some data, likely for those)
+
+# Consider "end_other_desc", "change_med_desc", "control_desc", and 
+# "location_desc" in "reasons_for_ending"
+
+# Consider "not_return_reasons" in "return_intention"
+
+# TODO: Keep looking, continuing with "session_review_distractions". Asked Dan 
+# for report of free-response columns on 1/11/20.
 
 
 
