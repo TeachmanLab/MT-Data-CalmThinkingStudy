@@ -496,17 +496,17 @@ unused_columns <- c(unused_columns, "angular_training$study",
 
 
 
-# TODO: Dan did not mention the following columns having data in "participant"
-# but they do. Asked him on 1/11/21 if they should. All rows are the same (odd).
+# TODO: Dan said that the following columns are redacted (no opinion to date on
+# whether they should or shouldn't be). Their default value in the Data Server
+# is not NULL, but the values they take on below. Indicate this.
 
-# attrition_risk = every row is 0
-# award_country_code = every row is US
-# blacklist = every row is 0
-# can_text_message = every row is 0
-# coaching = every row is 0
-# verified = every row is 0
-# wants_coaching = every row is 0
-
+# participant$attrition_risk = every row is 0
+# participant$award_country_code = every row is US
+# participant$blacklist = every row is 0
+# participant$can_text_message = every row is 0
+# participant$coaching = every row is 0
+# participant$verified = every row is 0
+# participant$wants_coaching = every row is 0
 
 
 
