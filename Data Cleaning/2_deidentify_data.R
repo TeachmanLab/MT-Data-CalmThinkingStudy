@@ -71,9 +71,7 @@ groundhog.library(lubridate, groundhog_day)
 groundhog.library(anytime, groundhog_day)
 
 # TODO: At the end of data cleaning figure out whether all of these packages 
-# are actually used; we may be able to remove some of them. For example, when
-# loading "plyr" above you have to restart R before it works; do we really
-# need "plyr"? Maybe it can be removed.
+# are actually used; we may be able to remove some of them.
 
 
 
@@ -126,18 +124,14 @@ names(data)
 # Determine which columns contain identifiers ----
 # ---------------------------------------------------------------------------- #
 
+# Regarding various dates, Bethany indicated on 1/13/2021 that MindTrails is not
+# subject to HIPAA regulations, so restrictions on dislcosing dates of service, 
+# dates of test measures, and birth years for people over age 89 do not apply.
+
 # TODO: Manually inspect columns and determine which ones may have identifiers
 
 # Check "email", "full_name", "password", "phone" in "participant" after
 # removing admin and test accounts (currently some data, likely for those)
-
-# Consider various dates
-
-# Consider "order_id" in "gift_log". Asked Dan/Henry about it on 1/12/20. Note
-# that "order_id" also appears in "error" column of "import_log".
-# Consider "session_id" in "dass21_as". Asked Dan about it on 1/13/2021.
-# Consider "session_id" in "oa". Asked Dan about it on 1/13/2021.
-# Consider "user_agent" in "task_log". Asked Dan about it on 1/13/2021.
 
 # Consider "button_pressed" column of "angular_training". Maybe filter by 
 # "trial_type"
@@ -166,7 +160,43 @@ names(data)
 
 # Consider "other_distraction" and "other_location_desc" in "session_review"
 
+
+
+
+
+
+
+
+
+
+
+# Regarding "user_agent" in "task_log", Dan Funk said on 1/13/2021 that it is 
+# not identifiable. Retain it.
+
+# Regarding "session_id" in "dass21_as" and "oa", Dan Funk said on 1/13/2021
+# that it is transient, encrypted by HTTPS, and used to index participants
+# before they create an account and get assigned a "participant_id". Retain it.
+
+
+
+
+
+
+
+
 # TODO: Asked Dan for report of free-response columns on 1/11/20.
+
+
+
+
+
+
+
+
+
+
+# TODO: Redact "order_id" in "gift_log" (and in "error" column of "import_log")
+# for security reasons
 
 
 
