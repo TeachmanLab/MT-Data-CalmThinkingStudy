@@ -142,8 +142,21 @@ rows1 <- data$angular_training[data$angular_training$trial_type == "FillInBlank"
                                  (data$angular_training$step_title == "Use Your Imagination" |
                                     data$angular_training$step_title == "Use your Imagination"), ]
 
-table(rows1$conditioning)
-table(rows1$session)
+table(rows1$conditioning) # TODO: Why are there rows for conditions other than those below? Asked Henry 1/14/2021.
+
+expected_conditions <- c("TRAINING",
+                         "TRAINING_ORIG", "TRAINING_30", "TRAINING_CREATE", 
+                         "TRAINING_ED")
+
+question1 <- rows1[!(rows1$conditioning %in% expected_conditions), ]
+View(question1)
+write.csv(question1, "./temp_cleaning/angular_training_question1.csv", row.names = FALSE)
+
+table(rows1$session) # TODO: Why are there rows at sessions other than "firstSession"? Asked Henry 1/14/2021.
+
+question2 <- rows1[rows1$session != "firstSession", ]
+View(question2)
+write.csv(question2, "./temp_cleaning/angular_training_question2.csv", row.names = FALSE)
 
 # Some rows are participant responses for training scenarios at "fifthSession"
 # that required filling in a blank (vs. completing a word fragment). Prior to
@@ -171,7 +184,14 @@ table(rows2$session)
 rows3 <- data$angular_training[data$angular_training$stimulus_name == 
                                  "flex_thinking_explanations", ]
 
-table(rows3$conditioning)
+table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have gotten this
+
+View(rows3[rows3$participant_id %in% data$study[data$study$study_extension == "", ]$participant_id, ])
+
+table(rows3$session) # TODO: How do we know what session "flexible_thinking" is for? Asked Henry 1/14/2021.
+
+View(rows3[rows3$session == "flexible_thinking", ])
+
 table(rows3$step_title)
 table(rows3$trial_type)
 
