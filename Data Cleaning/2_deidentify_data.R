@@ -142,27 +142,27 @@ rows1 <- data$angular_training[data$angular_training$trial_type == "FillInBlank"
                                  (data$angular_training$step_title == "Use Your Imagination" |
                                     data$angular_training$step_title == "Use your Imagination"), ]
 
-View(rows1)
-nrow(rows1)
+table(rows1$conditioning)
 table(rows1$session)
 
 # Some rows are participant responses for training scenarios at "fifthSession"
 # that required filling in a blank (vs. completing a word fragment). Prior to
-# 2/15/2019, these responses were indexed not with "step_title" of "scenario"
-# but with "step_title" of the scenario's title, which subsequently was stored
-# in "stimulus_name".
+# 2/15/2019, these responses were indexed not with a "step_title" value of 
+# "scenario", but with a "step_title" value of the scenario's title, which 
+# subsequently was stored in "stimulus_name". Among the scenario titles prior 
+# to this change was "pub"; three admin/test accounts completed this scenario,
+# but it does not appear to have been used again after this change.
 
 scenario_titles <- 
-  unique(data$angular_training[data$angular_training$step_title == 
-                                 "scenario", ]$stimulus_name)
+  c(unique(data$angular_training[data$angular_training$step_title == 
+                                 "scenario", ]$stimulus_name), "pub")
 
 rows2 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
                                  (data$angular_training$step_title == "scenario" |
                                     data$angular_training$step_title %in% scenario_titles), ]
 
-View(rows2)
-nrow(rows2)
 table(rows2$conditioning)
+table(rows2$session)
 
 # Henry says that this criterion reflects participants' responses to the Quick
 # Thinking Exercise (also called Flexible Thinking Exercise). Not all rows have 
@@ -171,10 +171,9 @@ table(rows2$conditioning)
 rows3 <- data$angular_training[data$angular_training$stimulus_name == 
                                  "flex_thinking_explanations", ]
 
-View(rows3)
-nrow(rows3)
 table(rows3$conditioning)
 table(rows3$step_title)
+table(rows3$trial_type)
 
 # Henry says these criteria reflect scenarios created by participants in the
 # Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of the 
@@ -190,7 +189,6 @@ rows4_all_conditions <- data$angular_training[data$angular_training$trial_type =
                                            data$angular_training$stimulus_name == "" &
                                            data$angular_training$step_title == "", ]
 
-nrow(rows4_all_conditions)
 table(rows4_all_conditions$conditioning)
 
 # Henry says this criterion reflects participants' explanations as to why the
@@ -200,23 +198,17 @@ table(rows4_all_conditions$conditioning)
 rows5 <- data$angular_training[data$angular_training$stimulus_name == 
                                  "training_create_explanations", ]
 
-View(rows5)
-nrow(rows5)
 table(rows5$conditioning)
 table(rows5$trial_type)
 
-# TODO: Seem to be some admin and test accounts that have "FillInBlank" rows in 
-# other cases. These rows do not appear after removing these accounts. Three of
-# the rows seem to involve the scenario "pub", which may have been removed;
-# asked Henry on 1/14/2021.
+# Confirm no rows remain unaccounted for
 
 ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
 
 remaining <- data$angular_training[!(data$angular_training$id %in% ignored_ids) &
                              data$angular_training$trial_type == "FillInBlank", ]
 
-View(remaining)
-nrow(remaining)
+nrow(remaining) == 0
 
 
 
