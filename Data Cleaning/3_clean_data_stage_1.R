@@ -73,9 +73,7 @@ groundhog.library(lubridate, groundhog_day)
 groundhog.library(anytime, groundhog_day)
 
 # TODO: At the end of data cleaning figure out whether all of these packages 
-# are actually used; we may be able to remove some of them. For example, when
-# loading "plyr" above you have to restart R before it works; do we really
-# need "plyr"? Maybe it can be removed.
+# are actually used; we may be able to remove some of them.
 
 
 
