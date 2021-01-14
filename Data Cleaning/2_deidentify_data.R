@@ -130,11 +130,102 @@ names(data)
 
 # TODO: Manually inspect columns and determine which ones may have identifiers
 
-# Check "email", "full_name", "password", "phone" in "participant" after
-# removing admin and test accounts (currently some data, likely for those)
+# Consider "button_pressed" column of "angular_training" for rows in which
+# "trial_type" is "FillInBlank". No identifiers are present for rows in which
+# "trial_type" is "Countdown", "Intro", "MissingLetter", "page", "Question",
+# "RandomNonPreviousStatement", "Slider", or "ThoughtBubble".
 
-# Consider "button_pressed" column of "angular_training". Maybe filter by 
-# "trial_type"
+# Some rows are participant descriptions of an anxious situation for the Use 
+# Your Imagination task at "firstSession" before starting training
+
+rows1 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                 (data$angular_training$step_title == "Use Your Imagination" |
+                                    data$angular_training$step_title == "Use your Imagination"), ]
+
+View(rows1)
+nrow(rows1)
+table(rows1$session)
+
+# Some rows are participant responses for training scenarios at "fifthSession"
+# that required filling in a blank (vs. completing a word fragment). Prior to
+# 2/15/2019, these responses were indexed not with "step_title" of "scenario"
+# but with "step_title" of the scenario's title, which subsequently was stored
+# in "stimulus_name".
+
+scenario_titles <- 
+  unique(data$angular_training[data$angular_training$step_title == 
+                                 "scenario", ]$stimulus_name)
+
+rows2 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                 (data$angular_training$step_title == "scenario" |
+                                    data$angular_training$step_title %in% scenario_titles), ]
+
+View(rows2)
+nrow(rows2)
+table(rows2$conditioning)
+
+# Henry says that this criterion reflects participants' responses to the Quick
+# Thinking Exercise (also called Flexible Thinking Exercise). Not all rows have 
+# "step_title" of "Exercise: Quick Thinking" due to a programming error.
+
+rows3 <- data$angular_training[data$angular_training$stimulus_name == 
+                                 "flex_thinking_explanations", ]
+
+View(rows3)
+nrow(rows3)
+table(rows3$conditioning)
+table(rows3$step_title)
+
+# Henry says these criteria reflect scenarios created by participants in the
+# Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of the 
+# TET study. However, one admin/test account ("participant_id" == 8) in the 
+# "CONTROL" condition also appears to have completed this task.
+
+rows4_training_create <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                 data$angular_training$conditioning == "TRAINING_CREATE" &
+                                 data$angular_training$stimulus_name == "" &
+                                 data$angular_training$step_title == "", ]
+
+rows4_all_conditions <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                           data$angular_training$stimulus_name == "" &
+                                           data$angular_training$step_title == "", ]
+
+nrow(rows4_all_conditions)
+table(rows4_all_conditions$conditioning)
+
+# Henry says this criterion reflects participants' explanations as to why the
+# they created occurred in the Write Your Own Scenario exercise in the
+# "TRAINING_CREATE" condition of the TET study
+
+rows5 <- data$angular_training[data$angular_training$stimulus_name == 
+                                 "training_create_explanations", ]
+
+View(rows5)
+nrow(rows5)
+table(rows5$conditioning)
+table(rows5$trial_type)
+
+# TODO: Seem to be some admin and test accounts that have "FillInBlank" rows in 
+# other cases. These rows do not appear after removing these accounts. Three of
+# the rows seem to involve the scenario "pub", which may have been removed;
+# asked Henry on 1/14/2021.
+
+ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
+
+remaining <- data$angular_training[!(data$angular_training$id %in% ignored_ids) &
+                             data$angular_training$trial_type == "FillInBlank", ]
+
+View(remaining)
+nrow(remaining)
+
+
+
+
+
+
+
+
+
 
 # Consider "compare_to_others" and "worth_per_week" of "assessing_program"
 
@@ -197,6 +288,23 @@ names(data)
 
 # TODO: Redact "order_id" in "gift_log" (and in "error" column of "import_log")
 # for security reasons
+
+
+
+
+
+
+
+
+
+
+# TODO: Redact "email", "full_name", "password", and "phone" in "participant" 
+# for admin and test accounts that have this data.
+
+View(data$participant[data$participant$email != "" |
+                             data$participant$full_name != "" |
+                             data$participant$password != "" |
+                             !is.na(data$participant$phone), ])
 
 
 
@@ -273,3 +381,4 @@ sms_log_redacted_filename <- paste0(gsub("*.csv", "",
 
 write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
           row.names = FALSE)
+          
