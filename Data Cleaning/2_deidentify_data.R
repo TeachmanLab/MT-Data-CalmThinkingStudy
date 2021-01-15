@@ -135,30 +135,24 @@ names(data)
 # "trial_type" is "Countdown", "Intro", "MissingLetter", "page", "Question",
 # "RandomNonPreviousStatement", "Slider", or "ThoughtBubble".
 
-# Some rows are participant descriptions of an anxious situation for the Use 
+# 1. Some rows are participant descriptions of an anxious situation for the Use 
 # Your Imagination task at "firstSession" before starting training
 
-rows1 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
-                                 (data$angular_training$step_title == "Use Your Imagination" |
-                                    data$angular_training$step_title == "Use your Imagination"), ]
+rows1 <- data$angular_training[data$angular_training$trial_type == 
+                                 "FillInBlank" &
+                                 (data$angular_training$step_title == 
+                                      "Use Your Imagination" |
+                                    data$angular_training$step_title == 
+                                      "Use your Imagination"), ]
 
-table(rows1$conditioning) # TODO: Why are there rows for conditions other than those below? Asked Henry 1/14/2021.
+# Note that issues regarding entries (a) for unexpected values of "conditioning" 
+# and (b) at sessions other than "firstSession" will be addressed in later data 
+# cleaning. For now, we focus on deidentification.
 
-expected_conditions <- c("TRAINING",
-                         "TRAINING_ORIG", "TRAINING_30", "TRAINING_CREATE", 
-                         "TRAINING_ED")
+table(rows1$conditioning)
+table(rows1$session)
 
-question1 <- rows1[!(rows1$conditioning %in% expected_conditions), ]
-View(question1)
-write.csv(question1, "./temp_cleaning/angular_training_question1.csv", row.names = FALSE)
-
-table(rows1$session) # TODO: Why are there rows at sessions other than "firstSession"? Asked Henry 1/14/2021.
-
-question2 <- rows1[rows1$session != "firstSession", ]
-View(question2)
-write.csv(question2, "./temp_cleaning/angular_training_question2.csv", row.names = FALSE)
-
-# Some rows are participant responses for training scenarios at "fifthSession"
+# 2. Some rows are participant responses for training scenarios at "fifthSession"
 # that required filling in a blank (vs. completing a word fragment). Prior to
 # 2/15/2019, these responses were indexed not with a "step_title" value of 
 # "scenario", but with a "step_title" value of the scenario's title, which 
@@ -168,57 +162,66 @@ write.csv(question2, "./temp_cleaning/angular_training_question2.csv", row.names
 
 scenario_titles <- 
   c(unique(data$angular_training[data$angular_training$step_title == 
-                                 "scenario", ]$stimulus_name), "pub")
+                                   "scenario", ]$stimulus_name), "pub")
 
 rows2 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
                                  (data$angular_training$step_title == "scenario" |
-                                    data$angular_training$step_title %in% scenario_titles), ]
+                                    data$angular_training$step_title %in% 
+                                      scenario_titles), ]
 
-table(rows2$conditioning)
-table(rows2$session)
-
-# Henry says that this criterion reflects participants' responses to the Quick
-# Thinking Exercise (also called Flexible Thinking Exercise). Not all rows have 
-# "step_title" of "Exercise: Quick Thinking" due to a programming error.
+# 3. Henry Behan said that this criterion reflects participants' responses to 
+# the Quick Thinking Exercise (also called Flexible Thinking Exercise). 
 
 rows3 <- data$angular_training[data$angular_training$stimulus_name == 
                                  "flex_thinking_explanations", ]
 
-table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have gotten this
-
-View(rows3[rows3$participant_id %in% data$study[data$study$study_extension == "", ]$participant_id, ])
-
-table(rows3$session) # TODO: How do we know what session "flexible_thinking" is for? Asked Henry 1/14/2021.
-
-View(rows3[rows3$session == "flexible_thinking", ])
-
-table(rows3$step_title)
 table(rows3$trial_type)
 
-# Henry says these criteria reflect scenarios created by participants in the
-# Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of the 
-# TET study. However, one admin/test account ("participant_id" == 8) in the 
-# "CONTROL" condition also appears to have completed this task.
+# Note that later data cleaning will address these issues: (a) not all rows have 
+# "step_title" of "Exercise: Quick Thinking" due to a programming error, (b) some 
+# Calm Thinking participants appear to have completed this task, and (c) for 
+# "CONTROL" participants, "session" is populated by "flexible_thinking", so the
+# session number is unclear.
 
-rows4_training_create <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
-                                 data$angular_training$conditioning == "TRAINING_CREATE" &
-                                 data$angular_training$stimulus_name == "" &
-                                 data$angular_training$step_title == "", ]
+table(rows3$step_title)
 
-rows4_all_conditions <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
-                                           data$angular_training$stimulus_name == "" &
-                                           data$angular_training$step_title == "", ]
+table(rows3$conditioning)
+
+table(rows3$session)
+table(rows3[rows3$session == "flexible_thinking", ]$conditioning)
+
+# 4. Henry Behan said these criteria reflect scenarios created by participants 
+# in the Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of 
+# the TET study.
+
+rows4_training_create <- data$angular_training[data$angular_training$trial_type == 
+                                                 "FillInBlank" &
+                                                 data$angular_training$conditioning == 
+                                                   "TRAINING_CREATE" &
+                                                 data$angular_training$stimulus_name == 
+                                                   "" &
+                                                 data$angular_training$step_title == 
+                                                   "", ]
+
+# However, one admin/test account in "CONTROL" also appears to have completed 
+# this task, so we cannot restrict to "TRAINING_CREATE" for deidentification.
+
+rows4_all_conditions <- data$angular_training[data$angular_training$trial_type == 
+                                                "FillInBlank" &
+                                                data$angular_training$stimulus_name == 
+                                                  "" &
+                                                data$angular_training$step_title == 
+                                                  "", ]
 
 table(rows4_all_conditions$conditioning)
 
-# Henry says this criterion reflects participants' explanations as to why the
-# they created occurred in the Write Your Own Scenario exercise in the
+# 5. Henry Behan said this criterion reflects participants' explanations as to 
+# why the they created occurred in the Write Your Own Scenario exercise in the
 # "TRAINING_CREATE" condition of the TET study
 
 rows5 <- data$angular_training[data$angular_training$stimulus_name == 
                                  "training_create_explanations", ]
 
-table(rows5$conditioning)
 table(rows5$trial_type)
 
 # Confirm no rows remain unaccounted for
@@ -226,7 +229,8 @@ table(rows5$trial_type)
 ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
 
 remaining <- data$angular_training[!(data$angular_training$id %in% ignored_ids) &
-                             data$angular_training$trial_type == "FillInBlank", ]
+                                     data$angular_training$trial_type == 
+                                       "FillInBlank", ]
 
 nrow(remaining) == 0
 
