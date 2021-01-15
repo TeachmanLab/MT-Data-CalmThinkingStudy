@@ -1326,8 +1326,7 @@ write.csv(question2, "./temp_cleaning/angular_training_question2.csv",
 # 2/15/2019, these responses were indexed not with a "step_title" value of 
 # "scenario", but with a "step_title" value of the scenario's title, which 
 # subsequently was stored in "stimulus_name". Among the scenario titles prior 
-# to this change was "pub"; three admin/test accounts completed this scenario,
-# but it does not appear to have been used again after this change.
+# to this change was "pub"; after this change, "pub" was renamed to "bar".
 
 scenario_titles <- 
   c(unique(data$angular_training[data$angular_training$step_title == 
