@@ -167,23 +167,6 @@ unused_tables <- c(unused_tables, "imagery_prime", "impact_anxious_imagery")
 system_tables <- c("export_log", "id_gen", "import_log", "password_token",
                    "random_condition", "visit")
 
-# TODO: Decide whether to retain "js_psych_trial", which contains information 
-# about user activity during RR measure. Dan said retaining "js_psych_trial" may
-# cause confusion because we switched to "angular_training" for RR user activity
-# data in 7/2020 (6 r01 partiicpnats have RR data there). Will ask rest of team
-# for input about whether to retain this table with clear documentation in code
-# book that its data is not comparable to RR user data in "angular_training" or
-# to remove this table (and RR user data in "angular_training" from pipeline).
-
-
-
-
-
-
-
-
-
-
 # Remove tables
 
 data <- data[!(names(data) %in% c(unused_tables, system_tables))]
