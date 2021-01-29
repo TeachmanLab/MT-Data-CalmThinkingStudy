@@ -412,16 +412,16 @@ unused_columns <- paste0(c("angular_training", "anxiety_identity",
                          "$tag")
 
 # The following "how_learn_other" columns in "evaluation" are not used in the 
-# R01, TET, or GIDI studies and because the "how_learn_other" item was moved to 
-# the demographics measure before R01 study launch. The item is called 
-# "ptp_reason_other" in the "demographics" table. The two columns below contain
-# no data and can be removed.
+# Calm Thinking, TET, or GIDI studies because the "how_learn_other" item was 
+# moved to the demographics measure before Calm Thinking study launch. The item 
+# is called "ptp_reason_other" in the "demographics" table. The two columns 
+# below contain no data and can be removed.
 
 unused_columns <- c(unused_columns, "evaluation$how_learn_other",
                     "evaluation$how_learn_other_link")
 
-# The following columns are also not used in the R01, TET, or GIDI studies and
-# contain no data. They can be removed.
+# The following columns are also not used in the Calm Thinking, TET, or GIDI 
+# studies and contain no data. They can be removed.
 
 unused_columns <- c(unused_columns, "angular_training$study",
                     "mental_health_history$other_help_text",
@@ -430,9 +430,11 @@ unused_columns <- c(unused_columns, "angular_training$study",
                     "reasons_for_ending$other_why_in_control",
                     "sms_log$type")
 
-# TODO: Waiting to address this until Henry updates the codebook
+# TODO: Asked Henry/Anna about this column on 1/29/21, which is not in the
+# codebook.
 
 # action_log$action_value     , class logical,     has all rows == NA
+
 
 
 
@@ -783,7 +785,7 @@ key_columns <- c("participant_id", "study_id", "id", "X")
 timepoint_columns <- c("session", "session_name", "tag")
 date_columns <- c("date", "date_created", "date_sent")
 duration_columns <- c("time_on_page")
-log_columns <- c("device", "exception", "successful")
+log_columns <- c("device", "exception", "successful", "task_name")
 
 # Define other columns that have the same names across the indicated tables but 
 # that have different meanings or possible values
@@ -847,11 +849,6 @@ find_repeated_column_names(data, ignored_columns)
 # TODO: Review the output for remaining columns above and ensure any shared 
 # column names that are expected to have the same values do indeed have the 
 # same values for a given "participant_id". Remaining columns:
-
-# [1] "action_log: task_name     is also in     task_log"
-
-# TODO: Waiting for Henry to complete codebook before addressing this. Asked him 
-# to complete codebook on 1/3/2021.
 
 
 
