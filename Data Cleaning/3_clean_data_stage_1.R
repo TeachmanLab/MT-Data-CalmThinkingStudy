@@ -15,6 +15,17 @@
 
 
 
+# TODO: Review Changes and Issues Log and consider whether other changes are
+# needed
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Notes ----
 # ---------------------------------------------------------------------------- #
@@ -934,10 +945,29 @@ if (all(data$study[data$study$participant_id %in%
 
 
 
-
 # ---------------------------------------------------------------------------- #
 # Part II. Filter Data for Desired Study ----
 # ---------------------------------------------------------------------------- #
+
+# ---------------------------------------------------------------------------- #
+# Identify number of participants who attempted screening for study ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: For Calm Thinking, need to determine this based on unique "session_id" 
+# in "dass21_as" for the date range for the study before filtering data below
+# based on "participant_id" because only those eligible get a "participant_id".
+# Consider both "over18" and DASS-21-AS score when breaking down reason for
+# ineligibility. For TET and GIDI, "oa" needs to be considered in addition to
+# "dass21_as" as the OASIS was added to screening for these studies.
+
+
+
+
+
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # Filter data from "participant" and "study" tables ----
@@ -1036,8 +1066,6 @@ data <- filter_all_data(data, participant_ids)
 # for those studies as needed.
 
 # TODO: Asked Anna on 1/29/21 why "action_log" has no data prior to 9/8/2020.
-
-
 
 
 
@@ -1200,6 +1228,45 @@ update_active_column <- function(data) {
 }
 
 updated_participant_data <- update_active_column(participant_data)
+
+# ---------------------------------------------------------------------------- #
+# Identify repeated screenings ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Identify multiple entries in "dass21_as". Also investigate how "over18"
+# column is used in "dass21_as" and consider multiple entries there. Note that
+# data have already been filtered to participants enrolled in Calm Thinking, 
+# meaning that ineligible participants have already been excluded. Identify
+# eligible participants with repeated screenings and how many repeats each has.
+
+
+
+
+
+
+
+
+
+
+# TODO: Deal with Sonia's code below. Keeping for reference for now.
+
+
+
+
+
+
+
+
+
+
+# Handle special case of DASS
+
+# For participant who have duplication in dass21As we keep the last entry
+
+# eligible <- filter(participant_data$dass21AS, session == "ELIGIBLE")
+# eligible <- eligible[!rev(duplicated(rev(eligible[, c("participantID")]))), ]
+# other <- filter(participant_data$dass21AS, session != "ELIGIBLE")
+# participant_data$dass21AS <- rbind(eligible, other)
 
 
 
@@ -1642,19 +1709,6 @@ remove_duplicates <- function(data) {
 # based on the id show the duplication in tables
 
 participant_data_no_duplication <- remove_duplicates(participant_data)
-
-# ---------------------------------------------------------------------------- #
-# INSERT HEADING ----
-# ---------------------------------------------------------------------------- #
-
-# Handle special case of DASS
-
-# For participant who have duplication in dass21As we keep the last entry
-
-# eligible <- filter(participant_data$dass21AS, session == "ELIGIBLE")
-# eligible <- eligible[!rev(duplicated(rev(eligible[, c("participantID")]))), ]
-# other <- filter(participant_data$dass21AS, session != "ELIGIBLE")
-# participant_data$dass21AS <- rbind(eligible, other)
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
