@@ -1035,6 +1035,17 @@ data <- filter_all_data(data, participant_ids)
 # may not be relevant to the TET and GIDI studies and will need to be revised
 # for those studies as needed.
 
+# TODO: Asked Anna on 1/29/21 why "action_log" has no data prior to 9/8/2020.
+
+
+
+
+
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # Add participant information ----
 # ---------------------------------------------------------------------------- #
