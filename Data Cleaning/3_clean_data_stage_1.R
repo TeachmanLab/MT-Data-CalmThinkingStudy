@@ -423,18 +423,13 @@ unused_columns <- c(unused_columns, "evaluation$how_learn_other",
 # The following columns are also not used in the Calm Thinking, TET, or GIDI 
 # studies and contain no data. They can be removed.
 
-unused_columns <- c(unused_columns, "angular_training$study",
+unused_columns <- c(unused_columns, "action_log$action_value",
+                    "angular_training$study",
                     "mental_health_history$other_help_text",
                     "participant$random_token",
                     "participant$return_date",
                     "reasons_for_ending$other_why_in_control",
                     "sms_log$type")
-
-# TODO: Asked Henry/Anna about this column on 1/29/21, which is not in the
-# codebook.
-
-# action_log$action_value     , class logical,     has all rows == NA
-
 
 
 
