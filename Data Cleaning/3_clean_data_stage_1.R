@@ -182,7 +182,6 @@ data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
 
 
-
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -431,15 +430,6 @@ unused_columns <- c(unused_columns, "action_log$action_value",
                     "reasons_for_ending$other_why_in_control",
                     "sms_log$type")
 
-
-
-
-
-
-
-
-
-
 # TODO: Dan said that the following columns are redacted and should be. Indicate
 # that these are redacted.
 
@@ -504,32 +494,19 @@ find_blank_columns(data, ignored_columns)
 
 # Define function to remove irrelevant columns
 
-# TODO: Fix function below. Says there are undefined columns selected. May
-# have something to do with the line with the NULL.
-
-
-
-
-
-
-
-
-
-
 remove_columns <- function(data, columns_to_remove) {
   output <- vector("list", length(data))
   
   for (i in 1:length(data)) {
+    output[[i]] <- data[[i]]
+    
     for (j in 1:length(data[[i]])) {
       table_i_name <- names(data[i])
       column_j_name <- names(data[[i]][j])
       table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
       
       if (table_i_column_j_name %in% columns_to_remove) {
-        data[[i]][j] <- NULL
-        output[[i]] <- data[[i]]
-      } else {
-        output[[i]] <- data[[i]]
+        output[[i]] <- output[[i]][, !(names(output[[i]]) %in% column_j_name)]
       }
     }
   }
