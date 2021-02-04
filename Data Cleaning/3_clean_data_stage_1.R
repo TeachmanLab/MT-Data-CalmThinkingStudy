@@ -954,11 +954,97 @@ if (all(data$study[data$study$participant_id %in%
 # ---------------------------------------------------------------------------- #
 
 # TODO: For Calm Thinking, need to determine this based on unique "session_id" 
-# in "dass21_as" for the date range for the study before filtering data below
-# based on "participant_id" because only those eligible get a "participant_id".
-# Consider both "over18" and DASS-21-AS score when breaking down reason for
-# ineligibility. For TET and GIDI, "oa" needs to be considered in addition to
-# "dass21_as" as the OASIS was added to screening for these studies.
+# in "dass21_as" where "session" is "" or "ELIGIBLE" for the date range of 
+# enrollment during the true launch period (i.e., 3/18/2019-4/6/2020) of the 
+# study (exclude the soft launch; i.e., before 3/18/2019) before filtering data 
+# below based on "participant_id" because only eligible participants are given
+# a "participant_id". Consider both "over18" and DASS-21-AS score when breaking 
+# down reason for ineligibility. For TET and GIDI, "oa" needs to be considered 
+# in addition to "dass21_as" as OASIS was added to screening for these studies.
+
+# TODO: Filter by date range, so far for Calm Thinking. Generalize this to other
+# studies and revise if "date" column is reformatted above.
+
+first_attempt_id <- min(data$dass21_as[(data$dass21_as$session == "" |
+                                         data$dass21_as$session == "ELIGIBLE") &
+                                         grepl("2019-03-18", data$dass21_as$date),
+                                       "id"])
+last_attempt_id <- max(data$dass21_as[(data$dass21_as$session == "" |
+                                         data$dass21_as$session == "ELIGIBLE") &
+                                        grepl("2020-04-06", data$dass21_as$date), 
+                                      "id"])
+
+dass21_as_calm_screens <- 
+  data$dass21_as[(data$dass21_as$session == "" |
+                    data$dass21_as$session == "ELIGIBLE") &
+                   data$dass21_as$id >= first_attempt_id &
+                   data$dass21_as$id <= last_attempt_id, ]
+
+
+
+
+
+
+
+
+
+
+# TODO: There are an unreasonable number of unique session_ids. On 12/6/2019,
+# many entries have "time_on_page" of exactly 1 or 10, but none of these got a
+# "participant_id". Remove these entries. Asked Henry/Sonia on 2/4/21 if they
+# know of other cases of bots or other bot checks we should do.
+
+length(unique(dass21_as_calm_screens$session_id))
+
+dass21_as_calm_screens$date_no_time <- sub(" .*", "", dass21_as_calm_screens$date)
+
+summary <- dass21_as_calm_screens %>% 
+  group_by(date_no_time) %>% 
+  summarise(count=n())
+
+head(summary[order(summary$count, decreasing = TRUE), ])
+
+table(dass21_as_calm_screens[dass21_as_calm_screens$date_no_time == "2019-12-06", 
+                             ]$time_on_page)
+
+table(dass21_as_calm_screens[dass21_as_calm_screens$time_on_page == 
+                               round(dass21_as_calm_screens$time_on_page, 0), 
+                             "time_on_page"])
+
+table(dass21_as_calm_screens[dass21_as_calm_screens$date_no_time == "2019-12-06" &
+                               (dass21_as_calm_screens$time_on_page == 1 |
+                                  dass21_as_calm_screens$time_on_page == 10), 
+                             "participant_id"])
+
+dass21_as_calm_screens2 <- 
+  dass21_as_calm_screens[!(dass21_as_calm_screens$date_no_time == "2019-12-06" &
+                             (dass21_as_calm_screens$time_on_page == 1 |
+                                dass21_as_calm_screens$time_on_page == 10)), ]
+
+nrow(dass21_as_calm_screens)
+nrow(dass21_as_calm_screens2)
+
+
+
+
+
+
+
+
+
+
+# TODO: Investigate number of repeated attempts among all attempters
+
+
+
+
+
+
+
+
+
+
+# TODO: Investigate number of repeated attempts among those eligible
 
 
 
