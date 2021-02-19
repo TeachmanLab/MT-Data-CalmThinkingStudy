@@ -991,8 +991,8 @@ dass21_as_calm_screens <-
 
 # TODO: There are an unreasonable number of unique session_ids. On 12/6/2019,
 # many entries have "time_on_page" of exactly 1 or 10, but none of these got a
-# "participant_id". Remove these entries. Asked Henry/Sonia on 2/4/21 if they
-# know of other cases of bots or other bot checks we should do.
+# "participant_id". Remove these entries (so far done just in the R object 
+# below, need to apply to actual dataset)
 
 length(unique(dass21_as_calm_screens$session_id))
 
@@ -1033,7 +1033,37 @@ nrow(dass21_as_calm_screens2)
 
 
 
-# TODO: Investigate number of repeated attempts among all attempters
+# TODO: Score DASS-21-AS and compute "anxiety_eligible" variable, first recoding 
+# 555 as NA. Take mean of available items, multiply by 7 to get total score, and
+# then multiply by 2 to interpret (10 or higher is eligible).
+
+dass21_as_items <- c("bre", "dry", "hea", "pan", "sca", "tre", "wor")
+
+sum(dass21_as_calm_screens2[, dass21_as_items] == 555)
+dass21_as_calm_screens2[, dass21_as_items][dass21_as_calm_screens2[, dass21_as_items] == 
+                                     555] <- NA
+sum(is.na(dass21_as_calm_screens2[, dass21_as_items]))
+
+dass21_as_calm_screens2$dass21_as_total <- 
+  rowMeans(dass21_as_calm_screens2[ , dass21_as_items], na.rm = TRUE)*7
+sum(is.na(dass21_as_calm_screens2$dass21_as_total) | 
+      is.nan(dass21_as_calm_screens2$dass21_as_total))
+
+dass21_as_calm_screens2$dass21_as_total_interp <- dass21_as_calm_screens2$dass21_as_total*2
+sum(is.na(dass21_as_calm_screens2$dass21_as_total_interp) | 
+      is.nan(dass21_as_calm_screens2$dass21_as_total_interp))
+
+for (i in 1:nrow(dass21_as_calm_screens2)) {
+  if (is.na(dass21_as_calm_screens2$dass21_as_total_interp[i])) {
+    dass21_as_calm_screens2$dass21_as_eligible[i] <- 0
+  } else if (dass21_as_calm_screens2$dass21_as_total_interp[i] < 10) {
+    dass21_as_calm_screens2$dass21_as_eligible[i] <- 0
+  } else if(dass21_as_calm_screens2$dass21_as_total_interp[i] >= 10) {
+    dass21_as_calm_screens2$dass21_as_eligible[i] <- 1
+  }
+}
+
+View(dass21_as_calm_screens2[order(dass21_as_calm_screens2$participant_id), ])
 
 
 
@@ -1044,7 +1074,109 @@ nrow(dass21_as_calm_screens2)
 
 
 
-# TODO: Investigate number of repeated attempts among those eligible
+# TODO: 394 participants attempted more than once. 96 of these participants 
+# ultimately were eligible and enrolled (i.e., got participant_id); 83 had 2 
+# attempts, 8 had 3 attempts, 3 had 4 attempts, 1 had 6 attempts, and 1 had 7 
+# attempts, for a total of 215 attempts for 96 enrolled participants.
+
+summary_session_id <- dass21_as_calm_screens2 %>% 
+  group_by(session_id) %>% 
+  summarise(count=n())
+
+length(summary_session_id[summary_session_id$count > 1, ]$session_id)
+
+summary_participant_id <- dass21_as_calm_screens2 %>% 
+  group_by(participant_id) %>% 
+  summarise(count=n())
+
+length(summary_participant_id[summary_participant_id$count > 1 &
+                                !is.na(summary_participant_id$participant_id), ]$participant_id)
+table(summary_participant_id[summary_participant_id$count > 1 &
+                               !is.na(summary_participant_id$participant_id), ]$count)
+
+reattempters <- 
+  summary_participant_id[summary_participant_id$count > 1 &
+                           !is.na(summary_participant_id$participant_id), ]$participant_id
+
+View(dass21_as_calm_screens2[dass21_as_calm_screens2$participant_id %in% reattempters, ])
+
+nrow(dass21_as_calm_screens2[dass21_as_calm_screens2$participant_id %in% reattempters, ])
+
+# However, only 179 of the 215 attempts are unique on key columns. Out of these
+# 179 attempts with unique key values (from the 96 enrolled participants), 156
+# represent multiple attempts (by 73 participants): 67 had 2 attempts, 4 had 3
+# attempts, 1 had 4 attempts, and 1 had 6 attempts.
+
+selected_nondup <- unique(dass21_as_calm_screens2[dass21_as_calm_screens2$participant_id %in% reattempters,
+                                  c("participant_id", 
+                                    "date", 
+                                    dass21_as_items, 
+                                    "over18",
+                                    "dass21_as_total",
+                                    "dass21_as_total_interp",
+                                    "dass21_as_eligible")])
+
+nrow(selected_nondup)
+length(unique(selected_nondup$participant_id))
+
+summary_participant_id_nondup <- 
+  selected_nondup %>% 
+  group_by(participant_id) %>% 
+  summarise(count=n())
+
+length(summary_participant_id_nondup[summary_participant_id_nondup$count > 1, ]$participant_id)
+table(summary_participant_id_nondup[summary_participant_id_nondup$count > 1 &
+                                      !is.na(summary_participant_id_nondup$participant_id), ]$count)
+67*2 + 4*3 + 1*4 + 1*6
+
+nondup_reattempters <- 
+  summary_participant_id_nondup[summary_participant_id_nondup$count > 1 &
+                           !is.na(summary_participant_id_nondup$participant_id), ]$participant_id
+
+selected_nondup_reattempters <- selected_nondup[selected_nondup$participant_id %in% nondup_reattempters, ]
+
+# TODO: See how many in selected_nondup_reattempters are versus are not cases of
+# multiple attempts on the exact same date. Asked Dan about this on 2/18/21. 
+
+View(selected_nondup_reattempters)
+
+summary_participant_id_date_nondup <- 
+  selected_nondup_reattempters %>% 
+  group_by(participant_id, date) %>% 
+  summarise(count=n())
+
+any_same_date <- 
+  unique(summary_participant_id_date_nondup[summary_participant_id_date_nondup$count > 1, 
+                                            ]$participant_id)
+selected_nondup_reattempters_any_same_date <- 
+  selected_nondup_reattempters[selected_nondup_reattempters$participant_id %in% any_same_date, ]
+View(selected_nondup_reattempters_any_same_date)
+
+write.csv(selected_nondup_reattempters_any_same_date, "./temp_cleaning/all_same_date.csv")
+
+summary_participant_id_date_nondup_any_same_date <- 
+  selected_nondup_reattempters_any_same_date %>% 
+  group_by(participant_id, date) %>% 
+  summarise(count=n())
+
+length(unique(summary_participant_id_date_nondup_any_same_date$participant_id))
+
+no_same_date <- setdiff(selected_nondup$participant_id, any_same_date)
+selected_nondup_reattempters_no_same_date <- 
+  selected_nondup_reattempters[selected_nondup_reattempters$participant_id %in% no_same_date, ]
+View(selected_nondup_reattempters_no_same_date)
+
+write.csv(selected_nondup_reattempters_no_same_date, "./temp_cleaning/no_same_date.csv")
+
+summary_participant_id_date_nondup_no_same_date <- 
+  selected_nondup_reattempters_no_same_date %>% 
+  group_by(participant_id, date) %>% 
+  summarise(count=n())
+
+length(unique(summary_participant_id_date_nondup_no_same_date$participant_id))
+
+
+
 
 
 
