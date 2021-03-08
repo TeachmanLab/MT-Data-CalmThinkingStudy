@@ -1183,10 +1183,6 @@ length(unique(summary_participant_id_date_nondup_no_same_date$participant_id))
 
 
 
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Filter data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -2146,3 +2142,19 @@ View(filter(data$taskLog, systemID == 412))
 
 View(filter(data$participant, participantID == 577))
 View(filter(data$taskLog, systemID == 577)) # Evaluation and assessing program are not done
+
+# ---------------------------------------------------------------------------- #
+# Write clean data files ----
+# ---------------------------------------------------------------------------- #
+
+# Create folder for clean data
+
+dir.create("./data/clean")
+
+# Write CSV files to clean data folder
+
+for (i in 1:length(data)) {
+  write.csv(data[[i]], 
+            paste0("./data/clean/", names(data[i]), ".csv"),
+            row.names = FALSE)
+}
