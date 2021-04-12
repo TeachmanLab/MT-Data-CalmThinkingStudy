@@ -6,6 +6,7 @@ setwd(raw_data_dir)
 library(dplyr) # Load package
 library(reshape2)
 library(plyr)
+library(waldo)
 library(data.table)
 require(lubridate)
 library(anytime)
@@ -148,7 +149,11 @@ get_study_participants = function(data, study_name){
   else if(study_name == "R01"){
     tmp = filter(participant_study_tables, (study_extension != "TET")&(study_extension != "GIDI"))
   }
-  return(tmp)
+  
+  last_entry_taskLog = data$task_log[!rev(duplicated(rev(data$task_log$systemID))),]
+  task_log_Ids = last_entry_taskLog$systemID
+  tmp2 = filter(tmp, systemID %in% task_log_Ids)
+  return(tmp2)
 }
 #---------------------------
 #---------------------------
@@ -245,9 +250,14 @@ add_days_since_task_column = function(data){
   daysSinceSession = as.Date(as.character(Sys.Date()), format = "%Y-%m-%d") -
     as.Date(as.character(data$study$last_session_date), format="%Y-%m-%d")
   
+  last_entry_taskLog = data$task_log[!rev(duplicated(rev(data$task_log$systemID))),]
+  daysSinceCompleted = as.Date(as.character(Sys.Date()), format = "%Y-%m-%d") -
+    as.Date(as.character(last_entry_taskLog$date_completed), format="%Y-%m-%d")
+  
   
   participant = mutate(data$participant, days_since_task = daysSinceTask)
   participant = mutate(participant, days_since_session = daysSinceSession)
+  participant = mutate(participant, days_since_completed = daysSinceCompleted)
   data$participant = participant
   return(data)
 }
@@ -260,125 +270,211 @@ names(participant_data_with_inactivity_days$participant)
 
 
 #---------------------------
-# 1. add a new column for checking the actual active column and the calculated column
-# 2. update the calculated_active column of those that have the inactivity threshold ~21
+# 1. report the number of completed sessions and not completed sessions 
+# 2. tasklog, study, participants tables are involved
 #---------------------------
-calculated_active_retention_clm = function(data, inactivity_threshold){
-  
-  data = participant_data_with_inactivity_days
-  participant_study_table = left_join(data$participant, data$study, by = c("systemID"))
-  
+completed_session_report = function(data){
+  # data = participant_data_with_inactivity_days
+  #sessions
+  sessionList = c("Eligibility", "preTest", "firstSession", "secondSession", 
+    "thirdSession", "fourthSession", "fifthSession",
+    "PostFollowUp", "COMPLETE")
+  #extract the last entry of the task log for all of the participants
+  last_entry_taskLog = data$task_log[!rev(duplicated(rev(data$task_log$systemID))),]
+  #mereg tasklog with the participant table 
+  taskLog_participant_data = left_join(data$participant, last_entry_taskLog, by = c("systemID"))
+  #study table for checking the current session of the 
+  study = data$study
   #order the sessions of the study
-  participant_study_table$session = factor(participant_study_table$current_session,
-                                           levels = c("preTest", "firstSession", "secondSession", 
+  taskLog_participant_data$session = factor(taskLog_participant_data$session,
+                                           levels = c("Eligibility", "preTest", "firstSession", "secondSession", 
                                                       "thirdSession", "fourthSession", "fifthSession",
                                                       "PostFollowUp", "COMPLETE"), ordered = TRUE)
-  
-  waiting_time = c("preTest" = 0, "firstSession" = 5 , "secondSession" = 5, "thirdSession" = 5, 
-                   "fourthSession" = 5, "fifthSession" = 60)
-  
-  waitingSessionList = names(waiting_time)
-  participant_study_table$calculated_active = -1
-  for(session in waitingSessionList){
-    wait_days = waiting_time[[session]]
-    inactivity_duration = inactivity_threshold + wait_days
-    
-    # we automatically move them to the next session after completing the current session
-    # the current_task_index remain 0 until they start that session
-    current_session_idx = which(levels(participant_study_table$session) == session)
-    next_session = levels(participant_study_table$session)[current_session_idx + 1]
-    
-    # therefore those that didn't start the session for specified duration, we consider them as inactive participants
-    participant_study_table[which(participant_study_table$session == next_session & 
-                                    participant_study_table$current_task_index == 0 & 
-                                    (participant_study_table$days_since_session > inactivity_duration |
-                                       participant_study_table$days_since_task > inactivity_duration)),]$calculated_active = 0
+  for(session in sessionList){
+    cat("--------------------------------\n")
+    cat("--------------------------------\n")
+    cat("---------", session, "----------\n")
+    cat("--------------------------------\n")
+    current_session_idx = which(levels(taskLog_participant_data$session) == session)
+    next_session = levels(taskLog_participant_data$session)[current_session_idx + 1]
+    if(session == "Eligibility"){
+      tmp_tasklog_completed = taskLog_participant_data[which(taskLog_participant_data$session == session ),
+                                                       c('participantID', 'systemID','session', 'task_name', 'date_completed', 'active')]
+      cat("--------------------------------\n")
+      cat(n_distinct(tmp_tasklog_completed$systemID), " number of participants completed at session:", session, "\n")
+      tmp_study = study[which(study$current_session == next_session & study$current_task_index == 0),]
+      cat("--------------------------------\n")
+      cat(n_distinct(tmp_study$systemID), " number of participants did not start task session: ", next_session, "\n")
+      cat("--------------------------------\n")
+      diff_ids = c()
+      if(dim(tmp_tasklog_completed)[1] > dim(tmp_study)[1]){
+        diff_ids = setdiff(tmp_tasklog_completed$systemID, tmp_study$systemID)
+      }
+      else{
+        diff_ids = setdiff(tmp_study$systemID, tmp_tasklog_completed$systemID)
+      }
+      if(length(diff_ids) > 0){
+        tmp_study_ids = filter(data$study, systemID %in% diff_ids)
+        tmp_tasklog_ids = filter(last_entry_taskLog, systemID %in% diff_ids)
+        cat(unique(tmp_study_ids$systemID), " participants have issues\n")
+        cat("--------------------------------\n")
+        print(tmp_study_ids)
+        cat("Tasklog information for >>>", unique(tmp_tasklog_ids$systemID), "participants\n")
+        cat("--------------------------------")
+        print(tmp_tasklog_ids)
+      }
+    }
+    else{
+      tmp_tasklog_completed = taskLog_participant_data[which(taskLog_participant_data$session == session & 
+                                                               taskLog_participant_data$task_name == 'SESSION_COMPLETE'),c('participantID', 'systemID','session', 'task_name', 'date_completed', 'active')]
+      cat("--------------------------------\n")
+      cat(n_distinct(tmp_tasklog_completed$systemID), " number of participants completed at session:", session, "\n")
+      tmp_tasklog_NOT_completed = taskLog_participant_data[which(taskLog_participant_data$session == session & 
+                                                                   taskLog_participant_data$task_name != 'SESSION_COMPLETE'),c('participantID', 'systemID','session', 'task_name', 'date_completed', 'active')]
+      cat("--------------------------------\n")
+      cat(n_distinct(tmp_tasklog_NOT_completed$systemID), " number of participants NOT completed at session:", session, "\n")
+      tmp_study = study[which(study$current_session == next_session & study$current_task_index == 0),]
+      cat("--------------------------------\n")
+      cat(n_distinct(tmp_study$systemID), " number of participants did not start task at session: ", next_session, "\n")
+      diff_ids = c()
+      if(dim(tmp_tasklog_completed)[1] > dim(tmp_study)[1]){
+        diff_ids = setdiff(tmp_tasklog_completed$systemID, tmp_study$systemID)}
+      else{
+        diff_ids = setdiff(tmp_study$systemID, tmp_tasklog_completed$systemID)}
+      if(length(diff_ids) > 0){
+        tmp_study_ids = filter(data$study, systemID %in% diff_ids)
+        tmp_tasklog_ids = filter(last_entry_taskLog, systemID %in% diff_ids)
+        cat(unique(tmp_study_ids$systemID), " participants have issues\n")
+        cat("--------------------------------\n")
+        print(tmp_study_ids)
+        cat("Tasklog information for >>>", unique(tmp_tasklog_ids$systemID), "participants\n")
+        cat("--------------------------------")
+        print(tmp_tasklog_ids)
+      }
+    }
   }
-  
-  data$study_participant = participant_study_table
-  return(data)
+  return("done")
 }
 #---------------------------
 #---------------------------
-participant_active_retention = calculated_active_retention_clm(participant_data_with_inactivity_days, 21)
-cat("the columns of participant table:")
-names(participant_active_retention)
-table(participant_active_retention$study_participant$calculated_active)
+completed_session_report(participant_data_with_inactivity_days)
 #---------------------------
 
 
+#---------------------------
+# 1. add a new column for completed a session
+# 2. if the task_name of the taskLog is session_complete we automatically move them to the next session with task_index = 0
+# 3. attrtion dropout means if they did not finish dropout_session
+# 4. select participant whose condition is 
+#---------------------------
+session_dropout = function(data, dropout_session){
+  
+  data = participant_data_with_inactivity_days
+  #extract the last entry of the task log for all of the participants
+  last_entry_taskLog = data$task_log[!rev(duplicated(rev(data$task_log$systemID))),]
+  #mereg tasklog with the participant table 
+  taskLog_participant_data = left_join(data$participant, last_entry_taskLog, by = c("systemID"))
+  taskLog_participant_data$session = factor(taskLog_participant_data$session,
+                                            levels = c("Eligibility", "preTest", "firstSession", "secondSession", 
+                                                       "thirdSession", "fourthSession", "fifthSession",
+                                                       "PostFollowUp", "COMPLETE"), ordered = TRUE)
+  
+  current_session_idx = which(levels(taskLog_participant_data$session) == dropout_session)
+  #dropout before starting dropout_session
+  previous_sessions = levels(taskLog_participant_data$session)[1:current_session_idx-1]
+  taskLog_participant_data = mutate(taskLog_participant_data,  prior_dropout = ifelse(session %in% previous_sessions ,1,0))
+  # taskLog_participant_data = mutate(taskLog_participant_data,  prior_dropout = ifelse(session %in% previous_sessions & task_name == 'SESSION_COMPLETE' ,1,0))
+  #dropout during dropout session
+  previous_current_sessions = levels(taskLog_participant_data$session)[1:current_session_idx]
+  taskLog_participant_data = mutate(taskLog_participant_data,  in_dropout = ifelse(session %in% previous_current_sessions & task_name != 'SESSION_COMPLETE' ,1,0))
+  
+  #rename dropout column
+  names(taskLog_participant_data)[names(taskLog_participant_data) == "prior_dropout"] = paste("dropout_prior_", dropout_session , sep="")
+  names(taskLog_participant_data)[names(taskLog_participant_data) == "in_dropout"] = paste("dropout_in_", dropout_session , sep="")
+  
+  # tasklog, study, participant table
+  taskLog_participant_study_data = left_join(taskLog_participant_data, data$study, by = c("systemID"))
+  
+  #select participants of attrition algorithm 
+  attrition_condition = c("TRAINING", "NONE", "LR_TRAINING", "HR_NO_COACH", "HR_COACH")
+  attrition_participants_data = taskLog_participant_study_data[which(taskLog_participant_study_data$conditioning %in% attrition_condition),]
+  
+  #completed session and not completed session
+  return(attrition_participants_data)
+}
 #---------------------------
 # calculate session based dropout
 # the number of participant who drop out in the selected session and add coresponding column
-dropout_per_session = function(data, dropout_session = ""){
-  
-  #data = participant_data_with_inactivity_days
-  participant_study_table = data$study_participant
-  
-  #order the sessions of the study
-  participant_study_table$session = factor(participant_study_table$session,
-                                           levels = c("preTest", "firstSession", "secondSession", 
-                                                      "thirdSession", "fourthSession", "fifthSession",
-                                                      "PostFollowUp", "COMPLETE"), ordered = TRUE)
-  
-  #select participants of attrition algorithm 
-  attrition_condition = c("TRAINING", "NONE", "LR_TRAINING", "HR_NO_COACH")
-  attrition_participants = participant_study_table[which(participant_study_table$conditioning %in% attrition_condition),]
-  
-  #overall attrition 
-  attrition_participants = mutate(attrition_participants, 
-                                  dropout = 
-                                    factor(ifelse(attrition_participants$session == "PostFollowUp" & active == 1, 0, 1)))
-  
-  attrition_participants = mutate(attrition_participants, 
-                                  dropout_calculated = 
-                                    factor(ifelse(attrition_participants$session == "PostFollowUp" & calculated_active == 1, 0, 1)))
-  
-  
-  #select data of previous sessions of the selectes session
-  #attrition_session_participants = attrition_participants[which(attrition_participants$session <= session),]
-  
-  
-  #sessionList = unique(attrition_participants$session)
-  current_session_idx = which(levels(participant_study_table$session) == dropout_session)
-  next_session = levels(participant_study_table$session)[current_session_idx + 1]
-  
-  dropout_participant = mutate(attrition_participants, 
-                               dropout_column_active = 
-                                 factor(ifelse(attrition_participants$session == next_session & 
-                                                 attrition_participants$current_task_index == 0 & 
-                                                 active == 0, 
-                                               1, 0)))
-  
-  dropout_participant = mutate(dropout_participant, 
-                               dropout_column_calculated_active = 
-                                 factor(ifelse(dropout_participant$session == next_session & 
-                                                 dropout_participant$current_task_index == 0 & 
-                                                 calculated_active == 0, 
-                                               1, 0)))
-  
-  #rename dropout column
-  names(dropout_participant)[names(dropout_participant) == "dropout_column_active"] = paste("dropout_prior_", dropout_session , sep="")
-  names(dropout_participant)[names(dropout_participant) == "dropout_column_calculated_active"] = paste("dropout_calculated_prior_", dropout_session , sep="")
-  return(dropout_participant)
-}
-#---------------------------
 interested_dropout_session = "secondSession"
-session_dropout = dropout_per_session(participant_active_retention, dropout_session = interested_dropout_session)
-# cat("the columns of participant table:")
-# names(session_dropout)
+labeled_data = session_dropout(participant_data_with_inactivity_days, interested_dropout_session)
 col1 = paste("dropout_prior_", interested_dropout_session , sep="")
-table(session_dropout[col1])
-col2 = paste("dropout_calculated_prior_", interested_dropout_session , sep="")
-table(session_dropout[col2])
+table(labeled_data[col1])
+#---------------------------
+#---------------------------
 
-table(session_dropout$dropout_calculated)
-
+#---------------------------
+# 1. saving the labeled data
+# 2. select the informative columns
+#---------------------------
+slc_columns = c("systemID", "participantID", 
+                "conditioning", "current_session",
+                "dropout_prior_secondSession", "dropout_in_secondSession")
+attrition_labeled_data = labeled_data[slc_columns]
 raw_data_date = unlist(strsplit(filenames[1],split=split_char, fixed=FALSE))[2]
-save_file_name = paste(paste("R01_dropout",raw_data_date, sep = split_char), ".csv", sep = '')
-write.csv(session_dropout, file = save_file_name , row.names = FALSE)
+save_file_name = paste(paste("R01_dropout_based_on_tasklog",raw_data_date, sep = split_char), sep = '')
+write.csv(attrition_labeled_data, file = save_file_name , row.names = FALSE)
 
 
+
+
+
+
+# #---------------------------
+# # 1. add a new column for checking the actual active column and the calculated column
+# # 2. update the calculated_active column of those that have the inactivity threshold ~21
+# #---------------------------
+# calculated_active_retention_clm = function(data, inactivity_threshold){
+#   
+#   data = participant_data_with_inactivity_days
+#   participant_study_table = left_join(data$participant, data$study, by = c("systemID"))
+#   
+#   #order the sessions of the study
+#   participant_study_table$session = factor(participant_study_table$current_session,
+#                                            levels = c("preTest", "firstSession", "secondSession", 
+#                                                       "thirdSession", "fourthSession", "fifthSession",
+#                                                       "PostFollowUp", "COMPLETE"), ordered = TRUE)
+#   
+#   waiting_time = c( "preTest" = 0, "firstSession" = 0 , "secondSession" = 5, "thirdSession" = 5, 
+#                    "fourthSession" = 5, "fifthSession" = 5, "PostFollowUp" = 60)
+#   
+#   waitingSessionList = names(waiting_time)
+#   participant_study_table$calculated_active = 1
+#   for(session in waitingSessionList){
+#     wait_days = waiting_time[[session]]
+#     inactivity_duration = inactivity_threshold + wait_days
+#     
+#     # we automatically move them to the next session after completing the current session
+#     # the current_task_index remain 0 until they start that session
+#     current_session_idx = which(levels(participant_study_table$session) == session)
+#     next_session = levels(participant_study_table$session)[current_session_idx + 1]
+#     
+#     # therefore those that didn't start the session for specified duration, we consider them as inactive participants
+#     participant_study_table[which(participant_study_table$session == next_session & 
+#                                     participant_study_table$current_task_index == 0 & 
+#                                     (participant_study_table$days_since_session > inactivity_duration |
+#                                        participant_study_table$days_since_completed > inactivity_duration)),]$calculated_active = 0
+#   }
+#   
+#   data$study_participant = participant_study_table
+#   return(data)
+# }
+# #---------------------------
+# #---------------------------
+# participant_active_retention = calculated_active_retention_clm(participant_data_with_inactivity_days, 21)
+# cat("the columns of participant table:")
+# names(participant_active_retention)
+# table(participant_active_retention$study_participant$active)
+# #---------------------------
 
 
 
