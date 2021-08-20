@@ -182,17 +182,6 @@ system_tables <- c("export_log", "id_gen", "import_log", "password_token",
 
 data <- data[!(names(data) %in% c(unused_tables, system_tables))]
 
-# TODO: Once this section is complete, consider exporting an R object with the
-# resulting tables and loading it back again to save time
-
-
-
-
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Rename "id" columns in "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -373,6 +362,98 @@ remove_admin_test_accounts <- function(data, admin_test_account_ids) {
 data <- remove_admin_test_accounts(data, admin_test_account_ids)
 
 # ---------------------------------------------------------------------------- #
+# Label redacted columns ----
+# ---------------------------------------------------------------------------- #
+
+# Specify a character vector of columns whose values should be labeled as "REDACTED", 
+# with each column listed as "<table_name>$<column_name>" (e.g., "participant$email"). 
+# If no column is to be labeled as "REDACTED", specify NULL without quotes (i.e., 
+# "redacted_columns <- NULL").
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted but should
+# not be given that they could be useful for analysis. These logical columns
+# have all rows == NA.
+
+unnecessarily_redacted_columns <- c("participant$coached_by_id",
+                                    "participant$first_coaching_format")
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted and should 
+# be. These character columns have all rows == "".
+
+necessarily_redacted_columns <- c("participant$email", "participant$full_name",
+                                  "participant$password")
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted and should 
+# be. These numeric columns have all rows == NA.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$phone", 
+                                  "participant$password_token_id")
+
+# On 1/11/2021, Dan Funk said that the following column is redacted and should 
+# be. This logical column has all rows == NA.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns,
+                                  "participant$verification_code_id")
+
+# On 1/13/2021, Dan Funk said that the following column is redacted and should 
+# be. This character column has all rows == "US", which is its default value in 
+# the Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$award_country_code")
+
+# On 1/13/2021, Dan Funk said that the following column is redacted and should 
+# be. This numeric column has all rows == 0, which is its default value in the 
+# Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$attrition_risk")
+
+# On 1/13/2021, Dan Funk said that the following columns are redacted and should 
+# be. These integer columns have all rows == 0, which is their default value in 
+# the Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$blacklist",
+                                  "participant$can_text_message", 
+                                  "participant$coaching",
+                                  "participant$verified", 
+                                  "participant$wants_coaching")
+
+# Collect all redacted columns
+
+redacted_columns <- c(unnecessarily_redacted_columns, necessarily_redacted_columns)
+
+# Define function to convert redacted columns to characters and label as "REDACTED"
+
+label_redacted_columns <- function(data, redacted_columns) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    output[[i]] <- data[[i]]
+    
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (table_i_column_j_name %in% redacted_columns) {
+        output[[i]][, column_j_name] <- as.character(output[[i]][, column_j_name])
+        output[[i]][, column_j_name] <- "REDACTED"
+      }
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Run function
+
+data <- label_redacted_columns(data, redacted_columns)
+
+# ---------------------------------------------------------------------------- #
 # Remove irrelevant columns ----
 # ---------------------------------------------------------------------------- #
 
@@ -441,63 +522,9 @@ unused_columns <- c(unused_columns, "action_log$action_value",
                     "reasons_for_ending$other_why_in_control",
                     "sms_log$type")
 
-# TODO: Dan said that the following columns are redacted and should be. Indicate
-# that these are redacted.
-
-# participant$email     , class character,     has all rows == ""
-# participant$full_name     , class character,     has all rows == ""
-# participant$password     , class character,     has all rows == ""
-# participant$phone     , class numeric,     has all rows == NA
-# participant$password_token_id     , class numeric,     has all rows == NA
-# participant$verification_code_id     , class logical,     has all rows == NA
-
-
-
-
-
-
-
-
-
-
-
-# TODO: Dan said that the following columns are redacted but shouldn't be. They
-# could be useful for analysis. Indicate this.
-
-# participant$coached_by_id     , class logical,     has all rows == NA
-# participant$first_coaching_format     , class logical,     has all rows == NA
-
-
-
-
-
-
-
-
-
-# TODO: Dan said that the following columns are redacted (no opinion to date on
-# whether they should or shouldn't be). Their default value in the Data Server
-# is not NULL, but the values they take on below. Indicate this.
-
-# participant$attrition_risk = every row is 0
-# participant$award_country_code = every row is US
-# participant$blacklist = every row is 0
-# participant$can_text_message = every row is 0
-# participant$coaching = every row is 0
-# participant$verified = every row is 0
-# participant$wants_coaching = every row is 0
-
-
-
-
-
-
-
-
-
 # Collect all columns to be ignored
 
-ignored_columns <- c(unused_columns)
+ignored_columns <- unused_columns
 
 # Run function
 
@@ -745,7 +772,6 @@ data <- lapply(data, rename_session)
 # are the same for a given "participant_id" across tables.
 
 find_repeated_column_names <- function(data, ignored_columns) {
-
   for (i in 1:length(data)) {
     for (j in 1:length(data[[i]])) {
       if (!(names(data[[i]][j]) %in% ignored_columns)) {
@@ -883,7 +909,7 @@ View(test4)
 
 # [1] "dass21_as: session_id     is also in     oa"
 
-# TODO. In progress. Seems the same but double check.
+# TODO. In progress. Seems the same but dPouble check.
 
 View(data$dass21_as)
 table(data$oa$session_id)
@@ -966,7 +992,7 @@ if (all(data$study[data$study$participant_id %in%
 # studies and revise if "date" column is reformatted above.
 
 first_attempt_id <- min(data$dass21_as[(data$dass21_as$session == "" |
-                                         data$dass21_as$session == "ELIGIBLE") &
+                                          data$dass21_as$session == "ELIGIBLE") &
                                          grepl("2019-03-18", data$dass21_as$date),
                                        "id"])
 last_attempt_id <- max(data$dass21_as[(data$dass21_as$session == "" |
@@ -2158,3 +2184,38 @@ for (i in 1:length(data)) {
             paste0("./data/clean/", names(data[i]), ".csv"),
             row.names = FALSE)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+first_ang <- data$angular_training[data$angular_training$session == "firstSession", ]
+table(first_ang$conditioning)
+View(first_ang[first_ang$conditioning == "", ])
+View(first_ang[first_ang$conditioning == "CONTROL", ])
+View(first_ang[first_ang$conditioning == "HR_COACH", ])
+View(first_ang[first_ang$conditioning == "HR_NO_COACH", ])
+View(first_ang[first_ang$conditioning == "LR_TRAINING", ])
+View(first_ang[first_ang$conditioning == "NONE", ])
+View(first_ang[first_ang$conditioning == "TRAINING", ])
+
+first <- data$task_log[data$task_log$session_name == "firstSession", ]
+first <- first[order(first$id), ]
+View(first)
+table(first$task_name, first$tag)
+
+length(unique(first[first$tag == "pre" & first$task_name == "Affect", ]$participant_id))
+length(unique(first[first$task_name == "1", ]$participant_id))
+
