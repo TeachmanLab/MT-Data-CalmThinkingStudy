@@ -457,37 +457,6 @@ data <- label_redacted_columns(data, redacted_columns)
 # Remove irrelevant columns ----
 # ---------------------------------------------------------------------------- #
 
-# Identify columns whose rows are all blank (interpreted by R as NA) or, if 
-# column is of class type "character", whose rows are all "". Do this after
-# removing admin and test accounts because some columns may have been used
-# during testing but not during the study itself.
-
-find_blank_columns <- function(data, ignored_columns) {
-  for (i in 1:length(data)) {
-    for (j in 1:length(data[[i]])) {
-      table_i_name <- names(data[i])
-      column_j_name <- names(data[[i]][j])
-      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
-      
-      if (!(table_i_column_j_name %in% ignored_columns)) {
-        if (all(is.na(data[[i]][[j]]))) {
-          cat(paste0(table_i_column_j_name,
-                     "     , class ", class(data[[i]][[j]]), ",",
-                     "     has all rows == NA", "\n"))
-        } else if (all(data[[i]][[j]] == "")) {
-          cat(paste0(table_i_column_j_name,
-                     "     , class ", class(data[[i]][[j]]), ",",
-                     '     has all rows == ""', "\n"))
-        }
-      }
-    }
-  }
-}
-
-# Specify a character vector of columns to be ignored, with each column listed
-# as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
-# to be ignored, specify NULL without quotes (i.e., "ignored_columns <- NULL").
-
 # The "tag" columns in the following tables are not used in the R01, TET, or 
 # GIDI studies and contain no data. They can be removed.
 
@@ -521,14 +490,6 @@ unused_columns <- c(unused_columns, "action_log$action_value",
                     "participant$return_date",
                     "reasons_for_ending$other_why_in_control",
                     "sms_log$type")
-
-# Collect all columns to be ignored
-
-ignored_columns <- unused_columns
-
-# Run function
-
-find_blank_columns(data, ignored_columns)
 
 # Define function to remove irrelevant columns
 
@@ -570,6 +531,50 @@ columns_to_remove <- c(columns_to_remove, "participant$over18")
 # Run function
 
 data <- remove_columns(data, columns_to_remove)
+
+# ---------------------------------------------------------------------------- #
+# Identify any remaining blank columns ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to identify columns whose rows are all blank (interpreted by 
+# R as NA) or, if column is of class type "character", whose rows are all "". 
+# Do this after removing admin and test accounts because some columns may have 
+# been used during testing but not during the study itself. If no columns are 
+# blank besides those that are ignored in the search, nothing will be outputted.
+
+find_blank_columns <- function(data, ignored_columns) {
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (!(table_i_column_j_name %in% ignored_columns)) {
+        if (all(is.na(data[[i]][[j]]))) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     "     has all rows == NA", "\n"))
+        } else if (all(data[[i]][[j]] == "")) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     '     has all rows == ""', "\n"))
+        }
+      }
+    }
+  }
+}
+
+# Specify a character vector of columns to be ignored, with each column listed
+# as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
+# to be ignored, specify NULL without quotes (i.e., "ignored_columns <- NULL").
+
+ignored_columns <- NULL
+
+# Run function. If blank columns are identified, consider whether they need to
+# be added (a) to the set of columns to be indicated as "REDACTED" (see above)
+# or (b) to the set of irrelevant columns to be removed (see above).
+
+find_blank_columns(data, ignored_columns)
 
 # ---------------------------------------------------------------------------- #
 # Identify and recode date columns ----
