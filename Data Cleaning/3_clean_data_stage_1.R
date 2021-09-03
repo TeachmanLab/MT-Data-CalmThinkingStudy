@@ -3,24 +3,8 @@
 # Authors: Sonia Baee and Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
-# TODO: Consider where in data cleaning pipeline it makes the most sense to
-# restructure data
-
-
-
-
-
-
-
-
-
-
 # TODO: Review Changes and Issues Log and consider whether other changes are
 # needed
-
-
-
-
 
 
 
@@ -74,6 +58,7 @@ if(current_R_version != script_R_version) {
 # and putting "Rtools" on the PATH. Then try loading the packages again.
 
 library(groundhog)
+meta.groundhog("2021-07-01")
 groundhog_day <- "2021-01-01"
 
 groundhog.library(data.table, groundhog_day)
@@ -85,11 +70,6 @@ groundhog.library(anytime, groundhog_day)
 
 # TODO: At the end of data cleaning figure out whether all of these packages 
 # are actually used; we may be able to remove some of them.
-
-
-
-
-
 
 
 
@@ -586,12 +566,6 @@ find_blank_columns(data, ignored_columns)
 
 
 
-
-
-
-
-
-
 # Use function "identify_columns" (defined above) to identify columns containing 
 # "date" in each table
 
@@ -677,23 +651,11 @@ data <- lapply(data, recode_date)
 
 
 
-
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Identify and rename session columns ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: Add explanation once approach is finalized
-
-
-
-
-
-
 
 
 
@@ -763,11 +725,6 @@ data <- lapply(data, rename_session)
 
 
 
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Check for repeated columns across tables ----
 # ---------------------------------------------------------------------------- #
@@ -795,7 +752,7 @@ find_repeated_column_names <- function(data, ignored_columns) {
 # Define system-related columns to be ignored. Note: The meanings and possible 
 # values of some of these columns differ across tables.
 
-key_columns <- c("participant_id", "study_id", "id", "X")
+key_columns <- c("participant_id", "study_id", "session_id", "id", "X")
 timepoint_columns <- c("session", "session_name", "tag")
 date_columns <- c("date", "date_created", "date_sent")
 duration_columns <- c("time_on_page")
@@ -868,15 +825,15 @@ find_repeated_column_names(data, ignored_columns)
 
 
 
-
-
-
-
-
 # [1] "angular_training: conditioning     is also in     study"
 
-# TODO: In progress. Not sure why "conditioning" is blank in some rows of
-# "angular_training". Asked Henry/Dan if they know why on 1/3/2021.
+# Note: "conditioning" is blank in some rows of "angular_training". Dan Funk 
+# said on 1/4/2021 that pressing the "Continue" button (i.e., button_pressed == 
+# "continue", which has a high prevalence in these cases) does not always contain 
+# a condition. He said that he believes these participants had a session timeout 
+# of some kind and likely received a red-error bar saying "you are not logged in" 
+# and prompting them to go back to the main site; however, they can ignore the 
+# prompt and continue anyway.
 
 temp1 <- data$angular_training[data$angular_training$conditioning == "", ]
 View(temp1)
@@ -891,10 +848,13 @@ View(temp2)
 write.csv(temp2, 
           "./temp_cleaning/2_angular_training_participants_with_blank_conditioning_row.csv",
           row.names = FALSE)
-head(which(temp$conditioning == ""))
 
 # TODO: In progress. Check that "conditioning" in "angular_training" otherwise 
 # makes sense with "conditioning" in "study".
+
+
+
+
 
 test2 <- data$angular_training[data$angular_training$conditioning != "", ]
 test3 <- test2[, c("participant_id", "conditioning", "session")]
@@ -904,40 +864,94 @@ test4 <- unique(test3)
 test4 <- test4[order(test4$participant_id), ]
 View(test4)
 
+# TODO: Not sure how 6 participants can be in "TRAINING" past "firstSession"
 
 
 
 
 
+training_ids_past_s1 <- test4[test4$conditioning == "TRAINING" & 
+              test4$session != "firstSession" &
+                test4$participant_id >= 159, "participant_id"]
+length(unique(training_ids_past_s1))
+table(test4[test4$conditioning == "TRAINING", "session"])
+View(test4[test4$participant_id %in% training_ids_past_s1, ])
 
-
-
-# [1] "dass21_as: session_id     is also in     oa"
-
-# TODO. In progress. Seems the same but dPouble check.
-
-View(data$dass21_as)
-table(data$oa$session_id)
-
-sum(data$oa$session_id == "")
-sum(data$dass21_as$session_id == "")
-
-oa_test <- data$oa[data$oa$session == "ELIGIBLE", ]
-dass_test <- data$dass21_as[data$dass21_as$session == "ELIGIBLE", ]
-
-setdiff(oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_id, 
-        dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id)
-setdiff(dass_test[dass_test$participant_id %in% oa_test$participant_id, ]$session_id,
-        oa_test[oa_test$participant_id %in% dass_test$participant_id, ]$session_id)
+# TODO: Not sure how 2 participants can be in "HR_COACH" and "LR_TRAINING" at 
+# "firstSession"
 
 
 
 
 
+risk_ids_at_s1 <- test4[test4$session == "firstSession" &
+                          test4$conditioning %in% c("HR_COACH", "HR_NO_COACH",
+                                                    "LR_TRAINING") &
+                          test4$participant_id >= 159, "participant_id"]
+length(unique(risk_ids_at_s1))
+table(test4[test4$session == "firstSession", "conditioning"])
+View(test4[test4$participant_id %in% risk_ids_at_s1, ])
+
+# Check for weird switching of conditions. Conditions should be the same
+# from "secondSession" onward
+
+nrow(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
+                                       "fourthSession", "fifthSession"), 
+                  c("participant_id", "conditioning")]))
+length(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
+                                         "fourthSession", "fifthSession"), 
+                    c("participant_id", "conditioning")])$participant_id)
+
+# Check for switching between CONTROL and another condition. Shouldn't happen.
+
+control_ids <- unique(test4[test4$conditioning == "CONTROL", "participant_id"])
+View(unique(test4[test4$participant_id %in% control_ids &
+                    test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                         "fourthSession", "fifthSession"), 
+                  c("participant_id", "conditioning")]))
+table(test4[test4$participant_id %in% control_ids &
+              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                   "fourthSession", "fifthSession"), ]$conditioning,
+      test4[test4$participant_id %in% control_ids &
+              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                   "fourthSession", "fifthSession"), ]$session)
+
+# TODO: Not sure why 3 participants have condition in study table not matching
+# condition at same session in angular table.
 
 
 
 
+
+study_test <- data$study[data$study$participant_id %in% test4$participant_id, 
+                           c("participant_id", "conditioning", "current_session")]
+names(study_test)[names(study_test) == "conditioning"] <- "current_conditioning"
+
+ang_study_test_comb <- merge(test4, study_test, by = "participant_id", all.x = TRUE)
+ang_study_test_comb_same_session <- ang_study_test_comb[ang_study_test_comb$session ==
+                                                          ang_study_test_comb$current_session, ]
+
+mismatch <- ang_study_test_comb_same_session[(ang_study_test_comb_same_session$conditioning !=
+                                   ang_study_test_comb_same_session$current_conditioning) &
+                                     ang_study_test_comb_same_session$participant_id >= 159, ]
+length(unique(mismatch$participant_id))
+
+# TODO: 2 participants are in "NONE" after "firstSession". Changes/Issues Log 
+# on 7/19/21 says that says that these GIDI participants were also missing
+# DASS Eligibility data (but that it was found intact on the ws02 server),
+# that the issue appears to be related to a daylight savings time change,
+# and that the condition for these subjects should be changed to TRAINING_ORIG.
+
+
+
+
+
+none_ids_past_s1 <- test4[test4$session %in% c("secondSession", "thirdSession",
+                                               "fourthSession", "fifthSession") &
+                            test4$conditioning == "NONE",
+                          "participant_id"]
+length(unique(none_ids_past_s1))
+View(test4[test4$participant_id %in% none_ids_past_s1, ])
 
 # ---------------------------------------------------------------------------- #
 # Correct study extensions ----
@@ -967,10 +981,6 @@ if (all(data$study[data$study$participant_id %in%
 # TODO: Make basic columns specific and sort tables in consistent way. Consider
 # starting with participant_id, study_id (if present), and then id (if present).
 # Also consider removing "X". Skip this task for now as columns may change below.
-
-
-
-
 
 
 
@@ -1015,11 +1025,6 @@ dass21_as_calm_screens <-
 
 
 
-
-
-
-
-
 # TODO: There are an unreasonable number of unique session_ids. On 12/6/2019,
 # many entries have "time_on_page" of exactly 1 or 10, but none of these got a
 # "participant_id". Remove these entries (so far done just in the R object 
@@ -1059,11 +1064,6 @@ nrow(dass21_as_calm_screens2)
 
 
 
-
-
-
-
-
 # TODO: Score DASS-21-AS and compute "anxiety_eligible" variable, first recoding 
 # 555 as NA. Take mean of available items, multiply by 7 to get total score, and
 # then multiply by 2 to interpret (10 or higher is eligible).
@@ -1095,11 +1095,6 @@ for (i in 1:nrow(dass21_as_calm_screens2)) {
 }
 
 View(dass21_as_calm_screens2[order(dass21_as_calm_screens2$participant_id), ])
-
-
-
-
-
 
 
 
@@ -1210,10 +1205,6 @@ length(unique(summary_participant_id_date_nondup_no_same_date$participant_id))
 
 
 
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Filter data from "participant" and "study" tables ----
 # ---------------------------------------------------------------------------- #
@@ -1221,11 +1212,6 @@ length(unique(summary_participant_id_date_nondup_no_same_date$participant_id))
 # TODO: See if Sonia actually wants the tables merged for reference. If not,
 # then just extract the participant_ids and get rid of the merged table. Asked
 # her on 1/1/2021.
-
-
-
-
-
 
 
 
@@ -1275,11 +1261,6 @@ cat("Number of participants enrolled in", study_name, "study:",
 
 
 
-
-
-
-
-
 # Define function to filter all data for participants in the desired study
 # based on participant_ids obtained above
 
@@ -1316,19 +1297,11 @@ data <- filter_all_data(data, participant_ids)
 
 
 
-
-
-
 # ---------------------------------------------------------------------------- #
 # Add participant information ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: Add explanation once approach is finalized
-
-
-
-
-
 
 
 
@@ -1363,11 +1336,6 @@ add_participant_info <- function(data, study_name) {
     
     
     
-    
-    
-    
-    
-    
   }
   return(data)
 }
@@ -1379,11 +1347,6 @@ data <- add_participant_info(data, "R01")
 # ---------------------------------------------------------------------------- #
 
 # TODO: Exclude soft-launch participants
-
-
-
-
-
 
 
 
@@ -1407,11 +1370,6 @@ if (sum(data$participant$participant_id %in% coaches) != 0) {
 # ---------------------------------------------------------------------------- #
 
 # TODO: Check below
-
-
-
-
-
 
 
 
@@ -1452,11 +1410,6 @@ updated_participant_data <- update_specific_participants(updated_participant_dat
 
 
 
-
-
-
-
-
 # Update active column of some specific participants
 
 update_active_column <- function(data) {
@@ -1488,17 +1441,7 @@ updated_participant_data <- update_active_column(participant_data)
 
 
 
-
-
-
-
-
 # TODO: Deal with Sonia's code below. Keeping for reference for now.
-
-
-
-
-
 
 
 
@@ -1517,11 +1460,6 @@ updated_participant_data <- update_active_column(participant_data)
 
 
 
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Clean "angular_training" table ----
 # ---------------------------------------------------------------------------- #
@@ -1532,11 +1470,6 @@ updated_participant_data <- update_active_column(participant_data)
 # and Quick Thinking (also called Flexible Thinking) Exercise were done. Note
 # that some of the rows below may not arise in the Calm Thinking Study, but
 # still check for whether they are present.
-
-
-
-
-
 
 
 
@@ -1571,12 +1504,6 @@ write.csv(question1, "./temp_cleaning/angular_training_question1.csv",
 
 
 
-
-
-
-
-
-
 table(rows1$session) # TODO: Why are there rows at sessions other than 
                      # "firstSession"? Asked Henry 1/14/2021. He said this
                      # seemed to be an issue at the soft launch phase. See
@@ -1586,11 +1513,6 @@ question2 <- rows1[rows1$session != "firstSession", ]
 View(question2)
 write.csv(question2, "./temp_cleaning/angular_training_question2.csv", 
           row.names = FALSE)
-
-
-
-
-
 
 
 
@@ -1630,20 +1552,11 @@ table(rows3$step_title)
 
 
 
-
-
-
-
 table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have 
                           # gotten this. Check this.
 
 View(rows3[rows3$participant_id %in% data$study[data$study$study_extension == 
                                                   "", ]$participant_id, ])
-
-
-
-
-
 
 
 
@@ -1661,12 +1574,6 @@ table(rows3$trial_type)
 
 View(data$angular_training[data$angular_training$conditioning == "CONTROL", ])
 View(data$angular_training[data$angular_training$conditioning != "CONTROL", ])
-
-
-
-
-
-
 
 
 
@@ -1722,17 +1629,7 @@ nrow(remaining) == 0
 
 
 
-
-
-
-
-
 # TODO: Jeremy to check everything below this
-
-
-
-
-
 
 
 
@@ -2189,38 +2086,3 @@ for (i in 1:length(data)) {
             paste0("./data/clean/", names(data[i]), ".csv"),
             row.names = FALSE)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-first_ang <- data$angular_training[data$angular_training$session == "firstSession", ]
-table(first_ang$conditioning)
-View(first_ang[first_ang$conditioning == "", ])
-View(first_ang[first_ang$conditioning == "CONTROL", ])
-View(first_ang[first_ang$conditioning == "HR_COACH", ])
-View(first_ang[first_ang$conditioning == "HR_NO_COACH", ])
-View(first_ang[first_ang$conditioning == "LR_TRAINING", ])
-View(first_ang[first_ang$conditioning == "NONE", ])
-View(first_ang[first_ang$conditioning == "TRAINING", ])
-
-first <- data$task_log[data$task_log$session_name == "firstSession", ]
-first <- first[order(first$id), ]
-View(first)
-table(first$task_name, first$tag)
-
-length(unique(first[first$tag == "pre" & first$task_name == "Affect", ]$participant_id))
-length(unique(first[first$task_name == "1", ]$participant_id))
-
