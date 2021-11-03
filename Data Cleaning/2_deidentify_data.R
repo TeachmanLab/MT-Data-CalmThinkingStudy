@@ -77,11 +77,6 @@ groundhog.library(anytime, groundhog_day)
 
 
 
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Import raw data ----
 # ---------------------------------------------------------------------------- #
@@ -237,11 +232,6 @@ nrow(remaining) == 0
 
 
 
-
-
-
-
-
 # Consider "compare_to_others" and "worth_per_week" of "assessing_program"
 
 # Consider "difficult_to_understand", "other_feedback", and 
@@ -270,12 +260,6 @@ nrow(remaining) == 0
 
 
 
-
-
-
-
-
-
 # Regarding "user_agent" in "task_log", Dan Funk said on 1/13/2021 that it is 
 # not identifiable. Retain it.
 
@@ -287,15 +271,7 @@ nrow(remaining) == 0
 
 
 
-
-
-
 # TODO: Asked Dan for report of free-response columns on 1/11/20.
-
-
-
-
-
 
 
 
@@ -308,11 +284,6 @@ nrow(remaining) == 0
 
 
 
-
-
-
-
-
 # TODO: Redact "email", "full_name", "password", and "phone" in "participant" 
 # for admin and test accounts that have this data.
 
@@ -320,11 +291,6 @@ View(data$participant[data$participant$email != "" |
                              data$participant$full_name != "" |
                              data$participant$password != "" |
                              !is.na(data$participant$phone), ])
-
-
-
-
-
 
 
 
@@ -383,11 +349,6 @@ View(temp2)
 
 
 
-
-
-
-
-
 # Save redacted "sms_log". Remember to manually delete the original file.
 
 sms_log_redacted_filename <- paste0(gsub("*.csv", "",
@@ -396,4 +357,3 @@ sms_log_redacted_filename <- paste0(gsub("*.csv", "",
 
 write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
           row.names = FALSE)
-          
