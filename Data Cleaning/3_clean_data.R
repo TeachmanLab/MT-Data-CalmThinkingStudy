@@ -1,0 +1,2584 @@
+# ---------------------------------------------------------------------------- #
+# Clean Data (Stage 1)
+# Authors: Sonia Baee and Jeremy W. Eberle
+# ---------------------------------------------------------------------------- #
+
+# TODO: Review Changes and Issues Log and consider whether other changes are
+# needed
+
+
+
+
+
+# TODO: Change "data" to "dat" given that there is a "data" function in R
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Notes ----
+# ---------------------------------------------------------------------------- #
+
+# Before running this script, set your working directory. The present script 
+# will import deidentified raw data obtained from "2_deidentify_data.R" (which 
+# outputted redacted raw data files in the "data/raw" folder with "-redacted" 
+# appended to the original file name for raw data files that needed redaction) 
+# and output intermediate data in a new folder called 
+# "data/intermediate/stage_1_cleaning".
+
+# ---------------------------------------------------------------------------- #
+# Store working directory, install correct R version, load packages ----
+# ---------------------------------------------------------------------------- #
+
+# Store working directory
+
+wd_dir <- getwd()
+
+# Run the code below to ensure you are running the same version of R used at the
+# time the script was written. If you need to install a previous version, go to
+# https://cran.r-project.org/bin/windows/base/old/
+
+script_R_version <- "R version 4.0.3 (2020-10-10)"
+current_R_version <- R.Version()$version.string
+
+if(current_R_version != script_R_version) {
+  warning(paste0("This script is based on ", script_R_version,
+                 ". You are running ", current_R_version, "."))
+}
+
+# Load packages using "groundhog", which installs and loads the most recent
+# versions of packages available on the specified date ("groundhog_day"). This 
+# is important for reproducibility so that everyone running the script is using
+# the same versions of packages used at the time the script was written.
+
+# Note that packages may take longer to load the first time you load them with
+# "groundhog.library". This is because you may not have the correct versions of 
+# the packages installed based on the "groundhog_day". After "groundhog.library"
+# automatically installs the correct versions alongside other versions you may 
+# have installed, it will load the packages more quickly.
+
+# If in the process of loading packages with "groundhog.library" for the first 
+# time the console states that you first need to install "Rtools", follow steps 
+# here (https://cran.r-project.org/bin/windows/Rtools/) for installing "Rtools" 
+# and putting "Rtools" on the PATH. Then try loading the packages again.
+
+library(groundhog)
+meta.groundhog("2021-07-01")
+groundhog_day <- "2021-01-01"
+
+groundhog.library(data.table, groundhog_day)
+groundhog.library(plyr, groundhog_day)
+groundhog.library(dplyr, groundhog_day)
+groundhog.library(reshape2, groundhog_day)
+groundhog.library(lubridate, groundhog_day)
+groundhog.library(anytime, groundhog_day)
+
+# TODO: At the end of data cleaning figure out whether all of these packages 
+# are actually used; we may be able to remove some of them.
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Define functions used throughout script ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to identify columns matching a grep pattern in a data frame.
+# When used with lapply, function can be applied to all data frames in a list.
+
+identify_columns <- function(df, grep_pattern) {
+  df_colnames <- colnames(df)
+  
+  selected_columns <- grep(grep_pattern, df_colnames)
+  if (length(selected_columns) != 0) {
+    df_colnames[selected_columns]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
+# Import deidentified raw data ----
+# ---------------------------------------------------------------------------- #
+
+# Obtain file names of CSV data files
+
+raw_data_dir <- paste0(wd_dir, "/data/raw")
+filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
+
+# Import data files and store them in a list
+
+data <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
+
+# Name each data file in the list
+
+split_char <- "-"
+names(data) <- unlist(lapply(filenames, 
+                             function(f) {
+                               unlist(strsplit(f, 
+                                               split = split_char, 
+                                               fixed = FALSE))[1]
+                             }
+                             ))
+
+# Report the names of the imported tables
+
+cat("Imported tables: ")
+names(data)
+
+# ---------------------------------------------------------------------------- #
+# Part I. Database-Wide Data Cleaning ----
+# ---------------------------------------------------------------------------- #
+
+# The following code sections apply to data from every study in the "calm" SQL 
+# database (i.e., Calm Thinking, TET, GIDI).
+
+# ---------------------------------------------------------------------------- #
+# Remove irrelevant tables ----
+# ---------------------------------------------------------------------------- #
+
+# The following tables are vestiges of earlier studies and not used in the Calm
+# Thinking, TET, or GIDI studies and contain no data. They can be removed.
+
+unused_tables <- c("coach_log", "data", "media", "missing_data_log", "stimuli", 
+                  "trial", "verification_code")
+
+# The "evaluation_how_learn" table was not used in the Calm Thinking, TET, or GIDI 
+# studies because its "how_learn" item was moved to the demographics measure before 
+# the Calm Thinking study launch. The item is called "ptp_reason" in the "demographics" 
+# table. The "evaluation_how_learn" table contains no data and can be removed.
+
+unused_tables <- c(unused_tables, "evaluation_how_learn")
+
+# The following tables are vestiges of earlier studies and not used in the Calm
+# Thinking, TET, or GIDI studies. Although they contain data, after removing admin 
+# and test accounts they contain no data corresponding to a "participant_id" (the
+# rows that have data have a blank "participant_id"). They can be removed.
+
+unused_tables <- c(unused_tables, "imagery_prime", "impact_anxious_imagery")
+
+# The following tables are used internally by the MindTrails system and contain
+# no information relevant to individuals' participation in the Calm Thinking, TET, 
+# or GIDI studies. Although they have data, they can be removed.
+
+system_tables <- c("export_log", "id_gen", "import_log", "password_token",
+                   "random_condition", "visit")
+
+# Remove tables
+
+data <- data[!(names(data) %in% c(unused_tables, system_tables))]
+
+# ---------------------------------------------------------------------------- #
+# Rename "id" columns in "participant" and "study" tables ----
+# ---------------------------------------------------------------------------- #
+
+# Except where noted below, in the "calm" database each table has an "id" 
+# column that identifies the rows in that table. By convention, when a table 
+# contains a column that corresponds to the "id" column of another table, the 
+# derived column's name starts with the name of the table whose "id" column it 
+# refers to and ends with "id". For example, "participant_id" refers to "id" in 
+# the "participant" table, and "study_id" refers to "id" in the "study" table.
+
+# Each participant has only one "id" in the "participant" table and only one 
+# "id" in the "study" table, but these ids are not always the same. To make 
+# indexing tables by participant simpler, we rename "id" in the "participant" 
+# table to "participant_id" and rename "id" in the "study" table to "study_id". 
+# We treat "participant_id" as the primary identifier for each participant;
+# once a table is indexed by "participant_id", "study_id" is superfluous.
+
+# The exception to the naming convention above is that for measures that have
+# multiple tables (i.e., one main table and one or more companion tables that
+# contain responses to items in which multiple response options were possible),
+# the "id" variable in the companion table corresponds to the "id" variable in
+# the main table (but is not named "main_table_id" as would be expected by the
+# convention). For example, the "id" column in the "demographics_race" table
+# corresponds to the "id" column in the "demographics" table.
+
+# Define function to rename "id" in "participant" table to "participant_id"
+# and to rename "id" in "study" table to "study_id".
+
+rename_id_columns <- function(data) {
+  data$participant <- data$participant %>% select(participant_id = id,
+                                                  everything())
+  data$study <- data$study %>% select(study_id = id, everything())
+  return(data)
+}
+
+# Run function
+
+data <- rename_id_columns(data)
+
+# ---------------------------------------------------------------------------- #
+# Add participant_id to all participant-specific tables ----
+# ---------------------------------------------------------------------------- #
+
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "id" in each table
+
+lapply(data, identify_columns, grep_pattern = "id")
+
+# Add participant_id to "study" and "task_log" tables. These are participant-
+# specific tables but are currently indexed by study_id, not participant_id.
+
+participant_id_study_id_match <- 
+  select(data$participant, participant_id, study_id)
+
+data$study <- merge(data$study,
+                    participant_id_study_id_match,
+                    by = "study_id", 
+                    all.x = TRUE)
+
+data$task_log <- merge(data$task_log,
+                       participant_id_study_id_match,
+                       by = "study_id", 
+                       all.x = TRUE)
+
+# Add "participant_id" to support tables, which are currently indexed by the 
+# "id" column of the main table they support. First, for each main table,
+# select its "participant_id" and "id" columns and list its support tables.
+
+participant_id_demographics_id_match <- 
+  select(data$demographics, participant_id, id)
+
+demographics_support_table <- "demographics_race"
+
+participant_id_evaluation_id_match <- 
+  select(data$evaluation, participant_id, id)
+
+evaluation_support_tables <- c("evaluation_coach_help_topics",
+                               "evaluation_devices",
+                               "evaluation_how_learn",
+                               "evaluation_places",
+                               "evaluation_preferred_platform",
+                               "evaluation_reasons_control")
+
+participant_id_mental_health_history_id_match <- 
+  select(data$mental_health_history, participant_id, id)
+
+mental_health_history_support_tables <- c("mental_health_change_help",
+                                          "mental_health_disorders",
+                                          "mental_health_help",
+                                          "mental_health_why_no_help")
+
+participant_id_reasons_for_ending_id_match <- 
+  select(data$reasons_for_ending, participant_id, id)
+
+reasons_for_ending_support_tables <- c("reasons_for_ending_change_med",
+                                       "reasons_for_ending_device_use",
+                                       "reasons_for_ending_location",
+                                       "reasons_for_ending_reasons")
+
+participant_id_session_review_id_match <- 
+  select(data$session_review, participant_id, id)
+
+session_review_support_table <- "session_review_distractions"
+
+# Now define a function that uses the selected "participant_id" and "id" 
+# columns from each main table and the list of the main table's support 
+# tables to add "participant_id" to each support table based on the "id"
+
+add_participant_id <- function(data, id_match, support_tables) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    if (names(data)[[i]] %in% support_tables) {
+      output[[i]] <- merge(data[[i]], id_match, by = "id", all.x = TRUE)
+    } else {
+      output[[i]] <- data[[i]]
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Run the function for each set of support tables
+
+data <- add_participant_id(data = data,
+                           id_match = participant_id_demographics_id_match,
+                           support_tables = demographics_support_table)
+
+data <- add_participant_id(data = data,
+                           id_match = participant_id_evaluation_id_match,
+                           support_tables = evaluation_support_tables)
+
+data <- add_participant_id(data = data,
+                           id_match = participant_id_mental_health_history_id_match,
+                           support_tables = mental_health_history_support_tables)
+
+data <- add_participant_id(data = data,
+                           id_match = participant_id_reasons_for_ending_id_match,
+                           support_tables = reasons_for_ending_support_tables)
+
+data <- add_participant_id(data = data,
+                           id_match = participant_id_session_review_id_match,
+                           support_tables = session_review_support_table)
+
+# ---------------------------------------------------------------------------- #
+# Define additional test accounts ----
+# ---------------------------------------------------------------------------- #
+
+# Changes/Issues log on 4/16/21 indicates that participant 1663 should be a test 
+# account. The account was created for participant 1537 because they were having
+# technical issues, but the account was never used.
+
+data$participant[data$participant$participant_id == 1663, ]$test_account <- 1
+
+# ---------------------------------------------------------------------------- #
+# Remove admin and test accounts ----
+# ---------------------------------------------------------------------------- #
+
+# Identify participant_ids that are admin or test accounts
+
+admin_test_account_ids <- 
+  data$participant[data$participant$admin == 1 |
+                     data$participant$test_account == 1, ]$participant_id
+
+# Define function that removes in each table rows indexed by participant_ids of 
+# admin and test accounts
+
+remove_admin_test_accounts <- function(data, admin_test_account_ids) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    if ("participant_id" %in% colnames(data[[i]])) {
+      output[[i]] <- subset(data[[i]], 
+                          !(participant_id %in% admin_test_account_ids))
+    } else {
+      output[[i]] <- data[[i]]
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Run function
+
+data <- remove_admin_test_accounts(data, admin_test_account_ids)
+
+# ---------------------------------------------------------------------------- #
+# Label redacted columns ----
+# ---------------------------------------------------------------------------- #
+
+# Specify a character vector of columns whose values should be labeled as "REDACTED", 
+# with each column listed as "<table_name>$<column_name>" (e.g., "participant$email"). 
+# If no column is to be labeled as "REDACTED", specify NULL without quotes (i.e., 
+# "redacted_columns <- NULL").
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted but should
+# not be given that they could be useful for analysis. These logical columns
+# have all rows == NA.
+
+unnecessarily_redacted_columns <- c("participant$coached_by_id",
+                                    "participant$first_coaching_format")
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted and should 
+# be. These character columns have all rows == "".
+
+necessarily_redacted_columns <- c("participant$email", "participant$full_name",
+                                  "participant$password")
+
+# On 1/11/2021, Dan Funk said that the following columns are redacted and should 
+# be. These numeric columns have all rows == NA.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$phone", 
+                                  "participant$password_token_id")
+
+# On 1/11/2021, Dan Funk said that the following column is redacted and should 
+# be. This logical column has all rows == NA.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns,
+                                  "participant$verification_code_id")
+
+# On 1/13/2021, Dan Funk said that the following column is redacted and should 
+# be. This character column has all rows == "US", which is its default value in 
+# the Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$award_country_code")
+
+# On 1/13/2021, Dan Funk said that the following column is redacted and should 
+# be. This numeric column has all rows == 0, which is its default value in the 
+# Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$attrition_risk")
+
+# On 1/13/2021, Dan Funk said that the following columns are redacted and should 
+# be. These integer columns have all rows == 0, which is their default value in 
+# the Data Server.
+
+necessarily_redacted_columns <- c(necessarily_redacted_columns, 
+                                  "participant$blacklist",
+                                  "participant$can_text_message", 
+                                  "participant$coaching",
+                                  "participant$verified", 
+                                  "participant$wants_coaching")
+
+# Collect all redacted columns
+
+redacted_columns <- c(unnecessarily_redacted_columns, necessarily_redacted_columns)
+
+# Define function to convert redacted columns to characters and label as "REDACTED"
+
+label_redacted_columns <- function(data, redacted_columns) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    output[[i]] <- data[[i]]
+    
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (table_i_column_j_name %in% redacted_columns) {
+        output[[i]][, column_j_name] <- as.character(output[[i]][, column_j_name])
+        output[[i]][, column_j_name] <- "REDACTED"
+      }
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Run function
+
+data <- label_redacted_columns(data, redacted_columns)
+
+# ---------------------------------------------------------------------------- #
+# Remove irrelevant columns ----
+# ---------------------------------------------------------------------------- #
+
+# The "tag" columns in the following tables are not used in the Calm Thinking, TET, 
+# or GIDI studies and contain no data. They can be removed.
+
+unused_columns <- paste0(c("angular_training", "anxiety_identity", 
+                           "anxiety_triggers", "assessing_program", 
+                           "bbsiq", "cc", "coach_prompt", "comorbid", 
+                           "covid19", "credibility", "dass21_as", 
+                           "demographics", "evaluation", "gidi", "help_seeking",
+                           "js_psych_trial", "mechanisms",
+                           "mental_health_history", "oa", 
+                           "return_intention", "rr", "session_review", 
+                           "technology_use", "wellness"),
+                         "$tag")
+
+# The following "how_learn_other" columns in "evaluation" are not used in the 
+# Calm Thinking, TET, or GIDI studies because the "how_learn_other" item was 
+# moved to the demographics measure before Calm Thinking study launch. The item 
+# is called "ptp_reason_other" in the "demographics" table. The two columns 
+# below contain no data and can be removed.
+
+unused_columns <- c(unused_columns, "evaluation$how_learn_other",
+                    "evaluation$how_learn_other_link")
+
+# The following columns are also not used in the Calm Thinking, TET, or GIDI 
+# studies and contain no data. They can be removed.
+
+unused_columns <- c(unused_columns, "action_log$action_value",
+                    "angular_training$study",
+                    "mental_health_history$other_help_text",
+                    "participant$random_token",
+                    "participant$return_date",
+                    "reasons_for_ending$other_why_in_control",
+                    "sms_log$type")
+
+# Define function to remove irrelevant columns
+
+remove_columns <- function(data, columns_to_remove) {
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    output[[i]] <- data[[i]]
+    
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (table_i_column_j_name %in% columns_to_remove) {
+        output[[i]] <- output[[i]][, !(names(output[[i]]) %in% column_j_name)]
+      }
+    }
+  }
+  
+  names(output) <- names(data)
+  return(output)
+}
+
+# Specify a character vector of columns to be removed, with each column listed
+# as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
+# to be removed, specify NULL without quotes (i.e., "columns_to_remove <- NULL").
+
+# Unused columns defined above can be removed
+
+columns_to_remove <- unused_columns
+
+# Remove "over18" from "participant" table. Dan Funk said that for the Calm
+# Thinking study we moved this item to the DASS-21 page (and thus to "dass21_as") 
+# and that the "over18" column in the "participant" table should be disregarded.
+
+columns_to_remove <- c(columns_to_remove, "participant$over18")
+
+# Run function
+
+data <- remove_columns(data, columns_to_remove)
+
+# ---------------------------------------------------------------------------- #
+# Identify any remaining blank columns ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to identify columns whose rows are all blank (interpreted by 
+# R as NA) or, if column is of class type "character", whose rows are all "". 
+# Do this after removing admin and test accounts because some columns may have 
+# been used during testing but not during the study itself. If no columns are 
+# blank besides those that are ignored in the search, nothing will be outputted.
+
+find_blank_columns <- function(data, ignored_columns) {
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      table_i_name <- names(data[i])
+      column_j_name <- names(data[[i]][j])
+      table_i_column_j_name <- paste0(table_i_name, "$", column_j_name)
+      
+      if (!(table_i_column_j_name %in% ignored_columns)) {
+        if (all(is.na(data[[i]][[j]]))) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     "     has all rows == NA", "\n"))
+        } else if (all(data[[i]][[j]] == "")) {
+          cat(paste0(table_i_column_j_name,
+                     "     , class ", class(data[[i]][[j]]), ",",
+                     '     has all rows == ""', "\n"))
+        }
+      }
+    }
+  }
+}
+
+# Specify a character vector of columns to be ignored, with each column listed
+# as "<table_name>$<column_name>" (e.g., "js_psych_trial$tag"). If no column is 
+# to be ignored, specify NULL without quotes (i.e., "ignored_columns <- NULL").
+
+ignored_columns <- NULL
+
+# Run function. If blank columns are identified, consider whether they need to
+# be added (a) to the set of columns to be indicated as "REDACTED" (see above)
+# or (b) to the set of irrelevant columns to be removed (see above).
+
+find_blank_columns(data, ignored_columns)
+
+# ---------------------------------------------------------------------------- #
+# Identify and recode time stamp and date columns ----
+# ---------------------------------------------------------------------------- #
+
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "date" in each table
+
+lapply(data, identify_columns, grep_pattern = "date")
+
+# View structure of columns containing "date" in each table
+
+view_date_str <- function(df, df_name) {
+  print(paste0("Table: ", df_name))
+  cat("\n")
+  
+  df_colnames <- colnames(df)
+  date_columns <- grep("date", df_colnames)
+  
+  if (length(date_columns) != 0) {
+    for (i in date_columns) {
+      print(paste0(df_colnames[i]))
+      str(df[, i])
+      print(paste0("Number NA: ", sum(is.na(df[, i]))))
+      print(paste0("Number blank: ", sum(df[, i] == "")))
+      print(paste0("Number 555: ", sum(df[, i] == 555, na.rm = TRUE)))
+      print("Number of characters: ")
+      print(table(nchar(df[, i])))
+    }
+  } else {
+    print('No columns containing "date" found.')
+  }
+  
+  cat("----------")
+  cat("\n")
+}
+
+invisible(mapply(view_date_str, df = data, df_name = names(data)))
+
+# Some "date" and "date_submitted" fields are blank in "js_psych_trial" table. 
+# Changes/Issues log states on 10/7/2019 that a timeout on Recognition Ratings 
+# led to some of these data not being recorded for four participants. Based on
+# "task_log", each participant completed "RR" at "preTest", but the data are
+# not recorded in "js_psych_trial". Mark the blank "session" fields for these
+# entries as "preTest" and replace their "date" and "date_submitted" with the
+# corresponding "date_completed" from "task_log".
+
+blank_date_ids <- unique(data$js_psych_trial[data$js_psych_trial$date == "" |
+                           data$js_psych_trial$date_submitted == "", 
+                         "participant_id"])
+
+for (i in 1:length(blank_date_ids)) {
+  data$js_psych_trial[data$js_psych_trial$participant_id == blank_date_ids[i] &
+                        data$js_psych_trial$session == "", 
+                      "session"] <- "preTest"
+  
+  data$js_psych_trial[data$js_psych_trial$participant_id == blank_date_ids[i] &
+                        data$js_psych_trial$session == "preTest", 
+                      c("date", "date_submitted")] <- 
+    data$task_log[data$task_log$participant_id == blank_date_ids[i] &
+                    data$task_log$session_name == "preTest" &
+                    data$task_log$task_name == "RR",
+                  "date_completed"]
+}
+
+# Note: "last_session_date" in "study" table is blank where "current_session" is 
+# "preTest". Henry Behan said on 9/17/21 that this is expected.
+
+table(data$study[data$study$last_session_date == "", "current_session"], 
+      useNA = "always")
+
+# Note: "last_login_date" in "participant" table is blank for participant 3659.
+# This participant has no data in any tables besides "participant" and "study".
+# Henry Behan said on 9/22/21 that this participant emailed the study team on 
+# "2020-11-12 02:25:00 EST" saying they were eligible but had an issue creating 
+# an account. An account was made manually by an admin; thus, we presumably have 
+# screening data for them (indexed by "session_id") but cannot connect it to their
+# "participant_id". The participant is considered officially enrolled in the TET 
+# study; thus, this needs to be accounted for in the TET participant flow diagram.
+
+data$participant[data$participant$last_login_date == "", "participant_id"]
+
+# The following columns across tables are system-generated date and time stamps.
+# Dan Funk said on 10/1/21 that all of these are in EST time zone (note: EST, or
+# UTC - 5, all year, not "America/New York", which switches between EST and EDT).
+
+system_date_time_cols <- c("date", "date_created", "date_sent", "date_submitted",
+                           "last_login_date", "last_session_date",
+                           "date_completed")
+
+# The following column in "return_intention" table is user-provided dates and 
+# times. Dan Funk said on 9/24/21 that this data is collected in the user's 
+# local time but converted to UTC when stored in the database.
+
+user_date_time_cols <- "return_date"
+
+# Define function to reformat system-generated time stamps and user-provided dates 
+# and times and add time zone
+
+recode_date_time_timezone <- function(data) {
+  for (i in 1:length(data)) {
+    table_name <- names(data[i])
+    colnames <- names(data[[i]])
+    target_colnames <- colnames[colnames %in% c(system_date_time_cols,
+                                                user_date_time_cols)]
+    
+    if (length(target_colnames) != 0) {
+      for (j in 1:length(target_colnames)) {
+        # Create new variable for POSIXct values. Recode blanks as NA.
+        
+        POSIXct_colname <- paste0(target_colnames[j], "_as_POSIXct")
+        
+        data[[i]][, POSIXct_colname] <- data[[i]][, target_colnames[j]]
+        data[[i]][data[[i]][, POSIXct_colname] == "", POSIXct_colname] <- NA
+        
+        # Specify time zone as "UTC" for user-provided "return_date" in 
+        # "return_intention" and as "EST" for all system-generated 
+        # time stamps. Specify nonstandard format to parse "date_sent" in 
+        # "sms_log". Other columns are in standard format.
+        
+        if (table_name == "return_intention" & target_colnames[j] == "return_date") {
+          data[[i]][, POSIXct_colname] <-
+            as.POSIXct(data[[i]][, POSIXct_colname], 
+                       tz = "UTC")
+        } else if (table_name == "sms_log" & target_colnames[j] == "date_sent") {
+          data[[i]][, POSIXct_colname] <- 
+            as.POSIXct(data[[i]][, POSIXct_colname],
+                       tz = "EST", 
+                       format = "%m/%d/%Y %H:%M")
+        } else {
+          data[[i]][, POSIXct_colname] <-
+            as.POSIXct(data[[i]][, POSIXct_colname], 
+                       tz = "EST")
+        }
+      }
+    }
+  }
+  
+  return(data)
+}
+
+# Run function
+
+data <- recode_date_time_timezone(data)
+
+# Create new variables for filtering data based on system-generated time stamps. In 
+# most tables, the only system-generated time stamp is "date", but "js_psych_trial" 
+# table also has "date_submitted". Other tables do not have "date" but have other 
+# system-generated time stamps (i.e., "attrition_prediction" table has "date_created"; 
+# "email_log", "error_log", and "sms_log" tables have "date_sent"; "gift_log" table
+# has "date_created" and "date_sent"; "participant" table has "last_login_date";
+# "study" table has "last_session_date"; "task_log" table has "date_completed"). 
+# Given that some tables that have multiple system-generated time stamps, let 
+# "system_date_time_earliest" and "system_date_time_latest" represent the earliest
+# and latest time stamps, respectively, for each row in the table.
+
+for (i in 1:length(data)) {
+  table_name <- names(data[i])
+  colnames <- names(data[[i]])
+  
+  data[[i]][, "system_date_time_earliest"] <- NA
+  data[[i]][, "system_date_time_latest"] <- NA
+  
+  if (table_name == "js_psych_trial") {
+    data[[i]][, "system_date_time_earliest"] <- pmin(data[[i]][, "date_as_POSIXct"], 
+                                                     data[[i]][, "date_submitted_as_POSIXct"],
+                                                     na.rm = TRUE)
+    data[[i]][, "system_date_time_latest"] <-   pmax(data[[i]][, "date_as_POSIXct"], 
+                                                     data[[i]][, "date_submitted_as_POSIXct"],
+                                                     na.rm = TRUE)
+  } else if (table_name == "attrition_prediction") {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "date_created_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "date_created_as_POSIXct"]
+  } else if (table_name %in% c("email_log", "error_log", "sms_log")) {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "date_sent_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "date_sent_as_POSIXct"]
+  } else if (table_name == "gift_log") {
+    data[[i]][, "system_date_time_earliest"] <- pmin(data[[i]][, "date_created_as_POSIXct"], 
+                                                     data[[i]][, "date_sent_as_POSIXct"],
+                                                     na.rm = TRUE)
+    data[[i]][, "system_date_time_latest"] <-   pmax(data[[i]][, "date_created_as_POSIXct"], 
+                                                     data[[i]][, "date_sent_as_POSIXct"],
+                                                     na.rm = TRUE)
+  } else if (table_name == "participant") {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "last_login_date_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "last_login_date_as_POSIXct"]
+  } else if (table_name == "study") {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "last_session_date_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "last_session_date_as_POSIXct"]
+  } else if (table_name == "task_log") {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "date_completed_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "date_completed_as_POSIXct"]
+  } else if ("date" %in% colnames) {
+    data[[i]][, "system_date_time_earliest"] <- data[[i]][, "date_as_POSIXct"]
+    data[[i]][, "system_date_time_latest"] <-   data[[i]][, "date_as_POSIXct"]
+  }
+}
+
+# The following columns in the "covid9" table are participant-provided dates
+
+user_date_cols <- c("symptoms_date", "test_antibody_date", "test_covid_date")
+
+# Define function to reformat participant-provided dates so that they do not
+# contain empty times, which were not assessed
+
+recode_date <- function(data) {
+  for (i in 1:length(data)) {
+    colnames <- names(data[[i]])
+    target_colnames <- colnames[colnames %in% user_date_cols]
+    
+    if (length(target_colnames) != 0) {
+      for (j in 1:length(target_colnames)) {
+        # Create new variable for Date values. Recode blanks as NA.
+        
+        Date_colname <- paste0(target_colnames[j], "_as_Date")
+        
+        data[[i]][, Date_colname] <- data[[i]][, target_colnames[j]]
+        data[[i]][data[[i]][, Date_colname] == "", Date_colname] <- NA
+        
+        # Columns are in a standard format
+        
+        data[[i]][, Date_colname] <- as.Date(data[[i]][, Date_colname])
+      }
+    }
+  }
+  
+  return(data)
+}
+
+# Run function. Given that these columns will be read back into R as characters, 
+# they will need to be reconverted back to Date using the "as.Date" function.
+
+data <- recode_date(data)
+
+# The following "covid19" columns indicate whether the participant preferred not 
+# to provide a date. Do not reformat these as dates.
+
+covid19_user_date_pna_cols <- c("symptoms_date_no_answer", 
+                                "test_antibody_date_no_answer",
+                                "test_covid_date_no_answer")
+
+# ---------------------------------------------------------------------------- #
+# Identify and rename session-related columns ----
+# ---------------------------------------------------------------------------- #
+
+# Use function "identify_columns" (defined above) to identify columns containing 
+# "session" in each table
+
+lapply(data, identify_columns, grep_pattern = "session")
+
+# View structure of columns containing "session" in each table
+
+view_session_str <- function(data) {
+  for (i in 1:length(data)) {
+    print(paste0("Table: ", names(data[i])))
+    cat("\n")
+    
+    colnames <- names(data[[i]])
+    session_colnames <- colnames[grep("session", colnames)]
+    
+    if (length(session_colnames) != 0) {
+      for (j in 1:length(session_colnames)) {
+        session_colname <- session_colnames[j]
+        session_colname_class <- class(data[[i]][, session_colname])
+        
+        print(paste0(session_colname))
+        print(paste0("Class: ", session_colname_class))
+        
+        if (length(unique(data[[i]][, session_colname])) > 20) {
+          print("First 20 unique levels: ")
+          print(unique(data[[i]][, session_colname])[1:20])
+        } else {
+          print("All unique levels: ")
+          print(unique(data[[i]][, session_colname]))
+        }
+        
+        print(paste0("Number NA: ", sum(is.na(data[[i]][, session_colname]))))
+        
+        if (!("POSIXct" %in% session_colname_class)) {
+          print(paste0("Number blank: ", sum(data[[i]][, session_colname] == "")))
+          print(paste0("Number 555: ", sum(data[[i]][, session_colname] == 555,
+                                           na.rm = TRUE)))
+        }
+        
+        cat("\n")
+      }
+    } else {
+      print('No columns containing "session" found.')
+      cat("\n")
+    }
+    
+    cat("----------")
+    cat("\n", "\n")
+  }
+}
+
+view_session_str(data)
+
+# Rename selected session-related columns to clarify conflated content of some
+# columns and to enable consistent naming (i.e., "session_only") across tables
+# for columns that contain only session information
+
+  # Given that "session" column in "dass21_as" and "oa" tables contains both
+  # session information and eligibility status, rename column to reflect this.
+  # Also create new column "session_only" with "ELIGIBLE" and "" entries of
+  # original "session" column recoded as "Eligibility" (to reflect that these
+  # entries were collected at the eligibility screener time point.
+
+  table(data$dass21_as$session)
+  table(data$oa$session)
+
+  # Given that "session" column in "angular_training" table contains both
+  # session information and task-related information (i.e., "flexible_thinking",
+  # "Recognition Ratings"), rename column to reflect this.
+
+  table(data$angular_training$session)
+
+  # Given that "session_name" column in "gift_log" table contains both session
+  # information and an indicator of whether an admin awarded the gift card (i.e.,
+  # "AdminAwarded"), rename column to reflect this.
+
+  table(data$gift_log$session_name)
+  
+  # Rename remaining "session_name" columns (in "action_log" and "task_log"
+  # tables) and remaining "session" columns to "session_only" to reflect that
+  # they contain only session information. Do not rename "current_session"
+  # column of "study" table because "current_session" does not index entries
+  # within participants; rather, it reflects participants' current sessions.
+  
+  # Note: The resulting "session_only" column contains values of "COMPLETE" in
+  # some tables (i.e., "action_log", "email_log") but not others (Henry Behan 
+  # said on 9/14/21 that the "task_log" table was not designed to record values 
+  # of "COMPLETE" in the original "session" column). Also, although "task_log"
+  # table contains entries at Eligibility, "action_log" table does not; Henry 
+  # Behan said on 9/13/21 said that "action_log" table does not record data 
+  # until the participant has created an account.
+  
+for (i in 1:length(data)) {
+  if (names(data[i]) %in% c("dass21_as", "oa")) {
+    names(data[[i]])[names(data[[i]]) == "session"] <- "session_and_eligibility_status"
+    
+    data[[i]][, "session_only"] <- data[[i]][, "session_and_eligibility_status"]
+    data[[i]][data[[i]][, "session_only"] %in% c("ELIGIBLE", ""), 
+                "session_only"] <- "Eligibility"
+  } else if (names(data[i]) == "angular_training") {
+    names(data[[i]])[names(data[[i]]) == "session"] <- "session_and_task_info"
+  } else if (names(data[i]) == "gift_log") {
+    names(data[[i]])[names(data[[i]]) == "session_name"] <- "session_and_admin_awarded_info"
+  } else if (names(data[i]) %in% c("action_log", "task_log")) {
+    names(data[[i]])[names(data[[i]]) == "session_name"] <- "session_only"
+  } else if ("session" %in% names(data[[i]])) {
+    names(data[[i]])[names(data[[i]]) == "session"] <- "session_only"
+  }
+}
+
+# ---------------------------------------------------------------------------- #
+# Check for repeated columns across tables ----
+# ---------------------------------------------------------------------------- #
+
+# Define function that identifies column names that are repeated across tables.
+# This is used to identify potential columns to check as to whether their values
+# are the same for a given "participant_id" across tables.
+
+find_repeated_column_names <- function(data, ignored_columns) {
+  for (i in 1:length(data)) {
+    for (j in 1:length(data[[i]])) {
+      if (!(names(data[[i]][j]) %in% ignored_columns)) {
+        for (k in 1:length(data)) {
+          if ((i != k) &
+              names(data[[i]][j]) %in% names(data[[k]])) {
+            print(paste0(names(data[i]), "$", names(data[[i]][j]),
+                         "     is also in     ", names(data[k])))
+          }
+        }
+      }
+    }
+  }
+}
+
+# Define system-related columns to be ignored. Note: The meanings and possible 
+# values of some of these columns differ across tables.
+
+key_columns <- c("participant_id", "study_id", "session_id", "id", "X")
+raw_timepoint_columns <- c("session", "session_name", "tag")
+computed_timepoint_columns <- c("session_and_eligibility_status", "session_only")
+raw_date_columns <- c("date", "date_created", "date_sent")
+computed_date_columns <- c("date_as_POSIXct", "date_created_as_POSIXct",
+                           "date_sent_as_POSIXct",
+                           "system_date_time_earliest", "system_date_time_latest")
+duration_columns <- c("time_on_page")
+log_columns <- c("device", "exception", "successful", "task_name")
+
+# Define other columns that have the same names across the indicated tables but 
+# that have different meanings or possible values
+
+# "receive_gift_cards" in "participant" means that the participant is eligible
+# to receive gift cards (i.e., has supplied and verified their phone number),
+# whereas the same column in "study" means that the participant is assigned to
+# a study condition that will be awarded gift cards.
+
+participant_study_columns <- "receive_gift_cards"
+
+# "conditioning" in "angular_training" table may not always correspond with 
+# "conditioning" in "study" table where "session" in "angular_training" table
+# matches "current_session" in "study" table due to how "current_session" is
+# defined in "study" table. See the study-specific data cleaning section "Check 
+# 'conditioning' values in 'angular_training' and 'study' tables" below for
+# more information about this and related issues.
+
+angular_training_study_columns <- "conditioning"
+
+# "js_psych_trial" contains user activity for the Recognition Ratings measure
+# until early July 2020, whereas "angular_training" contains user activity for 
+# the Recognition Ratings measure after that. In addition, "angular_training" 
+# contains all user activity for training. Because the "js_psych_trial" and
+# "angular_training" tables represent different ways of tracking user activity, 
+# their shared column names are not necessarily comparable.
+
+js_psych_trial_angular_training_columns <- c("button_pressed", "correct", "rt", 
+                                             "rt_first_react", "stimulus", 
+                                             "time_elapsed", "trial_type")
+
+# The following shared column names represent different items across tables.
+
+session_review_evaluation_columns <- "distracted"
+
+session_review_reasons_for_ending_columns <- "location"
+
+evaluation_reasons_for_ending_columns <- c("easy", "focused", "helpful", 
+                                           "interest", "privacy",
+                                           "understand_training")
+
+reasons_for_ending_covid19_columns <- "work"
+
+anxiety_triggers_covid19_columns <- "thoughts"
+
+# "timezone" in "participant" is the timezone gleaned from the participant's web
+# browser and serves as the default timezone presented in the "return_intention"
+# measure. However, in the "return_intention" measure participants can change the
+# default timezone, giving "timezone" in "return_intention" a different meaning.
+
+participant_return_intention_columns <- "timezone"
+
+# Collect all columns to be ignored
+
+ignored_columns <- c(key_columns, 
+                     raw_timepoint_columns, computed_timepoint_columns,
+                     raw_date_columns, computed_date_columns,
+                     duration_columns, log_columns,
+                     participant_study_columns,
+                     angular_training_study_columns,
+                     js_psych_trial_angular_training_columns,
+                     session_review_evaluation_columns,
+                     session_review_reasons_for_ending_columns,
+                     evaluation_reasons_for_ending_columns,
+                     reasons_for_ending_covid19_columns,
+                     anxiety_triggers_covid19_columns,
+                     participant_return_intention_columns)
+
+# Run function
+
+find_repeated_column_names(data, ignored_columns)
+
+# ---------------------------------------------------------------------------- #
+# Correct study extensions ----
+# ---------------------------------------------------------------------------- #
+
+# Participants 2004 and 2005 enrolled in the Calm Thinking study and were assigned 
+# to a Calm Thinking condition but were given a TET study extension due to a bug at 
+# launch of the TET study. According to Dan Funk, the "study_extension" field was 
+# not properly being passed through to the Data Server. This was fixed on 4/7/2020, 
+# but the "study_extension" for these participants needs to be changed back to "".
+
+specialIDs <- c(2004, 2005)
+
+if (all(data$study[data$study$participant_id %in% 
+                   specialIDs, ]$study_extension == "")) {
+  print("Study extension for special IDs already corrected in server.")
+} else {
+  data$study[data$study$participant_id %in%
+             specialIDs, ]$study_extension <- ""
+}
+
+# ---------------------------------------------------------------------------- #
+# Part II. Filter Data for Desired Study ----
+# ---------------------------------------------------------------------------- #
+
+# ---------------------------------------------------------------------------- #
+# Specify desired study ----
+# ---------------------------------------------------------------------------- #
+
+# Specify desired study ("Calm" for Calm Thinking study, "TET" for TET study,
+# "GIDI" for GIDI study)
+
+study_name <- "Calm"
+
+# ---------------------------------------------------------------------------- #
+# Define enrollment period and participant_ids ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Further test best data type for filtering (e.g., POSIXct)
+
+
+
+
+
+# Define function that gets open/close dates for official enrollment period for 
+# desired study. Once TET enrollment closes, replace the NA with the close date.
+# The enrollment period is needed to filter eligibility screenings, which are
+# not indexed by "participant_id" (participant_ids are created only for eligible
+# participants who create an account).
+
+get_enroll_dates <- function(study_name) {
+  if (study_name == "Calm") {
+    official_enroll_open_date <- "2019-03-18 17:00:00 America/New York"
+    official_enroll_close_date <- "2020-04-06 23:59:00 America/New York"
+  } else if (study_name == "TET") {
+    official_enroll_open_date <- "2020-04-07 00:00:00 America/New York"
+    official_enroll_close_date <- NA
+  } else if (study_name == "GIDI") {
+    official_enroll_open_date <- "2020-07-10 13:00:00 America/New York"
+    official_enroll_close_date <- "2020-12-12 23:59:00 America/New York"
+  }
+  official_enroll_dates <- list(open = official_enroll_open_date,
+                                close = official_enroll_close_date)
+  return(official_enroll_dates)
+}
+
+# Define function that gets participant_ids for desired study
+
+get_participant_ids <- function(data, study_name) {
+  if (study_name == "Calm") {
+    participant_ids <- data$study[data$study$study_extension == "", "participant_id"]
+  } else if (study_name == "TET") {
+    participant_ids <- data$study[data$study$study_extension == "TET", "participant_id"]
+  } else if (study_name == "GIDI") {
+    participant_ids <- data$study[data$study$study_extension == "GIDI", "participant_id"]
+  }
+  return(participant_ids)
+}
+
+# ---------------------------------------------------------------------------- #
+# Filter all data ----
+# ---------------------------------------------------------------------------- #
+
+# Define function that filters all data for desired study. Use official enrollment
+# period to filter eligibility screenings (which excludes screenings during any soft
+# launch period). Use participant_ids to filter other tables. Note that "gidi" table
+# was not used in Calm Thinking study and that "condition_assignment_settings" table, 
+# for which "participant_id" is irrelevant, is retained only for Calm Thinking study; 
+# it is not used in TET or GIDI studies.
+
+filter_all_data <- function(data, study_name) {
+  official_enroll_dates <- get_enroll_dates(study_name)
+  participant_ids <- get_participant_ids(data, study_name)
+  
+  if (study_name == "Calm") {
+    screening_tbls <- "dass21_as"
+    irrelevant_tbls <- "gidi"
+  } else if (study_name %in% c("TET", "GIDI")) {
+    screening_tbls <- c("dass21_as", "oa")
+    irrelevant_tbls <- "condition_assignment_settings"
+  }
+  
+  data <- data[!(names(data) %in% irrelevant_tbls)]
+  
+  output <- vector("list", length(data))
+  
+  for (i in 1:length(data)) {
+    if (names(data[i]) %in% screening_tbls) {
+      if (!is.na(official_enroll_dates$close)) {
+        output[[i]] <- data[[i]][(data[[i]][, "session_only"] == "Eligibility" &
+                                    data[[i]][, "date"] >= official_enroll_dates$open &
+                                    data[[i]][, "date"] <= official_enroll_dates$close) |
+                                   data[[i]][, "participant_id"] %in% participant_ids, ]
+      } else if (is.na(official_enroll_dates$close)) {
+        output[[i]] <- data[[i]][(data[[i]][, "session_only"] == "Eligibility" &
+                                    data[[i]][, "date"] >= official_enroll_dates$open) |
+                                   data[[i]][, "participant_id"] %in% participant_ids, ]
+      }
+    } else if ("participant_id" %in% names(data[[i]])) {
+      output[[i]] <- data[[i]][data[[i]][, "participant_id"] %in% participant_ids, ]
+    } else {
+      output[[i]] <- data[[i]]
+    }
+  }
+
+  names(output) <- names(data)
+  return(output)
+}
+
+# Run function
+
+data <- filter_all_data(data, study_name)
+
+# ---------------------------------------------------------------------------- #
+# Part III. Calm Thinking Study-Specific Data Cleaning ----
+# ---------------------------------------------------------------------------- #
+
+# The following code sections are specific to data for the Calm Thinking study. 
+# The code may not be relevant to the TET and GIDI studies and will need to be 
+# revised for those studies as needed.
+
+# ---------------------------------------------------------------------------- #
+# Notes ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Add details or deal with the following once Henry confirms enrollment dates
+
+
+
+
+
+# TODO: "action_log" table has no data prior to 9/10/2020 because INSERT
+# TODO: "covid19" table has no data prior to INSERT because INSERT
+# TODO: "coronavirus" column of "anxiety_triggers" table has no data other than
+#         0 prior to INSERT because INSERT (likely recode 0 as NA)
+
+table(data$anxiety_triggers$coronavirus, useNA = "always")
+# View(data$anxiety_triggers[data$anxiety_triggers$coronavirus != 0, ])
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Add participant information ----
+# ---------------------------------------------------------------------------- #
+
+# Define function to add helper columns to "participant" table regarding how
+# condition was assigned, whether participants enrolled during the soft launch
+# versus the true launch of the study, and whether accounts are for coaches
+
+add_participant_info <- function(data, study_name) {
+  if (study_name == "Calm") {
+    
+    # Create new variable describing how participants were assigned to condition
+    
+    data$participant$condition_assignment_method <- NA
+    manual <- c(43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 108, 120, 130, 
+                131, 132, 140)
+    data$participant <- 
+      mutate(data$participant, 
+             condition_assignment_method = ifelse(participant_id %in% manual, 
+                                                  "manual", "algorithm"))
+    
+    # Create new variable to differentiate soft and official launch participants
+    
+    data$participant$launch_type <- NA
+    data$participant <- 
+      mutate(data$participant,
+             launch_type = ifelse(participant_id >= 157, "OFFICIAL", "SOFT"))
+    
+    # Create new indicator variable for coaching accounts
+    
+    coaching_participant_ids <- c(8, 10, 41, 42, 49, 50, 54, 55, 56, 68, 74, 400, 
+                                  906, 1103, 1107, 1111, 1112, 1772)
+    
+    data$participant$coaching_account <- NA
+    data$participant <- 
+      mutate(data$participant,
+             coaching_account = ifelse(participant_id %in% coaching_participant_ids, 
+                                       TRUE, FALSE))
+  }
+  return(data)
+}
+
+# Run function
+
+data <- add_participant_info(data, study_name)
+
+# ---------------------------------------------------------------------------- #
+# Exclude participants ----
+# ---------------------------------------------------------------------------- #
+
+# Confirm that accounts for coaches have already been removed (should all be test 
+# accounts, which were removed above)
+
+if (sum(data$participant$coaching_account) != 0) {
+  data$participant <-
+    data$participant[data$participant$coaching_account == FALSE, ]
+} else {
+  print("Coaching accounts already removed.")
+}
+
+# Identify official-launch participant_ids and exclude soft-launch participants 
+# from all tables. Note that "dass21_as" needs to retain screenings for ineligible
+# or uninterested participants (i.e., those without "participant_id") during the
+# official enrollment period (already restricted above) because number ineligible
+# and number uninterested need to be reported in the participant flow diagram.
+
+official_participant_ids <- 
+  data$participant[data$participant$launch_type == "OFFICIAL", ]$participant_id
+
+for (i in 1:length(data)) {
+  if (names(data[i]) == "dass21_as") {
+    data[[i]] <- data[[i]][data[[i]][, "participant_id"] %in% official_participant_ids |
+                             (data[[i]][, "session_only"] == "Eligibility" &
+                                (is.na(data[[i]][, "participant_id"]))), ]
+  } else if ("participant_id" %in% names(data[[i]])) {
+    data[[i]] <- data[[i]][data[[i]][, "participant_id"] %in% official_participant_ids, ]
+  } else {
+    data[[i]] <- data[[i]]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
+# Edit participant information: Participant spanning two studies ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Check below once Henry confirms official enrollment dates above
+
+
+
+
+
+# Participant 1992 only progressed to the early preTest phase before the Calm
+# Thinking study closed, but re-engaged with the program at a later point and 
+# got assigned to a TET study condition, so we change their progress to what it 
+# was in Calm Thinking before the switch happened.
+
+# TODO: task_log shows that participant 1992 completed their first preTest 
+# task (Credibility) on 4/15/2020, the day after TET launched on 4/14/2020.
+# This means that they did not even progress to preTest before TET launched.
+# Jeremy to ensure all their data after Eligibility is removed for Calm Thinking
+# data cleaning. The code below does not appear to actually remove any data.
+
+# TODO: Add an IF statement so the code below only applies to Calm Thinking data. 
+# For TET data the participant's information should not be changed.
+
+update_specific_participants <- function(data) {
+  data$study[data$study$participant_id == 1992, ]$conditioning <- "NONE"
+  data$study[data$study$participant_id == 1992, ]$current_session <- "preTest"
+  
+  return(data)
+}
+
+data <- update_specific_participants(data)
+
+# ---------------------------------------------------------------------------- #
+# Edit participant information: Inaccurate "active" column ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Asked Henry on 10/11/21 what the significance was of the following cases
+
+
+
+
+
+# Participants were supposed to be labeled as inactive at "preTest" or after 21 
+# days of inactivity before "PostFollowUp" or "COMPLETE", but a few were not 
+# labeled as such (unclear why)
+
+inactive_participant_ids <- 
+  data$study[data$study$current_session == "preTest" |
+               ((Sys.time() - data$study$last_session_date_as_POSIXct > 21) &
+                  !(data$study$current_session %in% c("PostFollowUp", "COMPLETE"))), 
+             "participant_id"]
+mislabeled_inactive_participant_ids <- 
+  data$participant[data$participant$participant_id %in% inactive_participant_ids &
+                     data$participant$active == 1, 
+                   "participant_id"]
+mislabeled_inactive_participant_ids
+
+# Participants were otherwise supposed to be labeled as active (default value),
+# but a few were labeled inactive (unclear why)
+
+active_participant_ids <- 
+  data$participant[!(data$participant$participant_id %in% inactive_participant_ids),
+                     "participant_id"]
+mislabeled_active_participant_ids <-
+  data$participant[data$participant$participant_id %in% active_participant_ids &
+                           data$participant$active == 0,
+                   "participant_id"]
+mislabeled_active_participant_ids
+
+
+
+
+
+# Define function to correct mislabeled "active" column
+
+update_active_column <- function(data) {
+  data$participant[data$participant$participant_id %in% 
+                     mislabeled_inactive_participant_ids, ]$active <- 0
+  data$participant[data$participant$participant_id %in% 
+                     mislabeled_active_participant_ids, ]$active <- 1
+  
+  return(data)
+}
+
+data <- update_active_column(data)
+
+# ---------------------------------------------------------------------------- #
+# Check "conditioning" values in "angular_training" and "study" tables ----
+# ---------------------------------------------------------------------------- #
+
+# Note: "conditioning" is blank for some rows of "angular_training". Dan Funk 
+# said on 1/4/2021 that pressing the "Continue" button (i.e., "button_pressed" == 
+# "continue", which has a high prevalence in these cases) does not always contain 
+# a condition. He said that he believes these participants had a session timeout 
+# of some kind and likely received a red-error bar saying "you are not logged in" 
+# and prompting them to go back to the main site; however, they can ignore the 
+# prompt and continue anyway.
+
+nrow(data$angular_training[data$angular_training$conditioning == "", ])
+
+# TODO: Prepare testing dataset to check "conditioning" in "angular_training" table and 
+# to reconcile this with "conditioning" in "study" table
+
+
+
+
+
+
+test2 <- data$angular_training[data$angular_training$conditioning != "", ]
+test3 <- test2[, c("participant_id", "conditioning", "session")]
+nrow(unique(test3))
+length(unique(test3$participant_id))
+test4 <- unique(test3)
+test4 <- test4[order(test4$participant_id), ]
+View(test4)
+
+# TODO: Not sure how 6 participants can be in "TRAINING" past "firstSession".
+# For participant 285, Changes/Issues Log indicates that their particpiant ID
+# was missing from Credibility table and thus was entered manually, at which 
+# point they were assigned to HR_COACH (by that point, they had completed the
+# second training session, and they were contacted by a coach before starting
+# the third training session. For participants 249, 639, 645, 984, 1049, Henry
+# Behan said on 9/7/2021 that there seems to have been an issue with Angular
+# Training table picking up these participants' assigned study condition after
+# the first training session. They do have participant IDs in the Credibility
+# table. They were all assigned LR_TRAINING or HR_NO_COACH; inspection of the
+# Angular Training table shows that they did receive CBM training.
+
+training_ids_past_s1 <- test4[test4$conditioning == "TRAINING" & 
+                                test4$session != "firstSession", "participant_id"]
+length(unique(training_ids_past_s1))
+table(test4[test4$conditioning == "TRAINING", "session"])
+View(test4[test4$participant_id %in% training_ids_past_s1, ])
+
+View(data$angular_training[data$angular_training$participant_id %in% 
+                             c(285, 249, 639, 645, 984, 1049), ])
+View(data$credibility[data$credibility$participant_id %in% 
+                        c(285, 249, 639, 645, 984, 1049), ])
+
+training_ids_past_s1_ignore <- c(285, 249, 639, 645, 984, 1049)
+
+setdiff(training_ids_past_s1, training_ids_past_s1_ignore)
+
+# TODO: Not sure how 2 participants can be in "HR_NO_COACH" and "LR_TRAINING" at 
+# "firstSession". Participant 161's condition changes from "TRAINING" to 
+# "HR_NO_COACH" during Session 1; nevertheless, it appears that they continued to 
+# recieve CBM training. Participant 545 has one row for "LR_TRAINING" at Session 1 
+# two months after completing the fifth training session; nevertheless, it appears 
+# that no additional scenarios were completed.
+
+risk_ids_at_s1 <- test4[test4$session == "firstSession" &
+                          test4$conditioning %in% c("HR_COACH", "HR_NO_COACH",
+                                                    "LR_TRAINING") &
+                          test4$participant_id >= 159, "participant_id"]
+length(unique(risk_ids_at_s1))
+table(test4[test4$session == "firstSession", "conditioning"])
+View(test4[test4$participant_id %in% risk_ids_at_s1, ])
+
+View(data$angular_training[data$angular_training$participant_id == 161, ])
+View(data$angular_training[data$angular_training$participant_id == 545, ])
+
+risk_ids_at_s1_ignore <- c(161, 545)
+setdiff(risk_ids_at_s1, risk_ids_at_s1_ignore)
+
+
+
+
+
+# Check for weird switching of conditions. Conditions should be the same
+# from "secondSession" onward
+
+nrow(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
+                                       "fourthSession", "fifthSession"), 
+                  c("participant_id", "conditioning")]))
+length(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
+                                         "fourthSession", "fifthSession"), 
+                    c("participant_id", "conditioning")])$participant_id)
+
+# Check for switching between CONTROL and another condition. Shouldn't happen.
+
+control_ids <- unique(test4[test4$conditioning == "CONTROL", "participant_id"])
+View(unique(test4[test4$participant_id %in% control_ids &
+                    test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                         "fourthSession", "fifthSession"), 
+                  c("participant_id", "conditioning")]))
+table(test4[test4$participant_id %in% control_ids &
+              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                   "fourthSession", "fifthSession"), ]$conditioning,
+      test4[test4$participant_id %in% control_ids &
+              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
+                                   "fourthSession", "fifthSession"), ]$session)
+
+# TODO: Not sure why 3 participants have condition in study table not matching
+# condition at same session in angular table. For participant 176, whose condition
+# is "NONE" in Angular Training table but "TRAINING" in study table at the first
+# training session, Henry Behan said on 9/7/2021 that he thinks the Angular
+# Training table did not pick up their assigned condition for some reason. They
+# do appear to have received the CBM condition during the first session, but they
+# did not complete the first session; asked Henry on 9/8/2021 if he thinks this
+# was due to a programming issue or to attrition. For participant 510, it seems
+# they completed session 1 training scenarios; perhaps they completed enough
+# measures after that to be stage 2 randomized but not enough for their current
+# session in the Study table to be updated to Session 2. For participant 645, it 
+# seems that the Angular Training table did not pick up on their assigned condition
+# until Session 2 (see above) for some reason.
+
+
+
+
+
+study_test <- data$study[data$study$participant_id %in% test4$participant_id, 
+                         c("participant_id", "conditioning", "current_session")]
+names(study_test)[names(study_test) == "conditioning"] <- "current_conditioning"
+
+ang_study_test_comb <- merge(test4, study_test, by = "participant_id", all.x = TRUE)
+ang_study_test_comb_same_session <- ang_study_test_comb[ang_study_test_comb$session ==
+                                                          ang_study_test_comb$current_session, ]
+
+mismatch <- ang_study_test_comb_same_session[(ang_study_test_comb_same_session$conditioning !=
+                                                ang_study_test_comb_same_session$current_conditioning) &
+                                               ang_study_test_comb_same_session$participant_id >= 159, ]
+length(unique(mismatch$participant_id))
+
+View(data$angular_training[data$angular_training$participant_id == 176, ])
+View(data$angular_training[data$angular_training$participant_id == 510, ])
+View(data$angular_training[data$angular_training$participant_id == 645, ])
+View(data$study[data$study$participant_id == 510, ])
+
+
+temp <- data$task_log[data$task_log$participant_id == 510, ]
+View(temp[order(temp$id), ])
+
+temp2 <- data$task_log[data$task_log$participant_id == 645, ]
+View(temp2[order(temp2$id), ])
+
+
+# TODO: 2 participants are in "NONE" after "firstSession". Changes/Issues Log 
+# on 7/19/21 says that says that these GIDI participants were also missing
+# DASS Eligibility data (but that it was found intact on the ws02 server),
+# that the issue appears to be related to a daylight savings time change,
+# and that the condition for these subjects should be changed to TRAINING_ORIG.
+
+
+
+
+
+none_ids_past_s1 <- test4[test4$session %in% c("secondSession", "thirdSession",
+                                               "fourthSession", "fifthSession") &
+                            test4$conditioning == "NONE",
+                          "participant_id"]
+length(unique(none_ids_past_s1))
+View(test4[test4$participant_id %in% none_ids_past_s1, ])
+
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Exclude screenings resembling bots ----
+# ---------------------------------------------------------------------------- #
+
+# There are many session_ids in "dass21_as" table on 12/6/2019. Most of them have
+# "time_on_page" of exactly 1 or 10 at screening, in which case none of them got
+# a "participant_id"; these 162,171 unique session_ids appear to be bots.
+
+summary <- data$dass21_as %>%
+  group_by(as.Date(date)) %>%
+  summarise(count=n())
+head(summary[order(summary$count, decreasing = TRUE), ])
+
+table(data$dass21_as[as.Date(data$dass21_as$date) == "2019-12-06", ]$time_on_page,
+      data$dass21_as[as.Date(data$dass21_as$date) == "2019-12-06", ]$session_only)
+
+bot_session_ids <- data$dass21_as[as.Date(data$dass21_as$date) == "2019-12-06" &
+                                    data$dass21_as$time_on_page %in% c(1, 10) &
+                                    data$dass21_as$session_only == "Eligibility",
+                                  "session_id"]
+sum(!is.na(data$dass21_as[data$dass21_as$session_id %in% bot_session_ids, 
+                          "participant_id"]))
+
+length(unique(bot_session_ids))
+
+# Remove the screenings for these bots (each had exactly one screening)
+
+data$dass21_as <- data$dass21_as[!(data$dass21_as$session_id %in% bot_session_ids), ]
+
+# ---------------------------------------------------------------------------- #
+# Identify and handle multiple screening attempters ----
+# ---------------------------------------------------------------------------- #
+
+# Define DASS-21-AS items
+
+dass21_as_items <- c("bre", "dry", "hea", "pan", "sca", "tre", "wor")
+
+# Recode 555 ("prefer not to answer") as NA
+
+data$dass21_as[, dass21_as_items][data$dass21_as[, dass21_as_items] == 555] <- NA
+
+# TODO: This is now done in "Identify and Remove Duplicates" below. Consolidate
+# code if possible:
+#   For rows that have duplicated values on every meaningful column (i.e., every
+#   column except "X" and "id"), keep only the last row
+
+meaningful_dass21_as_cols <- 
+  names(data$dass21_as)[!(names(data$dass21_as) %in% c("X", "id"))]
+
+data$dass21_as <- data$dass21_as[order(data$dass21_as[, "id"]), ]
+
+data$dass21_as <- 
+  data$dass21_as[!duplicated(data$dass21_as[, meaningful_dass21_as_cols],
+                             fromLast = TRUE), ]
+
+
+
+
+
+# Similarly, for remaining rows that have duplicated values on DASS-21-AS items,
+# "over18", and "time_on_page" at different time stamps, keep only the last row
+
+response_cols <- c(dass21_as_items, "over18", "time_on_page")
+
+data$dass21_as <- 
+  data$dass21_as[!duplicated(data$dass21_as[, response_cols],
+                             fromLast = TRUE), ]
+
+# Compute number of multiple rows per "session_id" at screening
+
+dass21_as_eligibility <- 
+  data$dass21_as[data$dass21_as$session_only == "Eligibility", ]
+
+n_eligibility_rows <- 
+  dass21_as_eligibility %>% 
+  group_by(session_id, session_only) %>% 
+  summarise(count=n())
+
+n_eligibility_rows <- as.data.frame(n_eligibility_rows)
+names(n_eligibility_rows)[names(n_eligibility_rows) == "count"] <- "n_eligibility_rows"
+
+data$dass21_as <- merge(data$dass21_as, 
+                        n_eligibility_rows, 
+                        c("session_id", "session_only"), 
+                        all.x = TRUE,
+                        sort = FALSE)
+
+# Compute mean "time_on_page" across multiple rows per "session_id". Note that 
+# this currently only applies to rows at screening.
+
+time_on_page_mean <- aggregate(dass21_as_eligibility$time_on_page, 
+                               list(dass21_as_eligibility$session_id,
+                                    dass21_as_eligibility$session_only), 
+                               mean)
+names(time_on_page_mean) <- c("session_id", "session_only", "time_on_page_mean")
+
+data$dass21_as <- merge(data$dass21_as, 
+                        time_on_page_mean, 
+                        c("session_id", "session_only"), 
+                        all.x = TRUE,
+                        sort = FALSE)
+
+# Compute number of unique rows on DASS-21-AS items per "session_id" at screening. 
+# If a participant has more than two sets of unique values on DASS-21-AS items, 
+# we will exclude them from analysis given concerns about their data integrity. 
+# Otherwise, we will include them in analysis, even if they have two or more entries 
+# for "over18" (their final "over18" entry had to be TRUE for them to enroll in the 
+# program). However, we will compute the column mean across their unique DASS-21-AS 
+# item entries and then use these column means to compute their average item score
+# (taking the mean of available column means). In this way, we will have one set 
+# of items and one average item score for analysis that take into account the 
+# participant's multiple unique item entries.
+
+unique_dass21_as_eligibility_items <- 
+  unique(dass21_as_eligibility[, c("participant_id", "session_id",
+                                   "session_only",
+                                   dass21_as_items)])
+
+n_eligibility_unq_item_rows <- 
+  unique_dass21_as_eligibility_items %>% 
+  group_by(session_id, session_only) %>% 
+  summarise(count=n())
+
+n_eligibility_unq_item_rows <- as.data.frame(n_eligibility_unq_item_rows)
+names(n_eligibility_unq_item_rows)[names(n_eligibility_unq_item_rows) == "count"] <-
+  "n_eligibility_unq_item_rows"
+
+data$dass21_as <- merge(data$dass21_as, 
+                        n_eligibility_unq_item_rows, 
+                        c("session_id", "session_only"), 
+                        all.x = TRUE,
+                        sort = FALSE)
+
+# Compute column mean of unique values on DASS-21-AS items per "session_id". Note 
+# that this currently only applies to rows at screening.
+
+for (i in 1:length(dass21_as_items)) {
+  col_name <- dass21_as_items[i]
+  col_mean_name <- paste0(dass21_as_items[i], "_mean")
+  
+  dass21_as_item_mean <- 
+    aggregate(unique_dass21_as_eligibility_items[, col_name], 
+              list(unique_dass21_as_eligibility_items$session_id,
+                   unique_dass21_as_eligibility_items$session_only), 
+              mean, na.rm = TRUE)
+  names(dass21_as_item_mean) <- c("session_id", "session_only", col_mean_name)
+  
+  dass21_as_item_mean[is.nan(dass21_as_item_mean[, col_mean_name]), 
+                      col_mean_name] <- NA
+  
+  data$dass21_as <- merge(data$dass21_as, 
+                          dass21_as_item_mean, 
+                          c("session_id", "session_only"), 
+                          all.x = TRUE,
+                          sort = FALSE)
+}
+
+# Compute DASS-21-AS total score per row (as computed by system, not accounting
+# for multiple entries) by taking mean of available raw items and multiplying 
+# by 7 (to create "dass21_as_total"). At screening, multiply by 2 to interpret
+# against eligibility criterion ("dass21_as_total_interp"; >= 10 is eligible) and
+# create indicator ("dass21_as_eligible") to reflect eligibility on DASS-21-AS.
+
+data$dass21_as$dass21_as_total <- NA
+data$dass21_as$dass21_as_total_interp <- NA
+data$dass21_as$dass21_as_eligible <- NA
+
+for (i in 1:nrow(data$dass21_as)) {
+  if (all(is.na(data$dass21_as[i, dass21_as_items]))) {
+    data$dass21_as$dass21_as_total[i] <- NA
+  } else {
+    data$dass21_as$dass21_as_total[i] <- 
+      rowMeans(data$dass21_as[i, dass21_as_items], na.rm = TRUE)*7
+  }
+}
+
+for (i in 1:nrow(data$dass21_as)) {
+  if (data$dass21_as$session_only[i] == "Eligibility") {
+    data$dass21_as$dass21_as_total_interp[i] <- data$dass21_as$dass21_as_total[i]*2
+    
+    if (is.na(data$dass21_as$dass21_as_total_interp[i])) {
+      data$dass21_as$dass21_as_eligible[i] <- 0
+    } else if (data$dass21_as$dass21_as_total_interp[i] < 10) {
+      data$dass21_as$dass21_as_eligible[i] <- 0
+    } else if(data$dass21_as$dass21_as_total_interp[i] >= 10) {
+      data$dass21_as$dass21_as_eligible[i] <- 1
+    }
+  }
+}
+
+# Compute DASS-21-AS total score for analysis (accounting for multiple entries at 
+# screening). At screening, take mean of available item column means and multiply 
+# by 7 (to create "dass21_as_total_anal"); at other time points, copy values from
+# "dass21_as_total" into "dass21_as_total_anal".
+
+dass21_as_item_means <- paste0(dass21_as_items, "_mean")
+
+data$dass21_as$dass21_as_total_anal <- NA
+
+for (i in 1:nrow(data$dass21_as)) {
+  if (data$dass21_as$session_only[i] == "Eligibility") {
+    if (all(is.na(data$dass21_as[i, dass21_as_item_means]))) {
+      data$dass21_as$dass21_as_total_anal[i] <- NA
+    } else {
+      data$dass21_as$dass21_as_total_anal[i] <- 
+        rowMeans(data$dass21_as[i, dass21_as_item_means], na.rm = TRUE)*7
+    }
+  } else {
+    data$dass21_as$dass21_as_total_anal[i] <- data$dass21_as$dass21_as_total[i]
+  }
+}
+
+# TODO: Report number ineligible (a) due to DASS-21-AS score and (b) age. Use
+# most recent entry for people with multiple entries, as this is the entry that 
+# the program used to determine eligibility.However, for analysis, INSERT
+
+dass21_as_eligibility_last <- 
+  data$dass21_as[data$dass21_as$session_only == "Eligibility", ]
+dass21_as_eligibility_last <- 
+  dass21_as_eligibility_last[order(dass21_as_eligibility_last$session_id, 
+                                   dass21_as_eligibility_last$id), ]
+dass21_as_eligibility_last <- 
+  dass21_as_eligibility_last[!duplicated(dass21_as_eligibility_last$session_id, 
+                                         fromLast = TRUE), ]
+
+nrow(dass21_as_eligibility_last)
+
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id), ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == FALSE &
+                                  dass21_as_eligibility_last$over18 == "true", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == FALSE &
+                                  dass21_as_eligibility_last$over18 == "false", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == TRUE &
+                                  dass21_as_eligibility_last$over18 == "false", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == TRUE &
+                                  dass21_as_eligibility_last$over18 == "true", ])
+
+nrow(dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id), ])
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Clean "angular_training" table ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Check on the following potential issues identified in the process of
+# checking that data are deidentified. Also consider adding an indicator for
+# each kind of row below and clarifying what session the Recognition Ratings
+# and Quick Thinking (also called Flexible Thinking) Exercise were done. Note
+# that some of the rows below may not arise in the Calm Thinking Study, but
+# still check for whether they are present.
+
+
+
+
+
+# 1. Some rows are participant descriptions of an anxious situation for the Use 
+# Your Imagination task at "firstSession" before starting training
+
+rows1 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                 (data$angular_training$step_title %in%
+                                    c("Use Your Imagination", "Use your Imagination")), ]
+
+table(rows1$conditioning) # TODO: Why are there rows for conditions other than 
+                          # those below? Asked Henry 1/14/2021. He said it looks
+                          # like the table may have been pulling the incorrect
+                          # condition. See if this is still an issue after you
+                          # check the conditioning variable above.
+
+expected_conditions <- c("TRAINING",
+                         "TRAINING_ORIG", "TRAINING_30", "TRAINING_CREATE", 
+                         "TRAINING_ED")
+
+question1 <- rows1[!(rows1$conditioning %in% expected_conditions), ]
+View(question1)
+write.csv(question1, "./temp_cleaning/angular_training_question1.csv", 
+          row.names = FALSE)
+
+
+
+
+
+# 2. Some rows are participant responses for training scenarios at "fifthSession"
+# that required filling in a blank (vs. completing a word fragment). Prior to
+# 2/15/2019, these responses were indexed not with a "step_title" value of 
+# "scenario", but with a "step_title" value of the scenario's title, which 
+# subsequently was stored in "stimulus_name". Among the scenario titles prior 
+# to this change was "pub"; after this change, "pub" was renamed to "bar".
+
+scenario_titles <- 
+  c(unique(data$angular_training[data$angular_training$step_title == 
+                                   "scenario", ]$stimulus_name), "pub")
+
+rows2 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
+                                 (data$angular_training$step_title == "scenario" |
+                                    data$angular_training$step_title %in% 
+                                    scenario_titles), ]
+
+table(rows2$conditioning)
+table(rows2$session_and_task_info)
+
+# 3. Henry says that this criterion reflects participants' responses to the Quick
+# Thinking Exercise (also called Flexible Thinking Exercise). Also see his email
+# "MT Flex Thinking data for control pps" on 9/27/21 for a draft cleaning script.
+
+rows3 <- data$angular_training[data$angular_training$stimulus_name == 
+                                 "flex_thinking_explanations", ]
+
+# TODO: Not all rows have "step_title" of "Exercise: Quick Thinking" due to a
+# programming error.
+
+table(rows3$step_title)
+
+
+
+
+
+table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have 
+                          # gotten this. Check this.
+
+View(rows3[rows3$participant_id %in% data$study[data$study$study_extension == 
+                                                  "", ]$participant_id, ])
+
+
+
+
+
+table(rows3$session_and_task_info) # TODO: For "CONTROL" participants, the "session" 
+                     # column is populated by "flexible_thinking", so the session is
+                     # unclear. Consider clarifying the session.
+
+table(rows3[rows3$session_and_task_info == "flexible_thinking", ]$conditioning)
+table(rows3[rows3$conditioning != "CONTROL", ]$session_and_task_info)
+
+table(rows3$step_title)
+table(rows3$trial_type)
+
+View(data$angular_training[data$angular_training$conditioning == "CONTROL", ])
+View(data$angular_training[data$angular_training$conditioning != "CONTROL", ])
+
+
+
+
+
+
+# # 4. Henry Behan said these criteria reflect scenarios created by participants 
+# in the Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of 
+# the TET study. No participants completed this in Calm Thinking.
+
+rows4_all_conditions <- data$angular_training[data$angular_training$trial_type == 
+                                                "FillInBlank" &
+                                                data$angular_training$stimulus_name == 
+                                                "" &
+                                                data$angular_training$step_title == 
+                                                "", ]
+nrow(rows4_all_conditions)
+
+
+
+
+# TODO: Check the filtering criteria with Angel/Henry. Angel said he does not
+# need to filter on "FillInBlank" because all values are that when using the
+# criteria below.
+
+test <- data$angular_training[data$angular_training$conditioning == "TRAINING_CREATE" &
+                                data$angular_training$stimulus_name == "" &
+                                data$angular_training$step_title == "", ]
+
+gidi_ids <- data$study[data$study$study_extension == "GIDI", "participant_id"]
+test_gidi <- test[test$participant_id %in% gidi_ids, ]
+
+table(test_gidi$trial_type)
+
+test_gidi_countdown_ids <- test_gidi[test_gidi$trial_type == "Countdown", "participant_id"]
+test_gidi_fillinblank_ids <- test_gidi[test_gidi$trial_type == "FillInBlank", "participant_id"]
+test_gidi_intersect_ids <- intersect(test_gidi_countdown_ids, test_gidi_fillinblank_ids)
+
+test_gidi_ids <- list(test_gidi_countdown_ids = test_gidi_countdown_ids,
+                      test_gidi_fillinblank_ids = test_gidi_fillinblank_ids,
+                      test_gidi_intersect_ids = test_gidi_intersect_ids)
+
+save(test_gidi_ids, file = "./temp_cleaning/test_gidi_ids.RData")
+
+all(test_gidi$rt == test_gidi$rt_first_react)
+
+View(test_gidi[test_gidi$participant_id == 2280, ])
+
+View(data$angular_training[data$angular_training$participant_id == 2280, ])
+
+
+
+
+
+# 5. Henry Behan said this criterion reflects participants' explanations as to 
+# why the they created occurred in the Write Your Own Scenario exercise in the
+# "TRAINING_CREATE" condition of the TET study. No participants completed this
+# in Calm Thinking.
+
+rows5 <- data$angular_training[data$angular_training$stimulus_name == 
+                                 "training_create_explanations", ]
+nrow(rows5)
+
+# Confirm no rows remain unaccounted for
+
+ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
+
+remaining <- data$angular_training[!(data$angular_training$id %in% ignored_ids) &
+                                     data$angular_training$trial_type == 
+                                     "FillInBlank", ]
+
+nrow(remaining) == 0
+
+# 6. For indicating the session at which Recognition Ratings were completed, 
+# see Henry's email "MT Flex Thinking data for control pps" on 9/30/21 for a 
+# draft cleaning script.
+
+
+
+
+
+# TODO: Jeremy to check everything below this
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Identify and remove duplicates ----
+# ---------------------------------------------------------------------------- #
+
+# For rows that have duplicated values on every meaningful column (i.e., every
+# column except "X" and "id"), keep only the last row after sorting by "id" for
+# tables that contain "id" (throw error if "attrition_prediction", "participant", 
+# or "study" tables, which lack "id", contain multiple rows per "participant_id",
+# in which case they will need to be sorted and have their rows consolidated).
+
+for (i in 1:length(data)) {
+  meaningful_cols <- names(data[[i]])[!(names(data[[i]]) %in% c("X", "id"))]
+  
+  if (names(data[i]) %in% c("attrition_prediction", "participant", "study")) {
+    if (nrow(data[[i]]) != length(unique(data[[i]][, "participant_id"]))) {
+      error(paste0("Unexpectedly, table ", names(data[i]), 
+                   "contains multiple rows for at least one participant_id"))
+    }
+  } else if ("id" %in% names(data[[i]])) {
+    data[[i]] <- data[[i]][order(data[[i]][, "id"]), ]
+    
+    data[[i]] <- data[[i]][!duplicated(data[[i]][, meaningful_cols],
+                                       fromLast = TRUE), ]
+  } else {
+    error(paste0("Table ", names(data[i]), "needs to be checked for duplicates"))
+  }
+}
+
+# TODO: 4 rows of "js_psych_trial" have "internal_node_id" == "", where "trial
+# _index" is 0. Codebook says these columns should correspond to each other.
+
+table(data$js_psych_trial$internal_node_id, useNA = "always")
+table(data$js_psych_trial$trial_index, useNA = "always")
+
+View(data$js_psych_trial[data$js_psych_trial$internal_node_id == "", ])
+
+
+
+
+
+# TODO: Deal with repeated screenings of DASS
+
+
+
+
+
+# TODO: Check Changes/Issues log about "angular_training" repeated tasks
+
+test <- data$angular_training[data$angular_training$participant_id == 164, ]
+View(test)
+View(test[duplicated(test[, c("participant_id", 
+                              "session_and_task_info",
+                              "session_counter",
+                              "step_title",
+                              "stimulus",
+                              "stimulus_name")]), ])
+
+
+
+
+
+# TODO: Investigate other tables yielding duplicates
+
+
+
+
+
+
+
+# Function "remove_duplicates" shows which ids (systemID or participantID, 
+# depending on the table) have duplicated values (across all data tables) and 
+# returns the dataset without duplication
+
+# TODO: Add functionality for the ignored tables below
+#   Nothing besides "X" and "id" on which to search for these tables
+# 
+# "condition_assignment_settings"
+# "demographics_race"
+# "evaluation_coach_help_topics"
+# "evaluation_devices"
+# "evaluation_places"
+# "evaluation_preferred_platform"
+# "evaluation_reasons_control"
+# "mental_health_change_help"
+# "mental_health_disorders"
+# "mental_health_help"
+# "mental_health_why_no_help"
+# "reasons_for_ending_change_med"
+# "reasons_for_ending_device_use"
+# "reasons_for_ending_location"
+# "reasons_for_ending_reasons"
+# "session_review_distractions"
+# 
+#   To check these tables
+#
+# "gift_log" = try "session_and_admin_awarded_info"
+# "sms_log"
+# "error_log"
+
+
+
+
+
+remove_duplicates <- function(data) {
+  tmp <- list()
+  cnt <- 1
+  for (name in names(data)) {
+    if (name %in% c("condition_assignment_settings", 
+                    "demographics_race",
+                    "evaluation_coach_help_topics",
+                    "evaluation_devices",
+                    "evaluation_places",
+                    "evaluation_preferred_platform",
+                    "evaluation_reasons_control",
+                    "mental_health_change_help",
+                    "mental_health_disorders",
+                    "mental_health_help",
+                    "mental_health_why_no_help",
+                    "reasons_for_ending_change_med",
+                    "reasons_for_ending_device_use",
+                    "reasons_for_ending_location",
+                    "reasons_for_ending_reasons",
+                    "session_review_distractions",
+                    "gift_log",
+                    "sms_log",
+                    "error_log")) {
+      cat("Duplication not checked for:", name)
+      cat("\n-------------------------\n")
+      tmp[[cnt]] <- data[[name]]
+      cnt <- cnt + 1
+    } else if (name == "task_log") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "session_only", 
+                                                                   "task_name", 
+                                                                   "tag")])), ]
+      duplicated_rows_dass21_as_eligibility <- 
+        data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                  "session_only", 
+                                                  "task_name", 
+                                                  "tag")])) &
+                       data[[name]][, "session_only"] == "Eligibility" &
+                       data[[name]][, "task_name"] == "DASS21_AS", ]
+      duplicated_rows_other <- 
+        data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                  "session_only", 
+                                                  "task_name", 
+                                                  "tag")])) &
+                       !(data[[name]][, "session_only"] == "Eligibility" &
+                           data[[name]][, "task_name"] == "DASS21_AS"), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n")
+        cat("Duplicated values for DASS21_AS at Eligibility in the table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows_dass21_as_eligibility$participant_id)
+        cat("\n")
+        cat("Duplicated values for other tasks in the table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows_other$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                                "session_only", 
+                                                                "task_name", 
+                                                                "tag")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication in the table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "participant") {
+      duplicated_rows <- 
+        data[[name]][(duplicated(data[[name]][, c("participant_id")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- 
+          data[[name]][!duplicated(data[[name]][, c("participant_id")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "js_psych_trial") {
+      duplicated_rows <- 
+        data[[name]][(duplicated(data[[name]][, c("participant_id",
+                                                  "session_only",
+                                                  "internal_node_id", 
+                                                  "stimulus")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- 
+          data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                    "session_only",
+                                                    "internal_node_id", 
+                                                    "stimulus")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "study") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "current_session")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                                "current_session")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "affect") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "session_only", 
+                                                                   "tag")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                                "session_only", 
+                                                                "tag")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "attrition_prediction") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "angular_training") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "session_and_task_info",
+                                                                   "session_counter",
+                                                                   "step_title",
+                                                                   "stimulus",
+                                                                   "stimulus_name")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!(duplicated(data[[name]][, c("participant_id", 
+                                                                 "session_and_task_info", 
+                                                                 "session_counter",
+                                                                 "step_title", 
+                                                                 "stimulus",
+                                                                 "stimulus_name")])), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else if (name == "email_log") {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "session_only", 
+                                                                   "email_type", 
+                                                                   "date_sent")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                                "session_only", 
+                                                                "email_type", 
+                                                                "date_sent")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+    else {
+      duplicated_rows <- data[[name]][(duplicated(data[[name]][, c("participant_id", 
+                                                                   "session_only")])), ]
+      if (dim(duplicated_rows)[1] > 0) {
+        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+        cat("\n")
+        cat("For the following ids: ", duplicated_rows$participant_id)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]][!duplicated(data[[name]][, c("participant_id", 
+                                                                "session_only")]), ]
+        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
+        cnt <- cnt + 1
+      } else {
+        cat("No duplication for table:", name)
+        cat("\n-------------------------\n")
+        tmp[[cnt]] <- data[[name]]
+        cnt <- cnt + 1
+      }
+    }
+  }
+  
+  names(tmp) <- names(data)
+  return(tmp)
+}
+
+# "data_no_dup" is a collection of tables without any duplication based on the id 
+# show the duplication in tables
+
+data_no_dup <- remove_duplicates(data)
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
+# The range of each item in the table is stored in the data_summary
+
+data_summary <- lapply(participant_data, summary)
+for (i in 1:length(no_duplicated_data)) {
+  assign(paste(paste("df", i, sep = ""), "summary", sep = "."), data_summary[[i]])
+}
+
+data_summary
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
+# Prefer not to answer coding for each table
+# pna = -1 or 555
+# This function return the participant/system Ids of the row with prefer not to
+# answer value for each table
+
+get_ids_with_pna <- function(df, pna = 555) {
+  tmp_df <- df[, -which(names(df) %in% c("participantID", 
+                                         "systemID", 
+                                         "session"))]
+  tmp_cols <- apply(tmp_df, 2, function(col) names(which(col == pna)))
+  idx_list <- list()
+  cnt_idx <- 1
+  par_id_list <- list()
+  cnt1 <- 1
+  sys_id_list <- list()
+  cnt2 <- 1
+  for (col in tmp_cols) {
+    for (idx in col) {
+      idx_list[[cnt_idx]] <- idx
+      cnt_idx <- cnt_idx + 1
+    }
+  }
+  idx_list <- unlist(idx_list, recursive = FALSE)
+  idx_list <- idx_list[!duplicated(idx_list)]
+  if (length(idx_list) != 0) {
+    if ("participantID" %in% colnames(df)) {
+      for (idx in idx_list) {
+        par_id_list[[cnt1]] <- df[idx, ]$participantID
+        cnt1 <- cnt1 + 1
+      }
+      par_id_list <- unlist(par_id_list, recursive = FALSE)
+      par_id_list <- par_id_list[!duplicated(par_id_list)]
+      return(par_id_list)
+    }
+    else if ("systemID" %in% colnames(df)) {
+      for (idx in idx_list) {
+        sys_id_list[[cnt1]] <- df[idx, ]$systemID
+        cnt1 <- cnt1 + 1
+      }
+      sys_id_list <- unlist(sys_id_list, recursive = FALSE)
+      sys_id_list <- sys_id_list[!duplicated(sys_id_list)]
+      return(sys_id_list)
+    }
+  }
+  # else{
+  #   return(cat("\nNo entries with prefer not to answer = ", pna, " found!\n"))
+  # }
+}
+
+ids_with_pna <- lapply(participant_data, get_ids_with_pna)
+ids_with_pna
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
+# This function return the participant/system Ids with null values in each table
+
+get_ids_with_missing <- function(df) {
+  tmp_df <- df[, -which(names(df) %in% c("participantID", 
+                                         "systemID", 
+                                         "session"))]
+  tmp_cols <- apply(tmp_df, 2, function(col) names(which(is.na(col))))
+  
+  # "idx_list" is a list of row index that has null value
+  
+  idx_list <- list()
+  cnt_idx <- 1
+  
+  # "par_id_list" is a list of participant ids with the null value
+  
+  par_id_list <- list()
+  cnt1 <- 1
+  
+  # "sys_id_list" is a list of system ids with the null value
+  
+  sys_id_list <- list()
+  cnt2 <- 1
+  for (col in tmp_cols) {
+    for (idx in col) {
+      idx_list[[cnt_idx]] <- idx
+      cnt_idx <- cnt_idx + 1
+    }
+  }
+  idx_list <- unlist(idx_list, recursive = FALSE)
+  idx_list <- idx_list[!duplicated(idx_list)]
+  if (length(idx_list) != 0) {
+    if ("participantID" %in% colnames(df)) {
+      for (idx in idx_list) {
+        par_id_list[[cnt1]] <- df[idx, ]$participantID
+        cnt1 <- cnt1 + 1
+      }
+      par_id_list <- unlist(par_id_list, recursive = FALSE)
+      par_id_list <- par_id_list[!duplicated(par_id_list)]
+      return(par_id_list)
+    }
+    else if ("systemID" %in% colnames(df)) {
+      for (idx in idx_list) {
+        sys_id_list[[cnt1]] <- df[idx, ]$systemID
+        cnt1 <- cnt1 + 1
+      }
+      sys_id_list <- unlist(sys_id_list, recursive = FALSE)
+      sys_id_list <- sys_id_list[!duplicated(sys_id_list)]
+      return(sys_id_list)
+    }
+  }
+  # else{
+  #   return(cat("\nNo entries with missing values found!\n"))
+  # }
+}
+
+ids_with_missing <- lapply(participant_data, get_ids_with_missing )
+ids_with_missing
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
+#---------------------------
+# Create an object with the number of tasks that should be done per session
+
+number_of_tasks <- c(2, 14, 8, 5)
+names(number_of_tasks) <- c("Eligibility", "preTest", "firstSession", "secondSession")
+number_of_tasks # e.g., session eligibility should have 2 different tasks
+#---------------------------
+# "session_task_check" function, return if the participant complete a session or 
+# it is in the middle of the session
+
+session_task_check <- function(df, session_name) {
+  tmp <- ddply(df, 
+               ~systemID = session, 
+               summarise, 
+               number_of_distinct_tasks = length(unique(task_name)))
+  tmp2 <- filter(tmp, session == session_name)
+  tmp2$stage <- NULL
+  tmp2 <- transform(tmp2, 
+                    stage = ifelse(number_of_distinct_tasks == number_of_tasks[[session_name]], 
+                                   "completed", 
+                                   "middle"))
+  return(tmp2)
+}
+#---------------------------
+# The second argument can be any session name of the study
+# We can use this "number_of_distinct_task_for_session" variable to make sure 
+# participant didn't skip any tasks
+
+number_of_distinct_task_for_session <- 
+  session_task_check(participant_data$taskLog, "preTest")
+number_of_distinct_task_for_session
+#---------------------------
+
+# ---------------------------------------------------------------------------- #
+# INSERT HEADING ----
+# ---------------------------------------------------------------------------- #
+
+#---------------------------
+# Dropout
+# Claudia was using "current_task_index". I didn't find any documentation for that!
+
+tmp <- filter(data$taskLog, 
+              task_name == "SESSION_COMPLETE" & systemID %in% participantIDs)
+View(tmp)
+#---------------------------
+lastSessionComp <- aggregate(tmp[, c("session", "task_name")], 
+                             list(tmp$systemID), 
+                             tail, 
+                             1)
+names(lastSessionComp) <- c("systemID", "session", "task_name")
+#---------------------------
+participant_lastSession <- left_join(data$participant, 
+                                     lastSessionComp, 
+                                     by = "systemID")
+participant_lastSession <- participant_lastSession[, c("participantID", 
+                                                       "systemID", 
+                                                       "active", 
+                                                       "session", 
+                                                       "last_login_date", 
+                                                       "email_reminders", 
+                                                       "phone_reminders")]
+View(participant_lastSession)
+#---------------------------
+participant_lastSession$date <- as.Date(participant_lastSession$last_login_date, 
+                                        format = "%Y-%m-%d %H:%M:%S")
+participant_lastSession$dayDiff <- difftime(now(), 
+                                            participant_lastSession$date, 
+                                            units = c("days"))
+#---------------------------
+problematicUsers <- filter(participant_lastSession, 
+                           (active == 1) & (session != "PostFollowUp") & (dayDiff > 21))
+View(problematicUsers)
+
+#---------------------------
+# In the middle of fifth session
+
+View(filter(data$participant, participantID == 412))
+View(filter(data$taskLog, systemID == 412))
+
+# Completed the fifth session but not follow-up
+
+View(filter(data$participant, participantID == 577))
+View(filter(data$taskLog, systemID == 577)) # Evaluation and assessing program are not done
+
+# ---------------------------------------------------------------------------- #
+# Arrange columns and sort tables ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Make basic columns specific and sort tables in consistent way. Consider
+# starting with "participant_id", "study_id" (if present), and then "id" (if 
+# present). Consider ordering by "id". Also consider removing "X".
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Write clean data files ----
+# ---------------------------------------------------------------------------- #
+
+# Ensure that consistent format with timezone will output when writing to CSV. 
+# Given that these columns will be read back into R as characters, they will need 
+# to be reconverted back to POSIXct using the "as.POSIXct" function.
+
+for (i in 1:length(data)) {
+  POSIXct_colnames <- c(names(data[[i]])[grep("as_POSIXct", names(data[[i]]))],
+                        "system_date_time_earliest",
+                        "system_date_time_latest")
+  data[[i]][, POSIXct_colnames] <- format(data[[i]][, POSIXct_colnames],
+                                          usetz = TRUE)
+}
+
+# Create folder for clean data
+
+dir.create("./data/clean")
+
+# Write CSV files to clean data folder
+
+for (i in 1:length(data)) {
+  write.csv(data[[i]], 
+            paste0("./data/clean/", names(data[i]), ".csv"),
+            row.names = FALSE)
+}
