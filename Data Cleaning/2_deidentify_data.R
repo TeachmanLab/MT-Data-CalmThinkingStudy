@@ -88,12 +88,12 @@ filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
 # Import data files and store them in a list
 
-data <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
+dat <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
 
 # Name each data file in the list
 
 split_char <- "-"
-names(data) <- unlist(lapply(filenames, 
+names(dat) <- unlist(lapply(filenames, 
                              function(f) {
                                unlist(strsplit(f, 
                                                split = split_char, 
@@ -104,7 +104,7 @@ names(data) <- unlist(lapply(filenames,
 # Report the names of the imported tables
 
 cat("Imported tables: ")
-names(data)
+names(dat)
 
 # ---------------------------------------------------------------------------- #
 # Deidentify Data ----
@@ -133,12 +133,12 @@ names(data)
 # 1. Some rows are participant descriptions of an anxious situation for the Use 
 # Your Imagination task at "firstSession" before starting training
 
-rows1 <- data$angular_training[data$angular_training$trial_type == 
-                                 "FillInBlank" &
-                                 (data$angular_training$step_title == 
-                                      "Use Your Imagination" |
-                                    data$angular_training$step_title == 
-                                      "Use your Imagination"), ]
+rows1 <- dat$angular_training[dat$angular_training$trial_type == 
+                                "FillInBlank" &
+                                (dat$angular_training$step_title == 
+                                   "Use Your Imagination" |
+                                   dat$angular_training$step_title == 
+                                   "Use your Imagination"), ]
 
 # Note that issues regarding entries (a) for unexpected values of "conditioning" 
 # and (b) at sessions other than "firstSession" will be addressed in later data 
@@ -155,19 +155,19 @@ table(rows1$session)
 # to this change was "pub"; after this change, "pub" was renamed to "bar".
 
 scenario_titles <- 
-  c(unique(data$angular_training[data$angular_training$step_title == 
-                                   "scenario", ]$stimulus_name), "pub")
+  c(unique(dat$angular_training[dat$angular_training$step_title == 
+                                  "scenario", ]$stimulus_name), "pub")
 
-rows2 <- data$angular_training[data$angular_training$trial_type == "FillInBlank" &
-                                 (data$angular_training$step_title == "scenario" |
-                                    data$angular_training$step_title %in% 
-                                      scenario_titles), ]
+rows2 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
+                                (dat$angular_training$step_title == "scenario" |
+                                   dat$angular_training$step_title %in% 
+                                   scenario_titles), ]
 
 # 3. Henry Behan said that this criterion reflects participants' responses to 
 # the Quick Thinking Exercise (also called Flexible Thinking Exercise). 
 
-rows3 <- data$angular_training[data$angular_training$stimulus_name == 
-                                 "flex_thinking_explanations", ]
+rows3 <- dat$angular_training[dat$angular_training$stimulus_name == 
+                                "flex_thinking_explanations", ]
 
 table(rows3$trial_type)
 
@@ -188,24 +188,24 @@ table(rows3[rows3$session == "flexible_thinking", ]$conditioning)
 # in the Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of 
 # the TET study.
 
-rows4_training_create <- data$angular_training[data$angular_training$trial_type == 
-                                                 "FillInBlank" &
-                                                 data$angular_training$conditioning == 
-                                                   "TRAINING_CREATE" &
-                                                 data$angular_training$stimulus_name == 
-                                                   "" &
-                                                 data$angular_training$step_title == 
-                                                   "", ]
+rows4_training_create <- dat$angular_training[dat$angular_training$trial_type == 
+                                                "FillInBlank" &
+                                                dat$angular_training$conditioning == 
+                                                  "TRAINING_CREATE" &
+                                                dat$angular_training$stimulus_name == 
+                                                  "" &
+                                                dat$angular_training$step_title == 
+                                                  "", ]
 
 # However, one admin/test account in "CONTROL" also appears to have completed 
 # this task, so we cannot restrict to "TRAINING_CREATE" for deidentification.
 
-rows4_all_conditions <- data$angular_training[data$angular_training$trial_type == 
-                                                "FillInBlank" &
-                                                data$angular_training$stimulus_name == 
-                                                  "" &
-                                                data$angular_training$step_title == 
-                                                  "", ]
+rows4_all_conditions <- dat$angular_training[dat$angular_training$trial_type == 
+                                               "FillInBlank" &
+                                               dat$angular_training$stimulus_name == 
+                                                 "" &
+                                               dat$angular_training$step_title == 
+                                                 "", ]
 
 table(rows4_all_conditions$conditioning)
 
@@ -213,8 +213,8 @@ table(rows4_all_conditions$conditioning)
 # why the they created occurred in the Write Your Own Scenario exercise in the
 # "TRAINING_CREATE" condition of the TET study
 
-rows5 <- data$angular_training[data$angular_training$stimulus_name == 
-                                 "training_create_explanations", ]
+rows5 <- dat$angular_training[dat$angular_training$stimulus_name == 
+                                "training_create_explanations", ]
 
 table(rows5$trial_type)
 
@@ -222,9 +222,9 @@ table(rows5$trial_type)
 
 ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
 
-remaining <- data$angular_training[!(data$angular_training$id %in% ignored_ids) &
-                                     data$angular_training$trial_type == 
-                                       "FillInBlank", ]
+remaining <- dat$angular_training[!(dat$angular_training$id %in% ignored_ids) &
+                                    dat$angular_training$trial_type == 
+                                      "FillInBlank", ]
 
 nrow(remaining) == 0
 
@@ -287,10 +287,10 @@ nrow(remaining) == 0
 # TODO: Redact "email", "full_name", "password", and "phone" in "participant" 
 # for admin and test accounts that have this data.
 
-View(data$participant[data$participant$email != "" |
-                             data$participant$full_name != "" |
-                             data$participant$password != "" |
-                             !is.na(data$participant$phone), ])
+View(dat$participant[dat$participant$email != "" |
+                       dat$participant$full_name != "" |
+                       dat$participant$password != "" |
+                       !is.na(dat$participant$phone), ])
 
 
 
@@ -306,24 +306,24 @@ ignored_values <- c("A 'To' phone number is required.",
                     "Authenticate",
                     "The message From/To pair violates a blacklist rule.")
 
-temp <- data$sms_log[data$sms_log$exception != "" &
-                       !(data$sms_log$exception %in% ignored_values), ]
+temp <- dat$sms_log[dat$sms_log$exception != "" &
+                      !(dat$sms_log$exception %in% ignored_values), ]
 temp <- temp[order(temp$exception), ]
 View(temp)
 
-data$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
-                   data$sms_log$exception), ]$exception <-
+dat$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
+                  dat$sms_log$exception), ]$exception <-
   "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: [REDACTED]"
 
-data$sms_log[grepl("The 'To' number", 
-                   data$sms_log$exception) &
+dat$sms_log[grepl("The 'To' number", 
+                  dat$sms_log$exception) &
                grepl("is not a valid phone number.", 
-                     data$sms_log$exception), ]$exception <-
+                     dat$sms_log$exception), ]$exception <-
   "The 'To' number [REDACTED] is not a valid phone number."
 
-data$sms_log[grepl("To number", data$sms_log$exception) &
+dat$sms_log[grepl("To number", dat$sms_log$exception) &
                grepl("is not a mobile number", 
-                     data$sms_log$exception), ]$exception <- 
+                     dat$sms_log$exception), ]$exception <- 
   "To number: [REDACTED], is not a mobile number"
 
 deidentified_values <- 
@@ -331,9 +331,9 @@ deidentified_values <-
     "The 'To' number [REDACTED] is not a valid phone number.",
     "To number: [REDACTED], is not a mobile number")
 
-temp2 <- data$sms_log[data$sms_log$exception != "" &
-                        !(data$sms_log$exception %in% ignored_values) &
-                        !(data$sms_log$exception %in% deidentified_values), ]
+temp2 <- dat$sms_log[dat$sms_log$exception != "" &
+                       !(dat$sms_log$exception %in% ignored_values) &
+                       !(dat$sms_log$exception %in% deidentified_values), ]
 temp2 <- temp2[order(temp2$exception), ]
 View(temp2)
 
@@ -352,8 +352,8 @@ View(temp2)
 # Save redacted "sms_log". Remember to manually delete the original file.
 
 sms_log_redacted_filename <- paste0(gsub("*.csv", "",
-                                     filenames[grep("sms_log", filenames)]),
-                                     "-redacted.csv")
+                                         filenames[grep("sms_log", filenames)]),
+                                    "-redacted.csv")
 
-write.csv(data$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
+write.csv(dat$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
           row.names = FALSE)
