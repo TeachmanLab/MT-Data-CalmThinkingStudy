@@ -1992,12 +1992,6 @@ nrow(remaining) == 0
 
 
 
-# TODO: Jeremy to check everything below this
-
-
-
-
-
 # ---------------------------------------------------------------------------- #
 # Identify and remove duplicates ----
 # ---------------------------------------------------------------------------- #
@@ -2086,317 +2080,189 @@ View(test2[duplicated(test2[, c("participant_id",
 # Function "remove_duplicates" shows which ids ("id" or "participant_id", depending 
 # on the table) have duplicated values and returns the dataset without duplication
 
-remove_duplicates <- function(data) {
-  tmp <- list()
-  cnt <- 1
-  for (name in names(dat)) {
-    if (name %in% c("condition_assignment_settings", 
-                    "demographics_race",
-                    "evaluation_coach_help_topics",
-                    "evaluation_devices",
-                    "evaluation_places",
-                    "evaluation_preferred_platform",
-                    "evaluation_reasons_control",
-                    "mental_health_change_help",
-                    "mental_health_disorders",
-                    "mental_health_help",
-                    "mental_health_why_no_help",
-                    "reasons_for_ending_change_med",
-                    "reasons_for_ending_device_use",
-                    "reasons_for_ending_location",
-                    "reasons_for_ending_reasons",
-                    "session_review_distractions",
-                    "error_log",
-                    "sms_log")) {
-      duplicated_rows <- dat[[name]][duplicated(dat[[name]][, c("X", "id")]), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'id': ", duplicated_rows$id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("X", "id")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication in the table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "gift_log") {
-      duplicated_rows <- dat[[name]][duplicated(dat[[name]][, c("participant_id", 
-                                                                "session_and_admin_awarded_info",
-                                                                "order_id")]), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "session_and_admin_awarded_info",
-                                                              "order_id")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication in the table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "task_log") {
-      duplicated_rows <- dat[[name]][duplicated(dat[[name]][, c("participant_id", 
-                                                                "session_only", 
-                                                                "task_name", 
-                                                                "tag")]), ]
-      duplicated_rows_dass21_as_eligibility <- 
-        dat[[name]][duplicated(dat[[name]][, c("participant_id", 
-                                               "session_only", 
-                                               "task_name", 
-                                               "tag")]) &
-                       dat[[name]][, "session_only"] == "Eligibility" &
-                       dat[[name]][, "task_name"] == "DASS21_AS", ]
-      duplicated_rows_other <- 
-        dat[[name]][duplicated(dat[[name]][, c("participant_id", 
-                                               "session_only", 
-                                               "task_name", 
-                                               "tag")]) &
-                       !(dat[[name]][, "session_only"] == "Eligibility" &
-                           dat[[name]][, "task_name"] == "DASS21_AS"), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n")
-        cat("Duplicated values for DASS21_AS at Eligibility in the table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows_dass21_as_eligibility$participant_id)
-        cat("\n")
-        cat("Duplicated values for other tasks in the table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows_other$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "session_only", 
-                                                              "task_name", 
-                                                              "tag")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication in the table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "participant") {
-      duplicated_rows <- 
-        dat[[name]][(duplicated(dat[[name]][, c("participant_id")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- 
-          dat[[name]][!duplicated(dat[[name]][, c("participant_id")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "js_psych_trial") {
-      duplicated_rows <- 
-        dat[[name]][(duplicated(dat[[name]][, c("participant_id",
-                                                "session_only",
-                                                "internal_node_id", 
-                                                "stimulus")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- 
-          dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                  "session_only",
-                                                  "internal_node_id", 
-                                                  "stimulus")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "study") {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id", 
-                                                                 "current_session")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "current_session")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "affect") {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id", 
-                                                                 "session_only", 
-                                                                 "tag")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "session_only", 
-                                                              "tag")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "attrition_prediction") {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "angular_training") {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id", 
-                                                                 "session_and_task_info",
-                                                                 "session_counter",
-                                                                 "step_title",
-                                                                 "stimulus",
-                                                                 "stimulus_name")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!(duplicated(dat[[name]][, c("participant_id", 
-                                                               "session_and_task_info", 
-                                                               "session_counter",
-                                                               "step_title", 
-                                                               "stimulus",
-                                                               "stimulus_name")])), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "email_log") {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id", 
-                                                                 "session_only", 
-                                                                 "email_type", 
-                                                                 "date_sent")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
-        cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "session_only", 
-                                                              "email_type", 
-                                                              "date_sent")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
-      }
-    } else if (name == "dass21_as") {
+report_remove_dups_df <- function(df, df_name, target_cols, index_col) {
+  duplicated_rows <- df[duplicated(df[, target_cols]), ]
+  if (dim(duplicated_rows)[1] > 0) {
+    cat(nrow(duplicated_rows), "duplicated rows for table:", df_name)
+    cat("\n")
+    cat("For these '", index_col, "': ", duplicated_rows[, index_col])
+    cat("\n-------------------------\n")
+    output <- df[!duplicated(df[, target_cols]), ]
+    rownames(output) <- 1:nrow(output)
+  } else {
+    cat("No duplicated rows for table:", df_name)
+    cat("\n-------------------------\n")
+    output <- df
+  }
+  return(output)
+}
+
+report_remove_dups_list <- function(data) {
+  output <- vector("list", length(dat))
+  
+  for (i in 1:length(dat)) {
+    if (names(dat[i]) %in% c("condition_assignment_settings", 
+                             "demographics_race",
+                             "error_log",
+                             "evaluation_coach_help_topics", "evaluation_devices",
+                             "evaluation_places", "evaluation_preferred_platform",
+                             "evaluation_reasons_control", 
+                             "mental_health_change_help", "mental_health_disorders", 
+                             "mental_health_help", "mental_health_why_no_help", 
+                             "reasons_for_ending_change_med", "reasons_for_ending_device_use",
+                             "reasons_for_ending_location", "reasons_for_ending_reasons",
+                             "session_review_distractions",
+                             "sms_log")) {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("X", "id"), 
+                                           "id")
+    } else if (names(dat[i]) == "affect") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_only", 
+                                             "tag"), 
+                                           "participant_id")
+    } else if (names(dat[i]) == "angular_training") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_and_task_info",
+                                             "session_counter",
+                                             "step_title",
+                                             "stimulus",
+                                             "stimulus_name"), 
+                                           "participant_id")
+    } else if (names(dat[i]) %in% c("attrition_prediction", "participant")) {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           "participant_id", 
+                                           "participant_id")
+    } else if (names(dat[i]) == "dass21_as") {
       duplicated_rows_eligibility <- 
-        dat[[name]][dat[[name]][, "session_only"] == "Eligibility" &
-                       (duplicated(dat[[name]][, c("participant_id",
-                                                   "session_only",
-                                                   "session_id")])), ]
+        dat[[i]][dat[[i]][, "session_only"] == "Eligibility" &
+                   (duplicated(dat[[i]][, c("participant_id",
+                                            "session_only",
+                                            "session_id")])), ]
       duplicated_rows_other <-
-        dat[[name]][dat[[name]][, "session_only"] != "Eligibility" &
-                       (duplicated(dat[[name]][, c("participant_id",
-                                                   "session_only")])), ]
+        dat[[i]][dat[[i]][, "session_only"] != "Eligibility" &
+                   (duplicated(dat[[i]][, c("participant_id",
+                                            "session_only")])), ]
       if (dim(duplicated_rows_eligibility)[1] > 0 |
           dim(duplicated_rows_other)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows_eligibility), "duplicated values at Eligibility for table:", name)
+        cat(nrow(duplicated_rows_eligibility), 
+            "duplicated rows at Eligibility for table:", names(dat[i]))
         cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows_eligibility$participant_id)
+        cat("For these 'participant_id': ", duplicated_rows_eligibility$participant_id)
         cat("\n")
-        cat("There are ", nrow(duplicated_rows_other), "duplicated values at other time points for table:", name)
+        cat(nrow(duplicated_rows_other), 
+            "duplicated rows at other time points for table:", names(dat[i]))
         cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows_other$participant_id)
+        cat("For these 'participant_id': ", duplicated_rows_other$participant_id)
         cat("\n-------------------------\n")
         
         # TODO: The code below is temporary and doesn't remove duplicates
         
-        tmp[[cnt]] <- dat[[name]]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-        
+        output[[i]] <- dat[[i]]
+        rownames(output[[i]]) <- 1:nrow(output[[i]])
+
         
         
         
         
       } else {
-        cat("No duplication for table:", name)
+        cat("No duplicated rows for table:", names(dat[i]))
         cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
+        output[[i]] <- dat[[i]]
       }
-    } else {
-      duplicated_rows <- dat[[name]][(duplicated(dat[[name]][, c("participant_id", 
-                                                                 "session_only")])), ]
-      if (dim(duplicated_rows)[1] > 0) {
-        cat("There are ", nrow(duplicated_rows), "duplicated values for table:", name)
+    } else if (names(dat[i]) == "email_log") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_only", 
+                                             "email_type", 
+                                             "date_sent"), 
+                                           "participant_id")
+    } else if (names(dat[i]) == "gift_log") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_and_admin_awarded_info",
+                                             "order_id"), 
+                                           "participant_id")
+    } else if (names(dat[i]) == "js_psych_trial") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id",
+                                             "session_only",
+                                             "internal_node_id", 
+                                             "stimulus"), 
+                                           "participant_id")
+    } else if (names(dat[i]) == "task_log") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_only", 
+                                             "task_name", 
+                                             "tag"), 
+                                           "participant_id")
+
+      duplicated_rows_dass21_as_eligibility <- 
+        dat[[i]][duplicated(dat[[i]][, c("participant_id", 
+                                         "session_only", 
+                                         "task_name", 
+                                         "tag")]) &
+                   dat[[i]][, "session_only"] == "Eligibility" &
+                   dat[[i]][, "task_name"] == "DASS21_AS", ]
+      duplicated_rows_other <- 
+        dat[[i]][duplicated(dat[[i]][, c("participant_id", 
+                                         "session_only", 
+                                         "task_name", 
+                                         "tag")]) &
+                   !(dat[[i]][, "session_only"] == "Eligibility" &
+                   dat[[i]][, "task_name"] == "DASS21_AS"), ]
+      if (dim(duplicated_rows_dass21_as_eligibility)[1] > 0 |
+          dim(duplicated_rows_other)[1] > 0) {
+        cat(nrow(duplicated_rows_dass21_as_eligibility),
+            "duplicated rows for DASS21_AS at Eligibility in table:", names(dat[i]))
         cat("\n")
-        cat("For the following 'participant_id': ", duplicated_rows$participant_id)
+        cat("For these 'participant_id': ", duplicated_rows_dass21_as_eligibility$participant_id)
+        cat("\n")
+        cat(nrow(duplicated_rows_other),
+            "duplicated rows for other tasks in table:", names(dat[i]))
+        cat("\n")
+        cat("For these 'participant_id': ", duplicated_rows_other$participant_id)
         cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]][!duplicated(dat[[name]][, c("participant_id", 
-                                                              "session_only")]), ]
-        rownames(tmp[[cnt]]) <- 1:nrow(tmp[[cnt]])
-        cnt <- cnt + 1
-      } else {
-        cat("No duplication for table:", name)
-        cat("\n-------------------------\n")
-        tmp[[cnt]] <- dat[[name]]
-        cnt <- cnt + 1
       }
+    } else if (names(dat[i]) == "study") {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "current_session"), 
+                                           "participant_id")
+    } else {
+      output[[i]] <- report_remove_dups_df(dat[[i]], 
+                                           names(dat[i]), 
+                                           c("participant_id", 
+                                             "session_only"), 
+                                           "participant_id")
     }
   }
   
-  names(tmp) <- names(dat)
-  return(tmp)
+  names(output) <- names(dat)
+  return(output)
 }
 
-# "dat_no_dup" is a collection of tables without any duplication based on the id 
-# show the duplication in tables
+# "dat_no_dup" is list of tables without any duplication based on "target_cols"
 
-dat_no_dup <- remove_duplicates(dat)
+dat_no_dup <- report_remove_dups_list(dat)
+
+# TODO: Jeremy to check everything below this
+
+
+
+
 
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
