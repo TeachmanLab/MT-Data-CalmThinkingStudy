@@ -2032,8 +2032,15 @@ View(dat$js_psych_trial[dat$js_psych_trial$internal_node_id == "", ])
 
 
 
-# TODO: Deal with repeated screenings of DASS
+# TODO: Note that repeated "dass21_as" screening attempts are reflected in
+# "task_log" only for some participants. Thus, "task_log" should not be used
+# to identify repeated screening attempters.
 
+View(dat$task_log[dat$task_log$participant_id == 177, ])
+View(dat$dass21_as[dat$dass21_as$participant_id %in% 177, ])
+
+View(dat$task_log[dat$task_log$participant_id == 1529, ])
+View(dat$dass21_as[dat$dass21_as$participant_id %in% 1529, ])
 
 
 
@@ -2077,15 +2084,23 @@ View(test2[duplicated(test2[, c("participant_id",
 
 
 
-# Function "remove_duplicates" shows which ids ("id" or "participant_id", depending 
-# on the table) have duplicated values and returns the dataset without duplication
+# TODO: Check "dat_no_dup" to ensure it's what expected
+
+
+
+
+
+
+
+# Define functions to report and remove duplicated rows. "report_remove_dups_df"
+# is used within "report_remove_dups_list".
 
 report_remove_dups_df <- function(df, df_name, target_cols, index_col) {
   duplicated_rows <- df[duplicated(df[, target_cols]), ]
-  if (dim(duplicated_rows)[1] > 0) {
+  if (nrow(duplicated_rows) > 0) {
     cat(nrow(duplicated_rows), "duplicated rows for table:", df_name)
     cat("\n")
-    cat("For these '", index_col, "': ", duplicated_rows[, index_col])
+    cat("With these '", index_col, "': ", duplicated_rows[, index_col])
     cat("\n-------------------------\n")
     output <- df[!duplicated(df[, target_cols]), ]
     rownames(output) <- 1:nrow(output)
@@ -2149,33 +2164,36 @@ report_remove_dups_list <- function(data) {
         dat[[i]][dat[[i]][, "session_only"] != "Eligibility" &
                    (duplicated(dat[[i]][, c("participant_id",
                                             "session_only")])), ]
-      if (dim(duplicated_rows_eligibility)[1] > 0 |
-          dim(duplicated_rows_other)[1] > 0) {
+      duplicated_rows <- rbind(duplicated_rows_eligibility, duplicated_rows_other)
+      
+      if (nrow(duplicated_rows) > 0) {
+        p_ids <- duplicated_rows_eligibility[!is.na(duplicated_rows_eligibility$participant_id),
+                                             "participant_id"]
+        s_ids <- duplicated_rows_eligibility[is.na(duplicated_rows_eligibility$participant_id),
+                                             "session_id"]
+        
         cat(nrow(duplicated_rows_eligibility), 
             "duplicated rows at Eligibility for table:", names(dat[i]))
         cat("\n")
-        cat("For these 'participant_id': ", duplicated_rows_eligibility$participant_id)
+        cat("With these ", length(p_ids), "'participant_id' (where available): ", p_ids)
+        cat("\n")
+        cat("And with ", length(s_ids), "'session_id' (where 'participant_id' unavailable)")
         cat("\n")
         cat(nrow(duplicated_rows_other), 
             "duplicated rows at other time points for table:", names(dat[i]))
-        cat("\n")
-        cat("For these 'participant_id': ", duplicated_rows_other$participant_id)
+        if (nrow(duplicated_rows_other) > 0) {
+          cat("\n")
+          cat("With these 'participant_id': ", duplicated_rows_other$participant_id)
+        }
         cat("\n-------------------------\n")
         
-        # TODO: The code below is temporary and doesn't remove duplicates
-        
-        output[[i]] <- dat[[i]]
+        output[[i]] <- setdiff(dat[[i]], duplicated_rows)
         rownames(output[[i]]) <- 1:nrow(output[[i]])
-
-        
-        
-        
-        
       } else {
-        cat("No duplicated rows for table:", names(dat[i]))
-        cat("\n-------------------------\n")
-        output[[i]] <- dat[[i]]
-      }
+          cat("No duplicated rows for table:", names(dat[i]))
+          cat("\n-------------------------\n")
+          output[[i]] <- dat[[i]]
+        }
     } else if (names(dat[i]) == "email_log") {
       output[[i]] <- report_remove_dups_df(dat[[i]], 
                                            names(dat[i]), 
@@ -2222,17 +2240,17 @@ report_remove_dups_list <- function(data) {
                                          "tag")]) &
                    !(dat[[i]][, "session_only"] == "Eligibility" &
                    dat[[i]][, "task_name"] == "DASS21_AS"), ]
-      if (dim(duplicated_rows_dass21_as_eligibility)[1] > 0 |
-          dim(duplicated_rows_other)[1] > 0) {
+      if (nrow(duplicated_rows_dass21_as_eligibility) > 0 |
+          nrow(duplicated_rows_other) > 0) {
         cat(nrow(duplicated_rows_dass21_as_eligibility),
             "duplicated rows for DASS21_AS at Eligibility in table:", names(dat[i]))
         cat("\n")
-        cat("For these 'participant_id': ", duplicated_rows_dass21_as_eligibility$participant_id)
+        cat("With these 'participant_id': ", duplicated_rows_dass21_as_eligibility$participant_id)
         cat("\n")
         cat(nrow(duplicated_rows_other),
             "duplicated rows for other tasks in table:", names(dat[i]))
         cat("\n")
-        cat("For these 'participant_id': ", duplicated_rows_other$participant_id)
+        cat("With these 'participant_id': ", duplicated_rows_other$participant_id)
         cat("\n-------------------------\n")
       }
     } else if (names(dat[i]) == "study") {
