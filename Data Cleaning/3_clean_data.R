@@ -1337,21 +1337,16 @@ update_specific_participants <- function(data) {
 dat <- update_specific_participants(dat)
 
 # ---------------------------------------------------------------------------- #
-# Edit participant information: Inaccurate "active" column ----
+# Flag participants with inaccurate "active" column ----
 # ---------------------------------------------------------------------------- #
-
-# TODO: Henry said on 10/28/21 that "active" involves whether a final reminder 
-# email is sent and whether the participant is told their account is closed.
-# Jeremy's impression is to flag these cases but not change the values. Asked
-# Sonia for her opinion on 11/4/21.
-
-
-
-
 
 # Participants were supposed to be labeled as inactive at "preTest" or after 21 
 # days of inactivity before "PostFollowUp" or "COMPLETE", but a few were not 
-# labeled as such (unclear why)
+# labeled as such (unclear why). If not labeled as inactive after inactivity,
+# the participant might not be sent a final reminder email and might not be told 
+# their account is closed when they return to the site. Such participants are
+# listed below, but their values of "active" are not changed given that whether
+# and how this unexpected behavior matters will depend on the specific analysis.
 
 inactive_participant_ids <- 
   dat$study[dat$study$current_session == "preTest" |
@@ -1365,7 +1360,10 @@ mislabeled_inactive_participant_ids <-
 mislabeled_inactive_participant_ids
 
 # Participants were otherwise supposed to be labeled as active (default value),
-# but a few were labeled inactive (unclear why)
+# but a few were labeled as inactive (unclear why). In these cases, participants
+# may have incorrectly been sent a final reminder email or told that their account 
+# was closed when they returned to the site. Again, such participants are listed
+# below, but their values of "active" are not changed.
 
 active_participant_ids <- 
   dat$participant[!(dat$participant$participant_id %in% inactive_participant_ids),
@@ -1376,23 +1374,11 @@ mislabeled_active_participant_ids <-
                   "participant_id"]
 mislabeled_active_participant_ids
 
+# TODO: Flag both categories of participants above
 
 
 
 
-
-# Define function to correct mislabeled "active" column
-
-update_active_column <- function(data) {
-  dat$participant[dat$participant$participant_id %in% 
-                    mislabeled_inactive_participant_ids, ]$active <- 0
-  dat$participant[dat$participant$participant_id %in% 
-                    mislabeled_active_participant_ids, ]$active <- 1
-  
-  return(dat)
-}
-
-dat <- update_active_column(dat)
 
 # ---------------------------------------------------------------------------- #
 # Check "conditioning" values in "angular_training" and "study" tables ----
@@ -1408,163 +1394,195 @@ dat <- update_active_column(dat)
 
 nrow(dat$angular_training[dat$angular_training$conditioning == "", ])
 
-# TODO: Prepare testing dataset to check "conditioning" in "angular_training" table and 
-# to reconcile this with "conditioning" in "study" table
+# Create aggregated "angular_training" dataset to check "conditioning" column
+# and to compare this column's values with "conditioning" in "study" table
 
+ang_train_ag <- dat$angular_training[dat$angular_training$conditioning != "", 
+                                     c("participant_id", 
+                                       "conditioning", 
+                                       "session_and_task_info")]
+ang_train_ag <- unique(ang_train_ag)
+ang_train_ag <- ang_train_ag[order(ang_train_ag$participant_id), ]
 
+# Check for participants in "TRAINING" after "firstSession", which should not 
+# occur because "TRAINING" participants are classified as high/low risk and 
+# assigned to "LR_TRAINING", "HR_COACH", or "HR_NO_COACH" before Session 2.
 
+training_ids_past_s1 <- 
+  unique(ang_train_ag[ang_train_ag$conditioning == "TRAINING" & 
+                        ang_train_ag$session_and_task_info != "firstSession", 
+                      "participant_id"])
 
+#   For participant 285, Changes/Issues Log on 5/2/2019 says that their participant
+#   ID was missing from "credibility" table and thus was entered manually, at which 
+#   point they were assigned to "HR_COACH" (by that point, they had completed the
+#   second training session, and they were contacted by a coach before starting
+#   the third training session).
 
+training_ids_past_s1_ignore <- 285
 
-test2 <- dat$angular_training[dat$angular_training$conditioning != "", ]
-test3 <- test2[, c("participant_id", "conditioning", "session_and_task_info")]
-nrow(unique(test3))
-length(unique(test3$participant_id))
-test4 <- unique(test3)
-test4 <- test4[order(test4$participant_id), ]
-View(test4)
+#   For participants 249, 639, 645, 984, and 1049, Henry Behan said on 9/7/2021 that 
+#   there seems to have been an issue with "angular_training" table picking up these 
+#   participants' assigned condition after the first training session. They do have 
+#   participant IDs in "credibility" table. They were assigned to "LR_TRAINING" or 
+#   "HR_NO_COACH"; "angular_training" shows that they did receive CBM training.
 
-# TODO: Not sure how 6 participants can be in "TRAINING" past "firstSession".
-# For participant 285, Changes/Issues Log indicates that their particpiant ID
-# was missing from Credibility table and thus was entered manually, at which 
-# point they were assigned to HR_COACH (by that point, they had completed the
-# second training session, and they were contacted by a coach before starting
-# the third training session. For participants 249, 639, 645, 984, 1049, Henry
-# Behan said on 9/7/2021 that there seems to have been an issue with Angular
-# Training table picking up these participants' assigned study condition after
-# the first training session. They do have participant IDs in the Credibility
-# table. They were all assigned LR_TRAINING or HR_NO_COACH; inspection of the
-# Angular Training table shows that they did receive CBM training.
-
-training_ids_past_s1 <- test4[test4$conditioning == "TRAINING" & 
-                                test4$session != "firstSession", "participant_id"]
-length(unique(training_ids_past_s1))
-table(test4[test4$conditioning == "TRAINING", "session"])
-View(test4[test4$participant_id %in% training_ids_past_s1, ])
-
-View(dat$angular_training[dat$angular_training$participant_id %in% 
-                            c(285, 249, 639, 645, 984, 1049), ])
-View(dat$credibility[dat$credibility$participant_id %in% 
-                       c(285, 249, 639, 645, 984, 1049), ])
-
-training_ids_past_s1_ignore <- c(285, 249, 639, 645, 984, 1049)
+training_ids_past_s1_ignore <- c(training_ids_past_s1_ignore, 
+                                 249, 639, 645, 984, 1049)
 
 setdiff(training_ids_past_s1, training_ids_past_s1_ignore)
 
-# TODO: Not sure how 2 participants can be in "HR_NO_COACH" and "LR_TRAINING" at 
-# "firstSession". Participant 161's condition changes from "TRAINING" to 
-# "HR_NO_COACH" during Session 1; nevertheless, it appears that they continued to 
-# recieve CBM training. Participant 545 has one row for "LR_TRAINING" at Session 1 
-# two months after completing the fifth training session; nevertheless, it appears 
-# that no additional scenarios were completed.
+# Check for participants in "LR_TRAINING", "HR_COACH", or "HR_NO_COACH" at 
+# "firstSession", which should not occur because "TRAINING" participants are not
+# classified as high/low risk and assigned to one of these conditions until they 
+# complete the "affect" questions following the first training session.
 
-risk_ids_at_s1 <- test4[test4$session == "firstSession" &
-                          test4$conditioning %in% c("HR_COACH", "HR_NO_COACH",
-                                                    "LR_TRAINING") &
-                          test4$participant_id >= 159, "participant_id"]
-length(unique(risk_ids_at_s1))
-table(test4[test4$session == "firstSession", "conditioning"])
-View(test4[test4$participant_id %in% risk_ids_at_s1, ])
+risk_ids_at_s1 <- 
+  ang_train_ag[ang_train_ag$session_and_task_info == "firstSession" &
+                 ang_train_ag$conditioning %in% 
+                   c("HR_COACH", "HR_NO_COACH", "LR_TRAINING"), 
+               "participant_id"]
 
-View(dat$angular_training[dat$angular_training$participant_id == 161, ])
-View(dat$angular_training[dat$angular_training$participant_id == 545, ])
+#   Participant 161's condition changes from "TRAINING" to "HR_NO_COACH" during 
+#   Session 1; nevertheless, it seems that they continued receiving CBM training.
 
-risk_ids_at_s1_ignore <- c(161, 545)
+risk_ids_at_s1_ignore <- 161
+
+#   Participant 545 has one row for "LR_TRAINING" at Session 1 two months after 
+#   completing the fifth training session; nevertheless, no additional scenarios 
+#   seem to have been completed.
+
+risk_ids_at_s1_ignore <- c(risk_ids_at_s1_ignore, 545)
+
 setdiff(risk_ids_at_s1, risk_ids_at_s1_ignore)
 
+# Check that condition stays the same from "secondSession" through "fifthSession"
 
+ang_train_ag_s2_to_s5 <- ang_train_ag[ang_train_ag$session_and_task_info %in% 
+                                        c("secondSession", "thirdSession", 
+                                          "fourthSession", "fifthSession"), 
+                                      c("participant_id", "conditioning",
+                                        "session_and_task_info")]
+ang_train_ag_s2_to_s5_less <- 
+  unique(ang_train_ag_s2_to_s5[, c("participant_id", "conditioning")])
 
+summary <- ang_train_ag_s2_to_s5_less %>% 
+  group_by(participant_id) %>% summarise(count = n())
+summarySubset <- subset(summary, summary$count > 1)
 
+cond_change_ids_past_s1 <- summarySubset$participant_id
 
-# Check for weird switching of conditions. Conditions should be the same
-# from "secondSession" onward
+#   Participants 285, 249, 639, 645, 984, 1049 switch from "TRAINING" to "LR_TRAINING", 
+#   "HR_COACH", or "HR_NO_COACH" after Session 2. See above for explanation.
 
-nrow(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
-                                       "fourthSession", "fifthSession"), 
-                  c("participant_id", "conditioning")]))
-length(unique(test4[test4$session %in% c("secondSession", "thirdSession", 
-                                         "fourthSession", "fifthSession"), 
-                    c("participant_id", "conditioning")])$participant_id)
+cond_change_ids_past_s1_ignore <- c(285, 249, 639, 645, 984, 1049)
 
-# Check for switching between CONTROL and another condition. Shouldn't happen.
+setdiff(cond_change_ids_past_s1, cond_change_ids_past_s1_ignore)
 
-control_ids <- unique(test4[test4$conditioning == "CONTROL", "participant_id"])
-View(unique(test4[test4$participant_id %in% control_ids &
-                    test4$session %in% c("firstSession", "secondSession", "thirdSession", 
-                                         "fourthSession", "fifthSession"), 
-                  c("participant_id", "conditioning")]))
-table(test4[test4$participant_id %in% control_ids &
-              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
-                                   "fourthSession", "fifthSession"), ]$conditioning,
-      test4[test4$participant_id %in% control_ids &
-              test4$session %in% c("firstSession", "secondSession", "thirdSession", 
-                                   "fourthSession", "fifthSession"), ]$session)
+# Check for switching between "CONTROL" and another condition, which should not
+# occur given that "CONTROL" participants are not rerandomized at Stage 2
 
-# TODO: Not sure why 3 participants have condition in study table not matching
-# condition at same session in angular table. For participant 176, whose condition
-# is "NONE" in Angular Training table but "TRAINING" in study table at the first
-# training session, Henry Behan said on 9/7/2021 that he thinks the Angular
-# Training table did not pick up their assigned condition for some reason. They
-# do appear to have received the CBM condition during the first session, but they
-# did not complete the first session; asked Henry on 9/8/2021 if he thinks this
-# was due to a programming issue or to attrition. For participant 510, it seems
-# they completed session 1 training scenarios; perhaps they completed enough
-# measures after that to be stage 2 randomized but not enough for their current
-# session in the Study table to be updated to Session 2. For participant 645, it 
-# seems that the Angular Training table did not pick up on their assigned condition
-# until Session 2 (see above) for some reason.
+control_ids <- unique(ang_train_ag[ang_train_ag$conditioning == "CONTROL", 
+                                   "participant_id"])
 
+ang_train_ag_s1_to_s5 <- ang_train_ag[ang_train_ag$session_and_task_info %in% 
+                                        c("firstSession", "secondSession", 
+                                          "thirdSession", "fourthSession", 
+                                          "fifthSession"), 
+                                      c("participant_id", "conditioning",
+                                        "session_and_task_info")]
+ang_train_ag_s1_to_s5_control_less <- 
+  unique(ang_train_ag_s1_to_s5[ang_train_ag_s1_to_s5$participant_id %in% control_ids, 
+                               c("participant_id", "conditioning")])
 
+summary <- ang_train_ag_s1_to_s5_control_less %>% 
+  group_by(participant_id) %>% summarise(count = n())
+summarySubset <- subset(summary, summary$count > 1)
 
+control_change_ids <- summarySubset$participant_id
 
+#   Participant 382 is in "NONE" condition and did CBM-I training at "firstSession"
+#   and then switched to "CONTROL" and did psychoeducation from "secondSession"
+#   through "fifthSession". Henry Behan said on 9/9/2021 that CBM-I training is the
+#   default for the "NONE" condition and that he is unsure why the switch occurred.
+#   How this participant is handled will depend on the specific analysis.
 
-study_test <- dat$study[dat$study$participant_id %in% test4$participant_id, 
-                        c("participant_id", "conditioning", "current_session")]
-names(study_test)[names(study_test) == "conditioning"] <- "current_conditioning"
-
-ang_study_test_comb <- merge(test4, study_test, by = "participant_id", all.x = TRUE)
-ang_study_test_comb_same_session <- ang_study_test_comb[ang_study_test_comb$session ==
-                                                          ang_study_test_comb$current_session, ]
-
-mismatch <- ang_study_test_comb_same_session[(ang_study_test_comb_same_session$conditioning !=
-                                                ang_study_test_comb_same_session$current_conditioning) &
-                                               ang_study_test_comb_same_session$participant_id >= 159, ]
-length(unique(mismatch$participant_id))
-
-View(dat$angular_training[dat$angular_training$participant_id == 176, ])
-View(dat$angular_training[dat$angular_training$participant_id == 510, ])
-View(dat$angular_training[dat$angular_training$participant_id == 645, ])
-View(dat$study[dat$study$participant_id == 510, ])
-
-
-temp <- dat$task_log[dat$task_log$participant_id == 510, ]
-View(temp[order(temp$id), ])
-
-temp2 <- dat$task_log[dat$task_log$participant_id == 645, ]
-View(temp2[order(temp2$id), ])
-
-
-# TODO: 2 participants are in "NONE" after "firstSession". Changes/Issues Log 
-# on 7/19/21 says that says that these GIDI participants were also missing
-# DASS Eligibility data (but that it was found intact on the ws02 server),
-# that the issue appears to be related to a daylight savings time change,
-# and that the condition for these subjects should be changed to TRAINING_ORIG.
+# TODO: Flag this participant
 
 
 
 
 
-none_ids_past_s1 <- test4[test4$session %in% c("secondSession", "thirdSession",
-                                               "fourthSession", "fifthSession") &
-                            test4$conditioning == "NONE",
-                          "participant_id"]
-length(unique(none_ids_past_s1))
-View(test4[test4$participant_id %in% none_ids_past_s1, ])
+# Check for "conditioning" in "angular_training" table not matching "conditioning"
+# in "study" table at the same session.
 
+study_less <- dat$study[, c("participant_id", "conditioning", "current_session")]
+names(study_less)[names(study_less) == "conditioning"] <- "current_conditioning"
 
+ang_study_less_merge <- merge(ang_train_ag, study_less, by = "participant_id", all.x = TRUE)
+ang_study_less_merge_same_session <- ang_study_less_merge[ang_study_less_merge$session_and_task_info ==
+                                                            ang_study_less_merge$current_session, ]
 
+ang_study_cond_mismatch_ids <- 
+  ang_study_less_merge_same_session[(ang_study_less_merge_same_session$conditioning !=
+                                       ang_study_less_merge_same_session$current_conditioning), 
+                                    "participant_id"]
 
+#   For participant 176, whose condition is "NONE" in "angular_training" table but 
+#   "TRAINING" in "study" table at the first training session, Henry Behan said on 
+#   9/7/2021 that he thinks the "angular_training" table did not pick up their 
+#   assigned condition for some reason. They did receive CBM-I training during the 
+#   first session. However, they did not complete the training session, which Henry 
+#   Behan said on 9/8/2021 is likely due to attrition (vs. a programming error).
 
+ang_study_cond_mismatch_ids_ignore <- 176
+
+#   For participant 510, whose condition is "TRAINING" in "angular_training" table
+#   but "LR_TRAINING" in "study" table at the first training session, it seems they 
+#   completed session 1 training scenarios. Based on "task_log" table, they completed 
+#   "affect_post" at Session 1, so the attrition algorithm classified them and updated 
+#   their "study" table condition to "LR_TRAINING". However, because they didn't do
+#   "ReturnIntention" at Session 1, they did not get "SESSION_COMPLETE" in "task_log" 
+#   table and "current_session" in "study" table did not advance to "secondSession".
+#   Thus, "current_session" remains "firstSession", leading to the discrepancy.
+
+ang_study_cond_mismatch_ids_ignore <- c(ang_study_cond_mismatch_ids_ignore, 510)
+
+#   For participant 645, whose condition is "TRAINING" in "angular_training" table
+#   through part of the second training session but "HR_NO_COACH" in "study" table
+#   at Session 2, it seems "angular_training" table did not pick up their assigned 
+#   condition until partway into Session 2. Also see this participant above.
+
+ang_study_cond_mismatch_ids_ignore <- c(ang_study_cond_mismatch_ids_ignore, 645)
+
+setdiff(ang_study_cond_mismatch_ids, ang_study_cond_mismatch_ids_ignore)
+
+# Check for participants in "NONE", which should not occur because participants
+# are assigned to "TRAINING" or "CONTROL" prior to starting first training session.
+
+none_ids <- ang_train_ag[ang_train_ag$session_and_task_info %in% 
+                           c("firstSession", "secondSession", "thirdSession",
+                             "fourthSession", "fifthSession") &
+                           ang_train_ag$conditioning == "NONE",
+                         "participant_id"]
+
+#   For participants 176 and 382, see above for explanation
+
+none_ids_ignore <- c(176, 382)
+
+#   For participants 390 and 396, Changes/Issues log on 5/21/2019 says that these
+#   participant IDs were missing from the "dass" table and thus manually inputted
+#   there. These participants were in "NONE" at "firstSession" (where they received 
+#   CBM-I training) and "LR_TRAINING" starting at "secondSession".
+
+none_ids_ignore <- c(none_ids_ignore, 390, 396)
+
+#   For participant 403, condition is also "NONE" at "firstSession" (where they 
+#   received CBM-I training) and "LR_TRAINING" starting at "secondSession".
+
+none_ids_ignore <- c(none_ids_ignore, 403)
+
+setdiff(none_ids, none_ids_ignore)
 
 # ---------------------------------------------------------------------------- #
 # Exclude screenings resembling bots ----
@@ -2058,6 +2076,19 @@ View(test[duplicated(test[, c("participant_id",
                               "stimulus",
                               "stimulus_name")]), ])
 
+target_cols <- c("participant_id", 
+                 "session_and_task_info",
+                 "session_counter",
+                 "step_title",
+                 "stimulus",
+                 "stimulus_name")
+angular_training_dup <- 
+  dat$angular_training[duplicated(dat$angular_training[, target_cols]), ]
+write.csv(angular_training_dup, file = "./temp_cleaning/angular_training_dup.csv",
+          row.names = FALSE)
+
+
+
 
 
 
@@ -2072,8 +2103,14 @@ View(test2[duplicated(test2[, c("participant_id",
                                 "internal_node_id", 
                                 "stimulus"), ]), ])
 
-
-
+target_cols <- c("participant_id",
+                 "session_only",
+                 "internal_node_id", 
+                 "stimulus")
+js_psych_trial_dup <- 
+  dat$js_psych_trial[duplicated(dat$js_psych_trial[, target_cols]), ]
+write.csv(js_psych_trial_dup, file = "./temp_cleaning/js_psych_trial_dup.csv",
+          row.names = FALSE)
 
 
 # TODO: Investigate other tables yielding duplicates
