@@ -1621,10 +1621,6 @@ dat$dass21_as <- dat$dass21_as[!(dat$dass21_as$session_id %in% bot_session_ids),
 
 dass21_as_items <- c("bre", "dry", "hea", "pan", "sca", "tre", "wor")
 
-# Recode 555 ("prefer not to answer") as NA
-
-dat$dass21_as[, dass21_as_items][dat$dass21_as[, dass21_as_items] == 555] <- NA
-
 # TODO: This is now done in "Identify and Remove Duplicates" below. Consolidate
 # code if possible:
 #   For rows that have duplicated values on every meaningful column (i.e., every
@@ -1635,9 +1631,8 @@ meaningful_dass21_as_cols <-
 
 dat$dass21_as <- dat$dass21_as[order(dat$dass21_as[, "id"]), ]
 
-dat$dass21_as <- 
-  dat$dass21_as[!duplicated(dat$dass21_as[, meaningful_dass21_as_cols],
-                            fromLast = TRUE), ]
+dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, meaningful_dass21_as_cols],
+                                           fromLast = TRUE), ]
 
 
 
@@ -1648,21 +1643,18 @@ dat$dass21_as <-
 
 response_cols <- c(dass21_as_items, "over18", "time_on_page")
 
-dat$dass21_as <- 
-  dat$dass21_as[!duplicated(dat$dass21_as[, response_cols],
-                            fromLast = TRUE), ]
+dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, response_cols],
+                                           fromLast = TRUE), ]
 
 # Compute number of multiple rows per "session_id" at screening
 
-dass21_as_eligibility <- 
-  dat$dass21_as[dat$dass21_as$session_only == "Eligibility", ]
+dass21_as_eligibility <- dat$dass21_as[dat$dass21_as$session_only == "Eligibility", ]
 
-n_eligibility_rows <- 
-  dass21_as_eligibility %>% 
-  group_by(session_id, session_only) %>% 
-  summarise(count=n())
+n_eligibility_rows <- dass21_as_eligibility %>% 
+                      group_by(session_id, session_only) %>% 
+                      summarise(count=n()) %>%
+                      as.data.frame()
 
-n_eligibility_rows <- as.data.frame(n_eligibility_rows)
 names(n_eligibility_rows)[names(n_eligibility_rows) == "count"] <- "n_eligibility_rows"
 
 dat$dass21_as <- merge(dat$dass21_as, 
@@ -1679,6 +1671,9 @@ time_on_page_mean <- aggregate(dass21_as_eligibility$time_on_page,
                                     dass21_as_eligibility$session_only), 
                                mean)
 names(time_on_page_mean) <- c("session_id", "session_only", "time_on_page_mean")
+
+time_on_page_mean[is.nan(time_on_page_mean[, "time_on_page_mean"]), 
+                  "time_on_page_mean"] <- NA
 
 dat$dass21_as <- merge(dat$dass21_as, 
                        time_on_page_mean, 
@@ -1702,10 +1697,9 @@ unique_dass21_as_eligibility_items <-
                                    "session_only",
                                    dass21_as_items)])
 
-n_eligibility_unq_item_rows <- 
-  unique_dass21_as_eligibility_items %>% 
-  group_by(session_id, session_only) %>% 
-  summarise(count=n())
+n_eligibility_unq_item_rows <- unique_dass21_as_eligibility_items %>% 
+                               group_by(session_id, session_only) %>% 
+                               summarise(count=n())
 
 n_eligibility_unq_item_rows <- as.data.frame(n_eligibility_unq_item_rows)
 names(n_eligibility_unq_item_rows)[names(n_eligibility_unq_item_rows) == "count"] <-
@@ -1717,18 +1711,22 @@ dat$dass21_as <- merge(dat$dass21_as,
                        all.x = TRUE,
                        sort = FALSE)
 
-# Compute column mean of unique values on DASS-21-AS items per "session_id". Note 
-# that this currently only applies to rows at screening.
+# Compute column mean of unique values on DASS-21-AS items per "session_id",
+# treating values of "Prefer Not to Answer" as NA without recoding them as NA in 
+# the actual dataset. Note that this currently only applies to rows at screening.
+
+unique_items <- unique_dass21_as_eligibility_items
+
+unique_items[, dass21_as_items][unique_items[, dass21_as_items] == 555] <- NA
 
 for (i in 1:length(dass21_as_items)) {
   col_name <- dass21_as_items[i]
   col_mean_name <- paste0(dass21_as_items[i], "_mean")
   
-  dass21_as_item_mean <- 
-    aggregate(unique_dass21_as_eligibility_items[, col_name], 
-              list(unique_dass21_as_eligibility_items$session_id,
-                   unique_dass21_as_eligibility_items$session_only), 
-              mean, na.rm = TRUE)
+  dass21_as_item_mean <- aggregate(unique_items[, col_name], 
+                                   list(unique_items$session_id,
+                                        unique_items$session_only), 
+                                   mean, na.rm = TRUE)
   names(dass21_as_item_mean) <- c("session_id", "session_only", col_mean_name)
   
   dass21_as_item_mean[is.nan(dass21_as_item_mean[, col_mean_name]), 
@@ -1743,20 +1741,24 @@ for (i in 1:length(dass21_as_items)) {
 
 # Compute DASS-21-AS total score per row (as computed by system, not accounting
 # for multiple entries) by taking mean of available raw items and multiplying 
-# by 7 (to create "dass21_as_total"). At screening, multiply by 2 to interpret
-# against eligibility criterion ("dass21_as_total_interp"; >= 10 is eligible) and
+# by 7 (to create "dass21_as_total"). Treat "Prefer Not to Answer" as NA without 
+# recoding it as NA in the actual dataset. At screening, multiply by 2 to interpret 
+# against eligibility criterion ("dass21_as_total_interp"; >= 10 is eligible) and 
 # create indicator ("dass21_as_eligible") to reflect eligibility on DASS-21-AS.
 
 dat$dass21_as$dass21_as_total <- NA
 dat$dass21_as$dass21_as_total_interp <- NA
 dat$dass21_as$dass21_as_eligible <- NA
 
-for (i in 1:nrow(dat$dass21_as)) {
-  if (all(is.na(dat$dass21_as[i, dass21_as_items]))) {
+temp_dass21_as <- dat$dass21_as
+temp_dass21_as[, dass21_as_items][temp_dass21_as[, dass21_as_items] == 555] <- NA
+
+for (i in 1:nrow(temp_dass21_as)) {
+  if (all(is.na(temp_dass21_as[i, dass21_as_items]))) {
     dat$dass21_as$dass21_as_total[i] <- NA
   } else {
     dat$dass21_as$dass21_as_total[i] <- 
-      rowMeans(dat$dass21_as[i, dass21_as_items], na.rm = TRUE)*7
+      rowMeans(temp_dass21_as[i, dass21_as_items], na.rm = TRUE)*7
   }
 }
 
@@ -1832,6 +1834,32 @@ nrow(dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id
 
 
 # ---------------------------------------------------------------------------- #
+# Clean "reasons_for_ending" table ----
+# ---------------------------------------------------------------------------- #
+
+# Changes/Issues Log on 10/7/2019 says that some completers of the 2-month follow-
+# up assessment were incorrectly administered "reasons_for_ending". No data were
+# collected after this measure. Thus, these entries can be deleted. Note that the
+# "reasons_for_ending" task is not recorded in the "task_log" table.
+
+reasons_for_ending_complete_ids <- 
+  dat$reasons_for_ending[dat$reasons_for_ending$session_only == "COMPLETE", "id"]
+
+reasons_for_ending_tbls <- c("reasons_for_ending",
+                             "reasons_for_ending_change_med",
+                             "reasons_for_ending_device_use",
+                             "reasons_for_ending_location",
+                             "reasons_for_ending_reasons")
+
+for (i in 1:length(dat)) {
+  if (names(dat)[i] %in% reasons_for_ending_tbls) {
+    dat[[i]] <- dat[[i]][!(dat[[i]][, "id"] %in% reasons_for_ending_complete_ids), ]
+  } else {
+    dat[[i]] <- dat[[i]]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
 # Clean "angular_training" table ----
 # ---------------------------------------------------------------------------- #
 
@@ -1841,6 +1869,19 @@ nrow(dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id
 # and Quick Thinking (also called Flexible Thinking) Exercise were done. Note
 # that some of the rows below may not arise in the Calm Thinking Study, but
 # still check for whether they are present.
+
+# Create new columns for sorting rows based on the tasks they correspond to
+
+dat$angular_training$task <- NA
+dat$angular_training$subtask <- NA
+dat$angular_training$subtask_detail <- NA
+
+# TODO: Label rows for Anxious Imagery Prime task
+
+dat$angular_training$task[dat$angular_training$trial_type == "FillInBlank" &
+                            (dat$angular_training$step_title %in%
+                               c("Use Your Imagination", "Use your Imagination"))] <- 
+  "anx_imag_prime"
 
 
 
@@ -1890,6 +1931,15 @@ rows2 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
 
 table(rows2$conditioning)
 table(rows2$session_and_task_info)
+
+# TODO: Label rows for Quick Thinking Exercise
+
+dat$angular_training$task[dat$angular_training$stimulus_name == 
+                            "flex_thinking_explanations"] <- "quick_thinking"
+
+
+
+
 
 # 3. Henry says that this criterion reflects participants' responses to the Quick
 # Thinking Exercise (also called Flexible Thinking Exercise). Also see his email
@@ -1950,39 +2000,6 @@ nrow(rows4_all_conditions)
 
 
 
-# TODO: Check the filtering criteria with Angel/Henry. Angel said he does not
-# need to filter on "FillInBlank" because all values are that when using the
-# criteria below.
-
-test <- dat$angular_training[dat$angular_training$conditioning == "TRAINING_CREATE" &
-                               dat$angular_training$stimulus_name == "" &
-                               dat$angular_training$step_title == "", ]
-
-gidi_ids <- dat$study[dat$study$study_extension == "GIDI", "participant_id"]
-test_gidi <- test[test$participant_id %in% gidi_ids, ]
-
-table(test_gidi$trial_type)
-
-test_gidi_countdown_ids <- test_gidi[test_gidi$trial_type == "Countdown", "participant_id"]
-test_gidi_fillinblank_ids <- test_gidi[test_gidi$trial_type == "FillInBlank", "participant_id"]
-test_gidi_intersect_ids <- intersect(test_gidi_countdown_ids, test_gidi_fillinblank_ids)
-
-test_gidi_ids <- list(test_gidi_countdown_ids = test_gidi_countdown_ids,
-                      test_gidi_fillinblank_ids = test_gidi_fillinblank_ids,
-                      test_gidi_intersect_ids = test_gidi_intersect_ids)
-
-save(test_gidi_ids, file = "./temp_cleaning/test_gidi_ids.RData")
-
-all(test_gidi$rt == test_gidi$rt_first_react)
-
-View(test_gidi[test_gidi$participant_id == 2280, ])
-
-View(dat$angular_training[dat$angular_training$participant_id == 2280, ])
-
-
-
-
-
 # 5. Henry Behan said this criterion reflects participants' explanations as to 
 # why the they created occurred in the Write Your Own Scenario exercise in the
 # "TRAINING_CREATE" condition of the TET study. No participants completed this
@@ -2006,6 +2023,62 @@ nrow(remaining) == 0
 # see Henry's email "MT Flex Thinking data for control pps" on 9/30/21 for a 
 # draft cleaning script.
 
+# Create new column for session-only information
+
+dat$angular_training$session_only <- 
+  ifelse(dat$angular_training$session_and_task_info %in%
+           c("firstSession", "secondSession", "thirdSession", "fourthSession", 
+             "fifthSession"),
+         dat$angular_training$session_and_task_info,
+         NA)
+
+# TODO: Label rows for Recognition Ratings
+
+dat$angular_training$task[dat$angular_training$session_and_task_info == 
+                            "Recognition Ratings"] <- "recognition_ratings"
+
+# TODO: Determine session. Revise so that "readinessHeader" isn't just NA
+
+for (i in 1:nrow(dat$angular_training)) {
+  if (dat$angular_training$task[i] %in% "recognition_ratings") {
+    if (dat$angular_training$stimulus_name[i] == "readinessHeader") {
+      dat$angular_training$session_only[i] <- NA
+    } else {
+      if (dat$angular_training$session_index[i] == 0) {
+        dat$angular_training$session_only[i] <- "preTest"
+      } else if (dat$angular_training$session_index[i] == 3) {
+        dat$angular_training$session_only[i] <- "thirdSession"
+      } else if (dat$angular_training$session_index[i] == 5) {
+        dat$angular_training$session_only[i] <- "fifthSession"
+      } else if (dat$angular_training$session_index[i] == 6) {
+        dat$angular_training$session_only[i] <- "PostFollowUp"
+      } else if (dat$angular_training$session_index[i] == 7) {
+        dat$angular_training$session_only[i] <- "PostFollowUp2"
+      } 
+    }
+  }
+}
+
+# TODO: Continue reviewing Henry's code with Line 55
+
+
+View(dat$angular_training[dat$angular_training$task %in% "recognition_ratings", ])
+
+
+
+angular3$date <- format(as.Date(strptime(angular3$date, '%Y-%m-%d %H:%M')), "%x")
+
+ratings2 <- filter(ratings, participant_id > 2272)
+
+ratings2 <- ratings2 %>% 
+  group_by(participant_id) %>%
+  mutate(time_no = as.numeric(as.factor(date)))
+
+if(any(ratings2$time_no > 4)) {
+  "TRUE"
+} else {
+  "FALSE"
+}
 
 
 
@@ -2113,8 +2186,154 @@ write.csv(js_psych_trial_dup, file = "./temp_cleaning/js_psych_trial_dup.csv",
           row.names = FALSE)
 
 
+
+
+
 # TODO: Investigate other tables yielding duplicates
 
+
+
+
+
+#   2 duplicated rows for table: credibility
+#   With these ' participant_id ':  174 174
+
+View(dat$credibility[dat$credibility$participant_id == 174, ]) # SAME DATA
+
+#   1 duplicated rows for table: return_intention
+#   With these ' participant_id ':  1762
+
+View(dat$return_intention[dat$return_intention$participant_id == 1762, ]) # SAME DATA AND DATE
+
+#   1 duplicated rows for table: bbsiq
+#   With these ' participant_id ':  1529
+
+View(dat$bbsiq[dat$bbsiq$participant_id == 1529, ]) # SAME DATA AND DATE
+
+#   1 duplicated rows for table: oa
+#   With these ' participant_id ':  1860
+
+View(dat$oa[dat$oa$participant_id == 1860, ]) # SAME DATA AND DATE
+
+#   3 duplicated rows for other tasks in table: task_log
+#   With these 'participant_id':  1762 1529 1860
+
+View(dat$task_log[dat$task_log$participant_id == 1762, ]) # CONSISTENT WITH ABOVE
+View(dat$task_log[dat$task_log$participant_id == 1529, ]) # CONSISTENT WITH ABOVE
+View(dat$task_log[dat$task_log$participant_id == 1860, ]) # CONSISTENT WITH ABOVE
+
+
+
+
+
+# TODO: Define function
+
+compute_n_rows_col_means <- function(df, index_cols, time_on_col, item_cols) {
+  # Compute number of rows per index columns
+  
+  n_rows <- df %>%
+    group_by(across(all_of(index_cols))) %>%
+    summarise(count=n()) %>%
+    as.data.frame()
+  
+  names(n_rows)[names(n_rows) == "count"] <- "n_rows"
+  
+  df2 <- merge(df, n_rows, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # Compute mean "time_on_" column across multiple rows per index columns
+  
+  time_on_col_mean_name <- paste0(time_on_col, "_mean")
+  
+  time_on_col_mean <- aggregate(df2[, time_on_col], 
+                                 as.list(df2[, index_cols]), 
+                                 mean)
+  names(time_on_col_mean) <- c(index_cols, time_on_col_mean_name)
+  
+  time_on_col_mean[is.nan(time_on_col_mean[, time_on_col_mean_name]), 
+                   time_on_col_mean_name] <- NA
+  
+  df3 <- merge(df2, time_on_col_mean, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # Compute number of unique rows on item columns per index columns. We will 
+  # compute the column mean across the unique item entries.
+  
+  unique_items <- unique(df[, c(index_cols, item_cols)])
+  
+  n_unq_item_rows <- unique_items %>% 
+    group_by(across(all_of(index_cols))) %>% 
+    summarise(count=n()) %>%
+    as.data.frame()
+  
+  names(n_unq_item_rows)[names(n_unq_item_rows) == "count"] <- "n_unq_item_rows"
+  
+  df4 <- merge(df3, n_unq_item_rows, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # If multiple unique values on any item per index columns are present, compute 
+  # column means across unique values for all items, treating values of "Prefer
+  # Not to Answer" as NA without recoding them as NA in the actual dataset
+  
+  df5 <- df4
+  
+  unique_items[, item_cols][unique_items[, item_cols] == 555] <- NA
+  
+  if (any(df5$n_unq_item_rows > 1)) {
+    for (i in 1:length(item_cols)) {
+      col_name <- item_cols[i]
+      col_mean_name <- paste0(item_cols[i], "_mean")
+      
+      item_mean <- aggregate(unique_items[, col_name], 
+                             as.list(unique_items[, index_cols]),
+                             mean, 
+                             na.rm = TRUE)
+      names(item_mean) <- c(index_cols, col_mean_name)
+      
+      item_mean[is.nan(item_mean[, col_mean_name]), col_mean_name] <- NA
+      
+      df5 <- merge(df5, item_mean, index_cols, all.x = TRUE, sort = FALSE)
+    }
+  }
+  
+  return(df5)
+}
+
+# TODO: Run function
+
+test <- compute_n_rows_col_means(dat$credibility, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 c("confident_online", "important"))
+
+test <- compute_n_rows_col_means(dat$return_intention, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 "days_till_returning")
+
+bbsiq_items <- 
+  c("breath_flu", "breath_physically", "breath_suffocate", "chest_heart", 
+    "chest_indigestion", "chest_sore", "confused_cold", "confused_outofmind", 
+    "confused_work", "dizzy_ate", "dizzy_ill", "dizzy_overtired", "friend_helpful", 
+    "friend_incompetent", "friend_moreoften", "heart_active", "heart_excited", 
+    "heart_wrong", "jolt_burglar", "jolt_dream", "jolt_wind", "lightheaded_eat", 
+    "lightheaded_faint", "lightheaded_sleep", "party_boring", "party_hear", 
+    "party_preoccupied", "shop_bored", "shop_concentrating", "shop_irritating", 
+    "smoke_cig", "smoke_food", "smoke_house", "urgent_bill", "urgent_died", 
+    "urgent_junk", "vision_glasses", "vision_illness", "vision_strained", 
+    "visitors_bored", "visitors_engagement", "visitors_outstay")
+
+test <- compute_n_rows_col_means(dat$bbsiq, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 bbsiq_items)
+
+test <- compute_n_rows_col_means(dat$oa, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 c("axf", "axs", "avo", "wrk", "soc"))
+
+test <- compute_n_rows_col_means(dat$task_log, 
+                                 c("participant_id", "session_only", "task_name", "tag"),
+                                 "time_on_task",
+                                 "task_name")
 
 
 
@@ -2332,6 +2551,16 @@ for (i in 1:length(no_duplicated_dat)) {
 
 dat_summary
 
+# TODO: See "return_intention" past "return_date"
+
+unique(as.vector(as.matrix(dat$return_intention[, "days_till_returning"])))
+
+View(dat$return_intention[dat$return_intention$participant_id == 1265, ])
+
+
+
+
+
 # ---------------------------------------------------------------------------- #
 # INSERT HEADING ----
 # ---------------------------------------------------------------------------- #
@@ -2545,6 +2774,19 @@ View(filter(dat$taskLog, systemID == 577)) # Evaluation and assessing program ar
 # TODO: Make basic columns specific and sort tables in consistent way. Consider
 # starting with "participant_id", "study_id" (if present), and then "id" (if 
 # present). Consider ordering by "id". Also consider removing "X".
+
+# Draft of code from Taylor
+# 
+# nameList = list('id', "session_name")
+# 
+# for (i in 1:length(data)){
+#   for(colName in nameList){
+#     if(colName %in% colnames(data[[i]])){
+#       colnames(data[[i]]) <- 
+#         c(colName, colnames(data[[i]])[(colnames(data[[i]]) != colName) == TRUE])
+#     }
+#   }
+# }
 
 
 
