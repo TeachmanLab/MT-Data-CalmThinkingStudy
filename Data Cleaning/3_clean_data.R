@@ -1304,40 +1304,26 @@ for (i in 1:length(dat)) {
 # Obtain time of last collected data ----
 # ---------------------------------------------------------------------------- #
 
-# TODO (drawing from below as needed)
+# Identify latest value for system-generated time stamps across all tables
 
-
-
-
-
-# TODO: Checking Henry's proposed last data collection date for Calm Thinking
-
-View(dat$task_log[order(dat$task_log$system_date_time_latest), ])
-max_task_log <- max(dat$task_log$system_date_time_latest)
+output <- data.frame(table = rep(NA, length(dat)),
+                     max_system_date_time_latest = rep(NA, length(dat)))
+output$max_system_date_time_latest <- as.POSIXct(output$max_system_date_time_latest,
+                                                 tz = "EST")
 
 for (i in 1:length(dat)) {
-  if (all(is.na(dat[[i]][, "system_date_time_latest"]))) {
-    print(paste0(names(dat[i]), ": All system_date_time_latest is NA"))
-  } else if (max(dat[[i]][, "system_date_time_latest"], na.rm = TRUE) >=
-             max_task_log) {
-    print(paste0(names(dat[i]), ": ", max(dat[[i]][, "system_date_time_latest"], na.rm = TRUE)))
+  output$table[i] <- names(dat[i])
+  
+  if ("system_date_time_latest" %in% names(dat[[i]]) &
+      !(all(is.na(dat[[i]][, "system_date_time_latest"])))) {
+    output$max_system_date_time_latest[i] <- 
+      max(dat[[i]][, "system_date_time_latest"], na.rm = TRUE)
   } else {
-    print(paste0(names(dat[i]), ": system_date_time_latest less than max_task_log"))
+    output$max_system_date_time_latest[i] <- NA
   }
 }
 
-# "gift_log: 2020-08-23 14:44:14" - gift card sent to 2000
-# "sms_log: 2020-09-07 17:00:00" - final reminder to 412
-# "participant: 2020-11-12 15:14:09" - several people log in past
-# "angular_training: 2020-11-12 15:27:33" - 1373 did training on 11/12/20
-# "email_log: 2020-11-13 22:13:27" - emails about follow-up, debriefing, and password reset
-
-View(dat$participant[order(dat$participant$system_date_time_latest), ])
-View(dat$angular_training[order(dat$angular_training$system_date_time_latest), ])
-
-
-
-
+max(output$max_system_date_time_latest, na.rm = TRUE) # "2020-11-13 22:13:27 EST"
 
 # ---------------------------------------------------------------------------- #
 # Flag participants with inaccurate "active" column ----
