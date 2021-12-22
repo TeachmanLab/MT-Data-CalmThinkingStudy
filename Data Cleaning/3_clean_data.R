@@ -1271,6 +1271,42 @@ for (i in 1:length(dat)) {
   }
 }
 
+# ---------------------------------------------------------------------------- #
+# Edit participant information: Participant spanning two studies ----
+# ---------------------------------------------------------------------------- #
+
+# Participant 1992 completed only "dass21_as" before Calm Thinking enrollment 
+# closed on 2020-04-06 23:59 EDT but re-engaged with the program after the TET 
+# study launched on 2020-04-07 00:00 EDT and got assigned to a TET condition.
+# Thus, we change their condition and current session to what they were in Calm 
+# Thinking and remove all their data after the launch of TET. (Note that in TET
+# data cleaning, the participant's data should not be removed.)
+
+dat$study[dat$study$participant_id == 1992, ]$conditioning <- "NONE"
+dat$study[dat$study$participant_id == 1992, ]$current_session <- "preTest"
+dat$study[dat$study$participant_id == 1992, 
+          c("last_session_date", "last_session_date_as_POSIXct",
+            "system_date_time_earliest", "system_date_time_latest")] <- NA
+
+for (i in 1:length(dat)) {
+  if ("system_date_time_earliest" %in% names(dat[[i]]) &
+      "participant_id" %in% names(dat[[i]])) {
+    dat[[i]] <- dat[[i]][!(dat[[i]][, "participant_id"] == 1992 &
+                             (!is.na(dat[[i]][, "system_date_time_earliest"]) &
+                             dat[[i]][, "system_date_time_earliest"] >= 
+                               "2020-04-07 00:00 EDT")), ]
+  } else {
+    dat[[i]] <- dat[[i]]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
+# Obtain time of last collected data ----
+# ---------------------------------------------------------------------------- #
+
+# TODO (drawing from below as needed)
+
+
 
 
 
@@ -1283,7 +1319,7 @@ for (i in 1:length(dat)) {
   if (all(is.na(dat[[i]][, "system_date_time_latest"]))) {
     print(paste0(names(dat[i]), ": All system_date_time_latest is NA"))
   } else if (max(dat[[i]][, "system_date_time_latest"], na.rm = TRUE) >=
-               max_task_log) {
+             max_task_log) {
     print(paste0(names(dat[i]), ": ", max(dat[[i]][, "system_date_time_latest"], na.rm = TRUE)))
   } else {
     print(paste0(names(dat[i]), ": system_date_time_latest less than max_task_log"))
@@ -1302,39 +1338,6 @@ View(dat$angular_training[order(dat$angular_training$system_date_time_latest), ]
 
 
 
-
-# ---------------------------------------------------------------------------- #
-# Edit participant information: Participant spanning two studies ----
-# ---------------------------------------------------------------------------- #
-
-# TODO: Check below once Henry confirms official enrollment dates above
-
-
-
-
-
-# Participant 1992 only progressed to the early preTest phase before the Calm
-# Thinking study closed, but re-engaged with the program at a later point and 
-# got assigned to a TET study condition, so we change their progress to what it 
-# was in Calm Thinking before the switch happened.
-
-# TODO: task_log shows that participant 1992 completed their first preTest 
-# task (Credibility) on 4/15/2020, the day after TET launched on 4/14/2020.
-# This means that they did not even progress to preTest before TET launched.
-# Jeremy to ensure all their data after Eligibility is removed for Calm Thinking
-# data cleaning. The code below does not appear to actually remove any data.
-
-# TODO: Add an IF statement so the code below only applies to Calm Thinking data. 
-# For TET data the participant's information should not be changed.
-
-update_specific_participants <- function(data) {
-  dat$study[dat$study$participant_id == 1992, ]$conditioning <- "NONE"
-  dat$study[dat$study$participant_id == 1992, ]$current_session <- "preTest"
-  
-  return(dat)
-}
-
-dat <- update_specific_participants(dat)
 
 # ---------------------------------------------------------------------------- #
 # Flag participants with inaccurate "active" column ----
