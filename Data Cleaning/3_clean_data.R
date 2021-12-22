@@ -309,8 +309,13 @@ dat <- add_participant_id(data = dat,
                           support_tables = session_review_support_table)
 
 # ---------------------------------------------------------------------------- #
-# Define additional test accounts ----
+# Correct test accounts ----
 # ---------------------------------------------------------------------------- #
+
+# Changes/Issues log on 1/28/21 indicates that participant 1097 should not be a
+# test account. Recode "test_account" accordingly.
+
+dat$participant[dat$participant$participant_id == 1097, ]$test_account <- 0
 
 # Changes/Issues log on 4/16/21 indicates that participant 1663 should be a test 
 # account. The account was created for participant 1537 because they were having
@@ -1029,28 +1034,6 @@ ignored_columns <- c(key_columns,
 find_repeated_column_names(dat, ignored_columns)
 
 # ---------------------------------------------------------------------------- #
-# Recode "gender" in "demographics" table ----
-# ---------------------------------------------------------------------------- #
-
-# Changes/Issues log on 8/5/2019 states that before this date, a "transgender" 
-# value for "gender" column of "demographics" table meant transgender male or 
-# female. However, after this date, the meaning of a "transgender" value changed
-# to transgender male specifically, and a new value "transgender_female" was added 
-# to mean transgender female. Thus, recode "transgender" as "transgender_male" 
-# after this date but leave it as "transgender" before this date.
-
-# TODO: Asked Henry on 12/22/21. The values already seem correct.
-
-table(dat$demographics$gender, useNA = "always")
-
-View(dat$demographics[grep("Transgender", dat$demographics$gender), 
-                      c("date", "session_only", "gender", "participant_id")])
-
-
-
-
-
-# ---------------------------------------------------------------------------- #
 # Correct study extensions ----
 # ---------------------------------------------------------------------------- #
 
@@ -1374,7 +1357,7 @@ for (i in 1:length(dat)) {
 max(output$max_system_date_time_latest, na.rm = TRUE) # "2020-11-13 22:13:27 EST"
 
 # ---------------------------------------------------------------------------- #
-# Flag participants with inaccurate "active" column ----
+# Identify participants with inaccurate "active" column ----
 # ---------------------------------------------------------------------------- #
 
 # Participants were supposed to be labeled as inactive at "preTest" or after 21 
@@ -1394,7 +1377,7 @@ mislabeled_inactive_participant_ids <-
   dat$participant[dat$participant$participant_id %in% inactive_participant_ids &
                     dat$participant$active == 1, 
                    "participant_id"]
-mislabeled_inactive_participant_ids
+mislabeled_inactive_participant_ids # 891, 1627, 1852
 
 # Participants were otherwise supposed to be labeled as active (default value),
 # but a few were labeled as inactive (unclear why). In these cases, participants
@@ -1409,13 +1392,7 @@ mislabeled_active_participant_ids <-
   dat$participant[dat$participant$participant_id %in% active_participant_ids &
                     dat$participant$active == 0,
                   "participant_id"]
-mislabeled_active_participant_ids
-
-# TODO: Flag both categories of participants above
-
-
-
-
+mislabeled_active_participant_ids # 191, 329, 723
 
 # ---------------------------------------------------------------------------- #
 # Check "conditioning" values in "angular_training" and "study" tables ----
@@ -1497,9 +1474,7 @@ setdiff(risk_ids_at_s1, risk_ids_at_s1_ignore)
 
 ang_train_ag_s2_to_s5 <- ang_train_ag[ang_train_ag$session_and_task_info %in% 
                                         c("secondSession", "thirdSession", 
-                                          "fourthSession", "fifthSession"), 
-                                      c("participant_id", "conditioning",
-                                        "session_and_task_info")]
+                                          "fourthSession", "fifthSession"), ]
 ang_train_ag_s2_to_s5_less <- 
   unique(ang_train_ag_s2_to_s5[, c("participant_id", "conditioning")])
 
@@ -1525,9 +1500,7 @@ control_ids <- unique(ang_train_ag[ang_train_ag$conditioning == "CONTROL",
 ang_train_ag_s1_to_s5 <- ang_train_ag[ang_train_ag$session_and_task_info %in% 
                                         c("firstSession", "secondSession", 
                                           "thirdSession", "fourthSession", 
-                                          "fifthSession"), 
-                                      c("participant_id", "conditioning",
-                                        "session_and_task_info")]
+                                          "fifthSession"), ]
 ang_train_ag_s1_to_s5_control_less <- 
   unique(ang_train_ag_s1_to_s5[ang_train_ag_s1_to_s5$participant_id %in% control_ids, 
                                c("participant_id", "conditioning")])
@@ -1551,7 +1524,7 @@ control_change_ids <- summarySubset$participant_id
 
 
 # Check for "conditioning" in "angular_training" table not matching "conditioning"
-# in "study" table at the same session.
+# in "study" table at the same session
 
 study_less <- dat$study[, c("participant_id", "conditioning", "current_session")]
 names(study_less)[names(study_less) == "conditioning"] <- "current_conditioning"
@@ -1560,7 +1533,7 @@ ang_study_less_merge <- merge(ang_train_ag, study_less, by = "participant_id", a
 ang_study_less_merge_same_session <- ang_study_less_merge[ang_study_less_merge$session_and_task_info ==
                                                             ang_study_less_merge$current_session, ]
 
-ang_study_cond_mismatch_ids <- 
+ang_study_cond_mismatch_same_session_ids <- 
   ang_study_less_merge_same_session[(ang_study_less_merge_same_session$conditioning !=
                                        ang_study_less_merge_same_session$current_conditioning), 
                                     "participant_id"]
@@ -1572,7 +1545,7 @@ ang_study_cond_mismatch_ids <-
 #   first session. However, they did not complete the training session, which Henry 
 #   Behan said on 9/8/2021 is likely due to attrition (vs. a programming error).
 
-ang_study_cond_mismatch_ids_ignore <- 176
+ang_study_cond_mismatch_same_session_ids_ignore <- 176
 
 #   For participant 510, whose condition is "TRAINING" in "angular_training" table
 #   but "LR_TRAINING" in "study" table at the first training session, it seems they 
@@ -1583,16 +1556,43 @@ ang_study_cond_mismatch_ids_ignore <- 176
 #   table and "current_session" in "study" table did not advance to "secondSession".
 #   Thus, "current_session" remains "firstSession", leading to the discrepancy.
 
-ang_study_cond_mismatch_ids_ignore <- c(ang_study_cond_mismatch_ids_ignore, 510)
+ang_study_cond_mismatch_same_session_ids_ignore <- 
+  c(ang_study_cond_mismatch_same_session_ids_ignore, 510)
 
 #   For participant 645, whose condition is "TRAINING" in "angular_training" table
 #   through part of the second training session but "HR_NO_COACH" in "study" table
 #   at Session 2, it seems "angular_training" table did not pick up their assigned 
 #   condition until partway into Session 2. Also see this participant above.
 
-ang_study_cond_mismatch_ids_ignore <- c(ang_study_cond_mismatch_ids_ignore, 645)
+ang_study_cond_mismatch_same_session_ids_ignore <- 
+  c(ang_study_cond_mismatch_same_session_ids_ignore, 645)
 
-setdiff(ang_study_cond_mismatch_ids, ang_study_cond_mismatch_ids_ignore)
+setdiff(ang_study_cond_mismatch_same_session_ids, 
+        ang_study_cond_mismatch_same_session_ids_ignore)
+
+# Check for "conditioning" at Session 5 in "angular_training" table not matching 
+# "conditioning" at "COMPLETE" in "study" table
+
+ang_study_less_merge_s5_complete <- 
+  ang_study_less_merge[ang_study_less_merge$session_and_task_info == "fifthSession" &
+                         ang_study_less_merge$current_session == "COMPLETE", ]
+
+ang_study_cond_mismatch_s5_complete_ids <- 
+  ang_study_less_merge_s5_complete[(ang_study_less_merge_s5_complete$conditioning !=
+                                      ang_study_less_merge_s5_complete$current_conditioning), 
+                                   "participant_id"]
+
+#   For participant 1458, whose condition is "CONTROL" in "angular_training" table
+#   through Session 5 but "HR_COACH" in "study" table at "COMPLETE", Changes/Issues
+#   log on 1/28/21 states that participant's condition was changed to "HR_COACH" in 
+#   error after participant completed the study in "CONTROL". Thus, change condition 
+#   in "study" table back to "CONTROL".
+
+# TODO
+
+
+
+
 
 # Check for participants in "NONE", which should not occur because participants
 # are assigned to "TRAINING" or "CONTROL" prior to starting first training session.
