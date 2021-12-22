@@ -1175,8 +1175,8 @@ dat <- filter_all_data(dat, study_name)
 # "action_log" table has no data prior to 9/10/2020 because during the period it
 # was implemented (8/28/2019 to 10/18/2019) it had been collecting more data than 
 # intended; therefore, the data were deleted (see entries in Changes/Issues log on 
-# 8/28/2019, 10/18/2019). Data collection seems to have resumed around 9/10/2020
-# (see entry in Changes/Issues log on 9/8/2020).
+# 8/28/2019, 10/18/2019). Data collection seems to have resumed on 9/8/2020 (see 
+# entry in Changes/Issues log on 9/8/2020).
 
 # "covid19" table has no data prior to 4/23/2020 because this table was intended
 # for TET participants. Calm Thinking participants who accessed the site after
@@ -1201,20 +1201,25 @@ dat$anxiety_triggers[dat$anxiety_triggers$coronavirus %in% c(0, 999),
 # ---------------------------------------------------------------------------- #
 
 # Define function to add helper columns to "participant" table regarding how
-# condition was assigned, whether participants enrolled during the soft launch
-# versus the true launch of the study, and whether accounts are for coaches
+# condition was assigned, whether participants enrolled during the soft launch 
+# versus the true launch of the study, how high/low risk was classified, and 
+# whether accounts are for coaches
 
 add_participant_info <- function(data, study_name) {
   if (study_name == "Calm") {
     
-    # Create new variable describing how participants were assigned to condition
+    # Create new variable describing how participants were assigned to condition.
+    # See Changes/Issues log entries on 3/10/2019 and 4/9/2019, which state that
+    # the soft launch participants 69 to 154 and 43 to 140 below were manually
+    # assigned to condition for testing and training purposes.
     
     dat$participant$condition_assignment_method <- NA
-    manual <- c(43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 108, 120, 130, 
-                131, 132, 140)
+    manual_cond <- c(69, 73, 76, 77, 91, 103, 105, 112, 136, 148, 154)
+    manual_cond <- c(manual_cond, 43, 45, 57, 63, 67, 71, 82, 90, 94, 96, 97, 104, 
+                     108, 120, 130, 131, 132, 140)
     dat$participant <- 
-      mutate(dat$participant, 
-             condition_assignment_method = ifelse(participant_id %in% manual, 
+      mutate(dat$participant,
+             condition_assignment_method = ifelse(participant_id %in% manual_cond, 
                                                   "manual", "algorithm"))
     
     # Create new variable to differentiate soft and official launch participants
@@ -1223,6 +1228,21 @@ add_participant_info <- function(data, study_name) {
     dat$participant <- 
       mutate(dat$participant,
              launch_type = ifelse(participant_id >= 157, "OFFICIAL", "SOFT"))
+    
+    # Create new variable describing how participants were classified as high vs.
+    # low risk of dropout. Soft launch participants were manually classified. Also,
+    # see Changes/Issues log entry on 4/16/2019, which states that the official 
+    # participants below were manually classified as high risk "to account for the 
+    # drop in attrition scores the past week"; the participants were then randomly 
+    # assigned to "HR_COACH" or "HR_NO_COACH".
+    
+    dat$participant$risk_classification_method <- NA
+    manual_risk <- c(258, 259, 255, 250, 251, 246, 247, 242, 240, 235)
+    dat$participant <- 
+      mutate(dat$participant, 
+             risk_classification_method = ifelse(launch_type == "SOFT" |
+                                                   participant_id %in% manual_risk, 
+                                                 "manual", "algorithm"))
     
     # Create new indicator variable for coaching accounts
     
