@@ -1029,6 +1029,28 @@ ignored_columns <- c(key_columns,
 find_repeated_column_names(dat, ignored_columns)
 
 # ---------------------------------------------------------------------------- #
+# Recode "gender" in "demographics" table ----
+# ---------------------------------------------------------------------------- #
+
+# Changes/Issues log on 8/5/2019 states that before this date, a "transgender" 
+# value for "gender" column of "demographics" table meant transgender male or 
+# female. However, after this date, the meaning of a "transgender" value changed
+# to transgender male specifically, and a new value "transgender_female" was added 
+# to mean transgender female. Thus, recode "transgender" as "transgender_male" 
+# after this date but leave it as "transgender" before this date.
+
+# TODO: Asked Henry on 12/22/21. The values already seem correct.
+
+table(dat$demographics$gender, useNA = "always")
+
+View(dat$demographics[grep("Transgender", dat$demographics$gender), 
+                      c("date", "session_only", "gender", "participant_id")])
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
 # Correct study extensions ----
 # ---------------------------------------------------------------------------- #
 
