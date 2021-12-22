@@ -1172,23 +1172,29 @@ dat <- filter_all_data(dat, study_name)
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Add details or deal with the following once Henry confirms enrollment dates
+# "action_log" table has no data prior to 9/10/2020 because during the period it
+# was implemented (8/28/2019 to 10/18/2019) it had been collecting more data than 
+# intended; therefore, the data were deleted (see entries in Changes/Issues log on 
+# 8/28/2019, 10/18/2019). Data collection seems to have resumed around 9/10/2020
+# (see entry in Changes/Issues log on 9/8/2020).
 
+# "covid19" table has no data prior to 4/23/2020 because this table was intended
+# for TET participants. Calm Thinking participants who accessed the site after
+# TET launched on 4/7/2020 completed this questionnaire even though it was not
+# considered part of the Calm Thinking study.
 
+# ---------------------------------------------------------------------------- #
+# Recode "coronavirus" column of "anxiety_triggers" table ----
+# ---------------------------------------------------------------------------- #
 
+# "coronavirus" column of "anxiety_triggers" table has no data other than 0 prior 
+# to 4/4/2020 because this column was intended for TET participants. Calm Thinking
+# participants who accessed the site after TET launched on 4/7/2020 completed this
+# item even though it was not considered part of the Calm Thinking study. Recode
+# the 0 and 999 values (which indicate the item was not assessed) as NA.
 
-
-# TODO: "action_log" table has no data prior to 9/10/2020 because INSERT
-# TODO: "covid19" table has no data prior to INSERT because INSERT
-# TODO: "coronavirus" column of "anxiety_triggers" table has no data other than
-#         0 prior to INSERT because INSERT (likely recode 0 as NA)
-
-table(dat$anxiety_triggers$coronavirus, useNA = "always")
-# View(dat$anxiety_triggers[dat$anxiety_triggers$coronavirus != 0, ])
-
-
-
-
+dat$anxiety_triggers[dat$anxiety_triggers$coronavirus %in% c(0, 999), 
+                     "coronavirus"] <- NA
 
 # ---------------------------------------------------------------------------- #
 # Add participant information ----
