@@ -1309,15 +1309,32 @@ for (i in 1:length(dat)) {
 # Participant 1992 completed only "dass21_as" before Calm Thinking enrollment 
 # closed on 2020-04-06 23:59 EDT but re-engaged with the program after the TET 
 # study launched on 2020-04-07 00:00 EDT and got assigned to a TET condition.
-# Thus, we change their condition and current session to what they were in Calm 
-# Thinking and remove all their data after the launch of TET. (Note that in TET
-# data cleaning, the participant's data should not be removed.)
+# Thus, we change their condition, current session, and last session date to
+# what they were in Calm Thinking and remove all their data after the launch of 
+# TET. Make "last_session_date" in "study" table the same as "date_completed"
+# for "dass21_as" task in "task_log" table, but make "last_login_date" in
+# "participant" table NA (as the exact value is unknown). (Note: In TET data 
+# cleaning, the participant's data should not be changed or removed.)
 
 dat$study[dat$study$participant_id == 1992, ]$conditioning <- "NONE"
 dat$study[dat$study$participant_id == 1992, ]$current_session <- "preTest"
-dat$study[dat$study$participant_id == 1992, 
-          c("last_session_date", "last_session_date_as_POSIXct",
-            "system_date_time_earliest", "system_date_time_latest")] <- NA
+
+task_log_1992_elig_dass_row <- dat$task_log[dat$task_log$participant_id == 1992 & 
+                                              dat$task_log$session_only == "Eligibility" &
+                                              dat$task_log$task_name == "DASS21_AS", ]
+
+dat$study[dat$study$participant_id == 1992, "last_session_date"] <- 
+  task_log_1992_elig_dass_row[, "date_completed"]
+dat$study[dat$study$participant_id == 1992, "last_session_date_as_POSIXct"] <- 
+  task_log_1992_elig_dass_row[, "date_completed_as_POSIXct"]
+dat$study[dat$study$participant_id == 1992, "system_date_time_earliest"] <- 
+  task_log_1992_elig_dass_row[, "system_date_time_earliest"]
+dat$study[dat$study$participant_id == 1992, "system_date_time_latest"] <- 
+  task_log_1992_elig_dass_row[, "system_date_time_latest"]
+
+dat$participant[dat$participant$participant_id == 1992, 
+                c("last_login_date", "last_login_date_as_POSIXct",
+                  "system_date_time_earliest", "system_date_time_latest")] <- NA
 
 for (i in 1:length(dat)) {
   if ("system_date_time_earliest" %in% names(dat[[i]]) &
@@ -1588,7 +1605,7 @@ ang_study_cond_mismatch_s5_complete_ids <-
 #   error after participant completed the study in "CONTROL". Thus, change condition 
 #   in "study" table back to "CONTROL".
 
-# TODO
+# TODO once Henry confirms this is what happened. Asked on 12/22/21.
 
 
 
@@ -1622,6 +1639,257 @@ none_ids_ignore <- c(none_ids_ignore, 403)
 setdiff(none_ids, none_ids_ignore)
 
 # ---------------------------------------------------------------------------- #
+# Clean "angular_training" table ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Check on the following potential issues identified in the process of
+# checking that data are deidentified. Also consider adding an indicator for
+# each kind of row below and clarifying what session the Recognition Ratings
+# and Quick Thinking (also called Flexible Thinking) Exercise were done. Note
+# that some of the rows below may not arise in the Calm Thinking Study, but
+# still check for whether they are present.
+
+# Create new columns for sorting rows based on the tasks they correspond to
+
+dat$angular_training$task <- NA
+dat$angular_training$subtask <- NA
+dat$angular_training$subtask_detail <- NA
+
+# TODO: Label rows for Anxious Imagery Prime task
+
+dat$angular_training$task[dat$angular_training$trial_type == "FillInBlank" &
+                            (dat$angular_training$step_title %in%
+                               c("Use Your Imagination", "Use your Imagination"))] <- 
+  "anx_imag_prime"
+
+
+
+
+
+# 1. Some rows are participant descriptions of an anxious situation for the Use 
+# Your Imagination task at "firstSession" before starting training
+
+rows1 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
+                                (dat$angular_training$step_title %in%
+                                   c("Use Your Imagination", "Use your Imagination")), ]
+
+table(rows1$conditioning) # TODO: Why are there rows for conditions other than 
+# those below? Asked Henry 1/14/2021. He said it looks
+# like the table may have been pulling the incorrect
+# condition. See if this is still an issue after you
+# check the conditioning variable above.
+
+expected_conditions <- c("TRAINING",
+                         "TRAINING_ORIG", "TRAINING_30", "TRAINING_CREATE", 
+                         "TRAINING_ED")
+
+question1 <- rows1[!(rows1$conditioning %in% expected_conditions), ]
+View(question1)
+write.csv(question1, "./temp_cleaning/angular_training_question1.csv", 
+          row.names = FALSE)
+
+
+
+
+
+# 2. Some rows are participant responses for training scenarios at "fifthSession"
+# that required filling in a blank (vs. completing a word fragment). Prior to
+# 2/15/2019, these responses were indexed not with a "step_title" value of 
+# "scenario", but with a "step_title" value of the scenario's title, which 
+# subsequently was stored in "stimulus_name". Among the scenario titles prior 
+# to this change was "pub"; after this change, "pub" was renamed to "bar".
+
+scenario_titles <- 
+  c(unique(dat$angular_training[dat$angular_training$step_title == 
+                                  "scenario", ]$stimulus_name), "pub")
+
+rows2 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
+                                (dat$angular_training$step_title == "scenario" |
+                                   dat$angular_training$step_title %in% 
+                                   scenario_titles), ]
+
+table(rows2$conditioning)
+table(rows2$session_and_task_info)
+
+# TODO: Label rows for Quick Thinking Exercise
+
+dat$angular_training$task[dat$angular_training$stimulus_name == 
+                            "flex_thinking_explanations"] <- "quick_thinking"
+
+
+
+
+
+# 3. Henry says that this criterion reflects participants' responses to the Quick
+# Thinking Exercise (also called Flexible Thinking Exercise). Also see his email
+# "MT Flex Thinking data for control pps" on 9/27/21 for a draft cleaning script.
+
+rows3 <- dat$angular_training[dat$angular_training$stimulus_name == 
+                                "flex_thinking_explanations", ]
+
+# TODO: Not all rows have "step_title" of "Exercise: Quick Thinking" due to a
+# programming error.
+
+table(rows3$step_title)
+
+
+
+
+
+table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have 
+# gotten this. Check this.
+
+View(rows3[rows3$participant_id %in% dat$study[dat$study$study_extension == 
+                                                 "", ]$participant_id, ])
+
+
+
+
+
+table(rows3$session_and_task_info) # TODO: For "CONTROL" participants, the "session" 
+# column is populated by "flexible_thinking", so the session is
+# unclear. Consider clarifying the session.
+
+table(rows3[rows3$session_and_task_info == "flexible_thinking", ]$conditioning)
+table(rows3[rows3$conditioning != "CONTROL", ]$session_and_task_info)
+
+table(rows3$step_title)
+table(rows3$trial_type)
+
+View(dat$angular_training[dat$angular_training$conditioning == "CONTROL", ])
+View(dat$angular_training[dat$angular_training$conditioning != "CONTROL", ])
+
+
+
+
+
+
+# # 4. Henry Behan said these criteria reflect scenarios created by participants 
+# in the Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of 
+# the TET study. No participants completed this in Calm Thinking.
+
+rows4_all_conditions <- dat$angular_training[dat$angular_training$trial_type == 
+                                               "FillInBlank" &
+                                               dat$angular_training$stimulus_name == 
+                                               "" &
+                                               dat$angular_training$step_title == 
+                                               "", ]
+nrow(rows4_all_conditions)
+
+
+
+
+# 5. Henry Behan said this criterion reflects participants' explanations as to 
+# why the they created occurred in the Write Your Own Scenario exercise in the
+# "TRAINING_CREATE" condition of the TET study. No participants completed this
+# in Calm Thinking.
+
+rows5 <- dat$angular_training[dat$angular_training$stimulus_name == 
+                                "training_create_explanations", ]
+nrow(rows5)
+
+# Confirm no rows remain unaccounted for
+
+ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
+
+remaining <- dat$angular_training[!(dat$angular_training$id %in% ignored_ids) &
+                                    dat$angular_training$trial_type == 
+                                    "FillInBlank", ]
+
+nrow(remaining) == 0
+
+# 6. For indicating the session at which Recognition Ratings were completed, 
+# see Henry's email "MT Flex Thinking data for control pps" on 9/30/21 for a 
+# draft cleaning script.
+
+# Create new column for session-only information
+
+dat$angular_training$session_only <- 
+  ifelse(dat$angular_training$session_and_task_info %in%
+           c("firstSession", "secondSession", "thirdSession", "fourthSession", 
+             "fifthSession"),
+         dat$angular_training$session_and_task_info,
+         NA)
+
+# TODO: Label rows for Recognition Ratings
+
+dat$angular_training$task[dat$angular_training$session_and_task_info == 
+                            "Recognition Ratings"] <- "recognition_ratings"
+
+# TODO: Determine session. Revise so that "readinessHeader" isn't just NA
+
+for (i in 1:nrow(dat$angular_training)) {
+  if (dat$angular_training$task[i] %in% "recognition_ratings") {
+    if (dat$angular_training$stimulus_name[i] == "readinessHeader") {
+      dat$angular_training$session_only[i] <- NA
+    } else {
+      if (dat$angular_training$session_index[i] == 0) {
+        dat$angular_training$session_only[i] <- "preTest"
+      } else if (dat$angular_training$session_index[i] == 3) {
+        dat$angular_training$session_only[i] <- "thirdSession"
+      } else if (dat$angular_training$session_index[i] == 5) {
+        dat$angular_training$session_only[i] <- "fifthSession"
+      } else if (dat$angular_training$session_index[i] == 6) {
+        dat$angular_training$session_only[i] <- "PostFollowUp"
+      } else if (dat$angular_training$session_index[i] == 7) {
+        dat$angular_training$session_only[i] <- "PostFollowUp2"
+      } 
+    }
+  }
+}
+
+# TODO: Continue reviewing Henry's code with Line 55
+
+
+View(dat$angular_training[dat$angular_training$task %in% "recognition_ratings", ])
+
+
+
+angular3$date <- format(as.Date(strptime(angular3$date, '%Y-%m-%d %H:%M')), "%x")
+
+ratings2 <- filter(ratings, participant_id > 2272)
+
+ratings2 <- ratings2 %>% 
+  group_by(participant_id) %>%
+  mutate(time_no = as.numeric(as.factor(date)))
+
+if(any(ratings2$time_no > 4)) {
+  "TRUE"
+} else {
+  "FALSE"
+}
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Clean "reasons_for_ending" table ----
+# ---------------------------------------------------------------------------- #
+
+# Changes/Issues Log on 10/7/2019 says that some completers of the 2-month follow-
+# up assessment were incorrectly administered "reasons_for_ending". No data were
+# collected after this measure. Thus, these entries can be deleted. Note that the
+# "reasons_for_ending" task is not recorded in the "task_log" table.
+
+reasons_for_ending_complete_ids <- 
+  dat$reasons_for_ending[dat$reasons_for_ending$session_only == "COMPLETE", "id"]
+
+reasons_for_ending_tbls <- c("reasons_for_ending",
+                             "reasons_for_ending_change_med",
+                             "reasons_for_ending_device_use",
+                             "reasons_for_ending_location",
+                             "reasons_for_ending_reasons")
+
+for (i in 1:length(dat)) {
+  if (names(dat)[i] %in% reasons_for_ending_tbls) {
+    dat[[i]] <- dat[[i]][!(dat[[i]][, "id"] %in% reasons_for_ending_complete_ids), ]
+  } else {
+    dat[[i]] <- dat[[i]]
+  }
+}
+
+# ---------------------------------------------------------------------------- #
 # Exclude screenings resembling bots ----
 # ---------------------------------------------------------------------------- #
 
@@ -1651,36 +1919,81 @@ length(unique(bot_session_ids))
 dat$dass21_as <- dat$dass21_as[!(dat$dass21_as$session_id %in% bot_session_ids), ]
 
 # ---------------------------------------------------------------------------- #
-# Identify and handle multiple screening attempters ----
+# Identify and remove nonmeaningful duplicates ----
 # ---------------------------------------------------------------------------- #
+
+# For rows that have duplicated values on every meaningful column (i.e., every
+# column except "X" and "id"), keep only the last row after sorting by "id" for
+# tables that contain "id" (throw error if "attrition_prediction", "participant", 
+# or "study" tables, which lack "id", contain multiple rows per "participant_id",
+# in which case they will need to be sorted and have their rows consolidated).
+
+for (i in 1:length(dat)) {
+  meaningful_cols <- names(dat[[i]])[!(names(dat[[i]]) %in% c("X", "id"))]
+  
+  if (names(dat[i]) %in% c("attrition_prediction", "participant", "study")) {
+    if (nrow(dat[[i]]) != length(unique(dat[[i]][, "participant_id"]))) {
+      error(paste0("Unexpectedly, table ", names(dat[i]), 
+                   "contains multiple rows for at least one participant_id"))
+    }
+  } else if ("id" %in% names(dat[[i]])) {
+    dat[[i]] <- dat[[i]][order(dat[[i]][, "id"]), ]
+    
+    dat[[i]] <- dat[[i]][!duplicated(dat[[i]][, meaningful_cols],
+                                     fromLast = TRUE), ]
+  } else {
+    stop(paste0("Table ", names(dat[i]), "needs to be checked for duplicates"))
+  }
+}
+
+# ---------------------------------------------------------------------------- #
+# Handle multiple screenings and report participant flow up to enrollment ----
+# ---------------------------------------------------------------------------- #
+
+# Six participants did not have their "participant_id" connected to all screening 
+# attempts for their corresponding "session_id" (unclear why, as only for some, not 
+# all, attempts without "participant_id" was the participant ineligible on age, and 
+# all attempts were eligible on DASS). Correct this.
+
+unique_s_p_ids <- unique(dat$dass21_as[dat$dass21_as$session_only == "Eligibility", 
+                                       c("session_id", "participant_id")])
+
+n_unq_s_p_ids <- unique_s_p_ids %>% 
+  group_by(session_id) %>% 
+  summarise(count=n())
+
+s_ids_with_mlt_p_ids <- n_unq_s_p_ids$session_id[n_unq_s_p_ids$count > 1]
+length(unique(s_ids_with_mlt_p_ids))
+
+unique_s_p_ids_rest <- unique_s_p_ids[unique_s_p_ids$session_id %in% s_ids_with_mlt_p_ids, ]
+unique_s_p_ids_rest <- unique_s_p_ids_rest[!is.na(unique_s_p_ids_rest$participant_id), ]
+
+nrow(unique_s_p_ids_rest[duplicated(unique_s_p_ids_rest$session_id), ]) == 0
+
+for (i in 1:nrow(unique_s_p_ids_rest)) {
+  for (j in 1:nrow(dat$dass21_as)) {
+    if (dat$dass21_as$session_id[j] == unique_s_p_ids_rest$session_id[[i]]) {
+      dat$dass21_as$participant_id[j] <- unique_s_p_ids_rest$participant_id[[i]]
+    }
+  }
+}
 
 # Define DASS-21-AS items
 
 dass21_as_items <- c("bre", "dry", "hea", "pan", "sca", "tre", "wor")
 
-# TODO: This is now done in "Identify and Remove Duplicates" below. Consolidate
-# code if possible:
-#   For rows that have duplicated values on every meaningful column (i.e., every
-#   column except "X" and "id"), keep only the last row
-
-meaningful_dass21_as_cols <- 
-  names(dat$dass21_as)[!(names(dat$dass21_as) %in% c("X", "id"))]
-
-dat$dass21_as <- dat$dass21_as[order(dat$dass21_as[, "id"]), ]
-
-dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, meaningful_dass21_as_cols],
-                                           fromLast = TRUE), ]
-
-
-
-
-
-# Similarly, for remaining rows that have duplicated values on DASS-21-AS items,
-# "over18", and "time_on_page" at different time stamps, keep only the last row
+# After removing nonmeaningful duplicates (see above), for remaining rows that 
+# have duplicated values on DASS-21-AS items, "over18", and "time_on_page" for 
+# a given "session_id" and "session_only", keep only the last row after sorting
+# based on "id"
 
 response_cols <- c(dass21_as_items, "over18", "time_on_page")
 
-dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, response_cols],
+dat$dass21_as <- dat$dass21_as[order(dat$dass21_as$id), ]
+
+dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, c(response_cols, 
+                                                             "session_id", 
+                                                             "session_only")],
                                            fromLast = TRUE), ]
 
 # Compute number of multiple rows per "session_id" at screening
@@ -1835,9 +2148,11 @@ for (i in 1:nrow(dat$dass21_as)) {
   }
 }
 
-# TODO: Report number ineligible (a) due to DASS-21-AS score and (b) age. Use
-# most recent entry for people with multiple entries, as this is the entry that 
-# the program used to determine eligibility.However, for analysis, INSERT
+# Report number of participants screened, enrolled, and not enrolled. For not 
+# enrolled, report the reason; for people with multiple entries, base the
+# reason on the most recent entry (but note that nonenrollment following each
+# attempt could have occurred for a different reason--e.g., not eligible on age,
+# not eligible on DASS, eligible but not interested). 
 
 dass21_as_eligibility_last <- 
   dat$dass21_as[dat$dass21_as$session_only == "Eligibility", ]
@@ -1848,305 +2163,76 @@ dass21_as_eligibility_last <-
   dass21_as_eligibility_last[!duplicated(dass21_as_eligibility_last$session_id, 
                                          fromLast = TRUE), ]
 
-nrow(dass21_as_eligibility_last)
+# 5267 were screened for eligibility
+
+nrow(dass21_as_eligibility_last) 
+
+# Of the 5267 screened, 3519 did not enroll and 1748 enrolled
 
 nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id), ])
-nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
-                                  dass21_as_eligibility_last$dass21_as_eligible == FALSE &
-                                  dass21_as_eligibility_last$over18 == "true", ])
-nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
-                                  dass21_as_eligibility_last$dass21_as_eligible == FALSE &
-                                  dass21_as_eligibility_last$over18 == "false", ])
-nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
-                                  dass21_as_eligibility_last$dass21_as_eligible == TRUE &
-                                  dass21_as_eligibility_last$over18 == "false", ])
-nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
-                                  dass21_as_eligibility_last$dass21_as_eligible == TRUE &
-                                  dass21_as_eligibility_last$over18 == "true", ])
-
 nrow(dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id), ])
 
+# Of the 3519 who did not enroll, 774 were ineligible on DASS but eligible on age, 
+# 23 were ineligible on both DASS and age, 111 were eligible on DASS but ineligible
+# on age, and 2611 were eligible on both DASS and age
 
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == 0 &
+                                  dass21_as_eligibility_last$over18 == "true", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == 0 &
+                                  dass21_as_eligibility_last$over18 == "false", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == 1 &
+                                  dass21_as_eligibility_last$over18 == "false", ])
+nrow(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                  dass21_as_eligibility_last$dass21_as_eligible == 1 &
+                                  dass21_as_eligibility_last$over18 == "true", ])
 
+# Note that if screening data from participants who did not enroll is going to be
+# analyzed, 17 participants should be excluded from analysis because they have more 
+# than two sets of unique values on DASS-21-AS items
 
+exclude_nonenrolled_session_ids <- 
+  dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id) &
+                                    dass21_as_eligibility_last$n_eligibility_unq_item_rows > 2, 
+                             "session_id"]
+length(exclude_nonenrolled_session_ids)
+
+table(dass21_as_eligibility_last[is.na(dass21_as_eligibility_last$participant_id), 
+                                 "n_eligibility_unq_item_rows"])
+
+# Of the 1748 who did enroll, 6 participants should be excluded from analysis 
+# because they have more than two sets of unique values on DASS-21-AS items
+
+exclude_enrolled_participant_ids <- 
+  dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id) &
+                               dass21_as_eligibility_last$n_eligibility_unq_item_rows > 2, 
+                             "participant_id"]
+length(exclude_enrolled_participant_ids)
+
+table(dass21_as_eligibility_last[!is.na(dass21_as_eligibility_last$participant_id), 
+                                 "n_eligibility_unq_item_rows"])
+
+# Create indicator "exclude_analysis" to reflect nonenrolled/enrolled participants
+# who should be excluded from analysis
+
+dat$dass21_as$exclude_analysis <- 0
+
+dat$dass21_as$exclude_analysis[dat$dass21_as$session_id %in% 
+                                 exclude_nonenrolled_session_ids |
+                               dat$dass21_as$participant_id %in% 
+                                 exclude_enrolled_participant_ids] <- 1
+
+# Add "exclude_analysis" to "participant" table
+
+dat$participant$exclude_analysis <- 0
+dat$participant$exclude_analysis[dat$participant$participant_id %in%
+                                   exclude_enrolled_participant_ids] <- 1
 
 # ---------------------------------------------------------------------------- #
-# Clean "reasons_for_ending" table ----
+# Identify and remove INSERT duplicates ----
 # ---------------------------------------------------------------------------- #
-
-# Changes/Issues Log on 10/7/2019 says that some completers of the 2-month follow-
-# up assessment were incorrectly administered "reasons_for_ending". No data were
-# collected after this measure. Thus, these entries can be deleted. Note that the
-# "reasons_for_ending" task is not recorded in the "task_log" table.
-
-reasons_for_ending_complete_ids <- 
-  dat$reasons_for_ending[dat$reasons_for_ending$session_only == "COMPLETE", "id"]
-
-reasons_for_ending_tbls <- c("reasons_for_ending",
-                             "reasons_for_ending_change_med",
-                             "reasons_for_ending_device_use",
-                             "reasons_for_ending_location",
-                             "reasons_for_ending_reasons")
-
-for (i in 1:length(dat)) {
-  if (names(dat)[i] %in% reasons_for_ending_tbls) {
-    dat[[i]] <- dat[[i]][!(dat[[i]][, "id"] %in% reasons_for_ending_complete_ids), ]
-  } else {
-    dat[[i]] <- dat[[i]]
-  }
-}
-
-# ---------------------------------------------------------------------------- #
-# Clean "angular_training" table ----
-# ---------------------------------------------------------------------------- #
-
-# TODO: Check on the following potential issues identified in the process of
-# checking that data are deidentified. Also consider adding an indicator for
-# each kind of row below and clarifying what session the Recognition Ratings
-# and Quick Thinking (also called Flexible Thinking) Exercise were done. Note
-# that some of the rows below may not arise in the Calm Thinking Study, but
-# still check for whether they are present.
-
-# Create new columns for sorting rows based on the tasks they correspond to
-
-dat$angular_training$task <- NA
-dat$angular_training$subtask <- NA
-dat$angular_training$subtask_detail <- NA
-
-# TODO: Label rows for Anxious Imagery Prime task
-
-dat$angular_training$task[dat$angular_training$trial_type == "FillInBlank" &
-                            (dat$angular_training$step_title %in%
-                               c("Use Your Imagination", "Use your Imagination"))] <- 
-  "anx_imag_prime"
-
-
-
-
-
-# 1. Some rows are participant descriptions of an anxious situation for the Use 
-# Your Imagination task at "firstSession" before starting training
-
-rows1 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
-                                (dat$angular_training$step_title %in%
-                                   c("Use Your Imagination", "Use your Imagination")), ]
-
-table(rows1$conditioning) # TODO: Why are there rows for conditions other than 
-                          # those below? Asked Henry 1/14/2021. He said it looks
-                          # like the table may have been pulling the incorrect
-                          # condition. See if this is still an issue after you
-                          # check the conditioning variable above.
-
-expected_conditions <- c("TRAINING",
-                         "TRAINING_ORIG", "TRAINING_30", "TRAINING_CREATE", 
-                         "TRAINING_ED")
-
-question1 <- rows1[!(rows1$conditioning %in% expected_conditions), ]
-View(question1)
-write.csv(question1, "./temp_cleaning/angular_training_question1.csv", 
-          row.names = FALSE)
-
-
-
-
-
-# 2. Some rows are participant responses for training scenarios at "fifthSession"
-# that required filling in a blank (vs. completing a word fragment). Prior to
-# 2/15/2019, these responses were indexed not with a "step_title" value of 
-# "scenario", but with a "step_title" value of the scenario's title, which 
-# subsequently was stored in "stimulus_name". Among the scenario titles prior 
-# to this change was "pub"; after this change, "pub" was renamed to "bar".
-
-scenario_titles <- 
-  c(unique(dat$angular_training[dat$angular_training$step_title == 
-                                  "scenario", ]$stimulus_name), "pub")
-
-rows2 <- dat$angular_training[dat$angular_training$trial_type == "FillInBlank" &
-                                (dat$angular_training$step_title == "scenario" |
-                                   dat$angular_training$step_title %in% 
-                                   scenario_titles), ]
-
-table(rows2$conditioning)
-table(rows2$session_and_task_info)
-
-# TODO: Label rows for Quick Thinking Exercise
-
-dat$angular_training$task[dat$angular_training$stimulus_name == 
-                            "flex_thinking_explanations"] <- "quick_thinking"
-
-
-
-
-
-# 3. Henry says that this criterion reflects participants' responses to the Quick
-# Thinking Exercise (also called Flexible Thinking Exercise). Also see his email
-# "MT Flex Thinking data for control pps" on 9/27/21 for a draft cleaning script.
-
-rows3 <- dat$angular_training[dat$angular_training$stimulus_name == 
-                                "flex_thinking_explanations", ]
-
-# TODO: Not all rows have "step_title" of "Exercise: Quick Thinking" due to a
-# programming error.
-
-table(rows3$step_title)
-
-
-
-
-
-table(rows3$conditioning) # TODO: Some Calm Thinking Participants seem to have 
-                          # gotten this. Check this.
-
-View(rows3[rows3$participant_id %in% dat$study[dat$study$study_extension == 
-                                                 "", ]$participant_id, ])
-
-
-
-
-
-table(rows3$session_and_task_info) # TODO: For "CONTROL" participants, the "session" 
-                     # column is populated by "flexible_thinking", so the session is
-                     # unclear. Consider clarifying the session.
-
-table(rows3[rows3$session_and_task_info == "flexible_thinking", ]$conditioning)
-table(rows3[rows3$conditioning != "CONTROL", ]$session_and_task_info)
-
-table(rows3$step_title)
-table(rows3$trial_type)
-
-View(dat$angular_training[dat$angular_training$conditioning == "CONTROL", ])
-View(dat$angular_training[dat$angular_training$conditioning != "CONTROL", ])
-
-
-
-
-
-
-# # 4. Henry Behan said these criteria reflect scenarios created by participants 
-# in the Write Your Own Scenario exercise in the "TRAINING_CREATE" condition of 
-# the TET study. No participants completed this in Calm Thinking.
-
-rows4_all_conditions <- dat$angular_training[dat$angular_training$trial_type == 
-                                               "FillInBlank" &
-                                               dat$angular_training$stimulus_name == 
-                                               "" &
-                                               dat$angular_training$step_title == 
-                                               "", ]
-nrow(rows4_all_conditions)
-
-
-
-
-# 5. Henry Behan said this criterion reflects participants' explanations as to 
-# why the they created occurred in the Write Your Own Scenario exercise in the
-# "TRAINING_CREATE" condition of the TET study. No participants completed this
-# in Calm Thinking.
-
-rows5 <- dat$angular_training[dat$angular_training$stimulus_name == 
-                                "training_create_explanations", ]
-nrow(rows5)
-
-# Confirm no rows remain unaccounted for
-
-ignored_ids <- c(rows1$id, rows2$id, rows3$id, rows4_all_conditions$id, rows5$id)
-
-remaining <- dat$angular_training[!(dat$angular_training$id %in% ignored_ids) &
-                                    dat$angular_training$trial_type == 
-                                    "FillInBlank", ]
-
-nrow(remaining) == 0
-
-# 6. For indicating the session at which Recognition Ratings were completed, 
-# see Henry's email "MT Flex Thinking data for control pps" on 9/30/21 for a 
-# draft cleaning script.
-
-# Create new column for session-only information
-
-dat$angular_training$session_only <- 
-  ifelse(dat$angular_training$session_and_task_info %in%
-           c("firstSession", "secondSession", "thirdSession", "fourthSession", 
-             "fifthSession"),
-         dat$angular_training$session_and_task_info,
-         NA)
-
-# TODO: Label rows for Recognition Ratings
-
-dat$angular_training$task[dat$angular_training$session_and_task_info == 
-                            "Recognition Ratings"] <- "recognition_ratings"
-
-# TODO: Determine session. Revise so that "readinessHeader" isn't just NA
-
-for (i in 1:nrow(dat$angular_training)) {
-  if (dat$angular_training$task[i] %in% "recognition_ratings") {
-    if (dat$angular_training$stimulus_name[i] == "readinessHeader") {
-      dat$angular_training$session_only[i] <- NA
-    } else {
-      if (dat$angular_training$session_index[i] == 0) {
-        dat$angular_training$session_only[i] <- "preTest"
-      } else if (dat$angular_training$session_index[i] == 3) {
-        dat$angular_training$session_only[i] <- "thirdSession"
-      } else if (dat$angular_training$session_index[i] == 5) {
-        dat$angular_training$session_only[i] <- "fifthSession"
-      } else if (dat$angular_training$session_index[i] == 6) {
-        dat$angular_training$session_only[i] <- "PostFollowUp"
-      } else if (dat$angular_training$session_index[i] == 7) {
-        dat$angular_training$session_only[i] <- "PostFollowUp2"
-      } 
-    }
-  }
-}
-
-# TODO: Continue reviewing Henry's code with Line 55
-
-
-View(dat$angular_training[dat$angular_training$task %in% "recognition_ratings", ])
-
-
-
-angular3$date <- format(as.Date(strptime(angular3$date, '%Y-%m-%d %H:%M')), "%x")
-
-ratings2 <- filter(ratings, participant_id > 2272)
-
-ratings2 <- ratings2 %>% 
-  group_by(participant_id) %>%
-  mutate(time_no = as.numeric(as.factor(date)))
-
-if(any(ratings2$time_no > 4)) {
-  "TRUE"
-} else {
-  "FALSE"
-}
-
-
-
-
-# ---------------------------------------------------------------------------- #
-# Identify and remove duplicates ----
-# ---------------------------------------------------------------------------- #
-
-# For rows that have duplicated values on every meaningful column (i.e., every
-# column except "X" and "id"), keep only the last row after sorting by "id" for
-# tables that contain "id" (throw error if "attrition_prediction", "participant", 
-# or "study" tables, which lack "id", contain multiple rows per "participant_id",
-# in which case they will need to be sorted and have their rows consolidated).
-
-for (i in 1:length(dat)) {
-  meaningful_cols <- names(dat[[i]])[!(names(dat[[i]]) %in% c("X", "id"))]
-  
-  if (names(dat[i]) %in% c("attrition_prediction", "participant", "study")) {
-    if (nrow(dat[[i]]) != length(unique(dat[[i]][, "participant_id"]))) {
-      error(paste0("Unexpectedly, table ", names(dat[i]), 
-                   "contains multiple rows for at least one participant_id"))
-    }
-  } else if ("id" %in% names(dat[[i]])) {
-    dat[[i]] <- dat[[i]][order(dat[[i]][, "id"]), ]
-    
-    dat[[i]] <- dat[[i]][!duplicated(dat[[i]][, meaningful_cols],
-                                       fromLast = TRUE), ]
-  } else {
-    stop(paste0("Table ", names(dat[i]), "needs to be checked for duplicates"))
-  }
-}
 
 # TODO: 4 rows of "js_psych_trial" have "internal_node_id" == "", where "trial
 # _index" is 0. Codebook says these columns should correspond to each other.
@@ -2568,8 +2654,6 @@ report_remove_dups_list <- function(data) {
 # "dat_no_dup" is list of tables without any duplication based on "target_cols"
 
 dat_no_dup <- report_remove_dups_list(dat)
-
-# TODO: Jeremy to check everything below this
 
 
 
