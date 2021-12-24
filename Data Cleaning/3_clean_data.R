@@ -2235,181 +2235,12 @@ dat$participant$exclude_analysis[dat$participant$participant_id %in%
 # Identify unexpected multiple entries ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Note that repeated "dass21_as" screening attempts are reflected in
-# "task_log" only for some participants. Thus, "task_log" should not be used
-# to identify repeated screening attempters.
-
-View(dat$task_log[dat$task_log$participant_id == 177, ])
-View(dat$dass21_as[dat$dass21_as$participant_id %in% 177, ])
-
-View(dat$task_log[dat$task_log$participant_id == 1529, ])
-View(dat$dass21_as[dat$dass21_as$participant_id %in% 1529, ])
-
-
-
-
-
-# TODO: Investigate other tables yielding duplicates
-
-
-
-
-
-#   2 duplicated rows for table: credibility
-#   With these ' participant_id ':  174 174
-
-View(dat$credibility[dat$credibility$participant_id == 174, ]) # SAME DATA
-
-#   1 duplicated rows for table: return_intention
-#   With these ' participant_id ':  1762
-
-View(dat$return_intention[dat$return_intention$participant_id == 1762, ]) # SAME DATA AND DATE
-
-#   1 duplicated rows for table: bbsiq
-#   With these ' participant_id ':  1529
-
-View(dat$bbsiq[dat$bbsiq$participant_id == 1529, ]) # SAME DATA AND DATE
-
-#   1 duplicated rows for table: oa
-#   With these ' participant_id ':  1860
-
-View(dat$oa[dat$oa$participant_id == 1860, ]) # SAME DATA AND DATE
-
-#   3 duplicated rows for other tasks in table: task_log
-#   With these 'participant_id':  1762 1529 1860
-
-View(dat$task_log[dat$task_log$participant_id == 1762, ]) # CONSISTENT WITH ABOVE
-View(dat$task_log[dat$task_log$participant_id == 1529, ]) # CONSISTENT WITH ABOVE
-View(dat$task_log[dat$task_log$participant_id == 1860, ]) # CONSISTENT WITH ABOVE
-
-
-
-
-
-# TODO: Define function
-
-compute_n_rows_col_means <- function(df, index_cols, time_on_col, item_cols) {
-  # Compute number of rows per index columns
-  
-  n_rows <- df %>%
-    group_by(across(all_of(index_cols))) %>%
-    summarise(count=n()) %>%
-    as.data.frame()
-  
-  names(n_rows)[names(n_rows) == "count"] <- "n_rows"
-  
-  df2 <- merge(df, n_rows, index_cols, all.x = TRUE, sort = FALSE)
-  
-  # Compute mean "time_on_" column across multiple rows per index columns
-  
-  time_on_col_mean_name <- paste0(time_on_col, "_mean")
-  
-  time_on_col_mean <- aggregate(df2[, time_on_col], 
-                                 as.list(df2[, index_cols]), 
-                                 mean)
-  names(time_on_col_mean) <- c(index_cols, time_on_col_mean_name)
-  
-  time_on_col_mean[is.nan(time_on_col_mean[, time_on_col_mean_name]), 
-                   time_on_col_mean_name] <- NA
-  
-  df3 <- merge(df2, time_on_col_mean, index_cols, all.x = TRUE, sort = FALSE)
-  
-  # Compute number of unique rows on item columns per index columns. We will 
-  # compute the column mean across the unique item entries.
-  
-  unique_items <- unique(df[, c(index_cols, item_cols)])
-  
-  n_unq_item_rows <- unique_items %>% 
-    group_by(across(all_of(index_cols))) %>% 
-    summarise(count=n()) %>%
-    as.data.frame()
-  
-  names(n_unq_item_rows)[names(n_unq_item_rows) == "count"] <- "n_unq_item_rows"
-  
-  df4 <- merge(df3, n_unq_item_rows, index_cols, all.x = TRUE, sort = FALSE)
-  
-  # If multiple unique values on any item per index columns are present, compute 
-  # column means across unique values for all items, treating values of "Prefer
-  # Not to Answer" as NA without recoding them as NA in the actual dataset
-  
-  df5 <- df4
-  
-  unique_items[, item_cols][unique_items[, item_cols] == 555] <- NA
-  
-  if (any(df5$n_unq_item_rows > 1)) {
-    for (i in 1:length(item_cols)) {
-      col_name <- item_cols[i]
-      col_mean_name <- paste0(item_cols[i], "_mean")
-      
-      item_mean <- aggregate(unique_items[, col_name], 
-                             as.list(unique_items[, index_cols]),
-                             mean, 
-                             na.rm = TRUE)
-      names(item_mean) <- c(index_cols, col_mean_name)
-      
-      item_mean[is.nan(item_mean[, col_mean_name]), col_mean_name] <- NA
-      
-      df5 <- merge(df5, item_mean, index_cols, all.x = TRUE, sort = FALSE)
-    }
-  }
-  
-  return(df5)
-}
-
-# TODO: Run function
-
-test <- compute_n_rows_col_means(dat$credibility, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 c("confident_online", "important"))
-
-test <- compute_n_rows_col_means(dat$return_intention, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 "days_till_returning")
-
-bbsiq_items <- 
-  c("breath_flu", "breath_physically", "breath_suffocate", "chest_heart", 
-    "chest_indigestion", "chest_sore", "confused_cold", "confused_outofmind", 
-    "confused_work", "dizzy_ate", "dizzy_ill", "dizzy_overtired", "friend_helpful", 
-    "friend_incompetent", "friend_moreoften", "heart_active", "heart_excited", 
-    "heart_wrong", "jolt_burglar", "jolt_dream", "jolt_wind", "lightheaded_eat", 
-    "lightheaded_faint", "lightheaded_sleep", "party_boring", "party_hear", 
-    "party_preoccupied", "shop_bored", "shop_concentrating", "shop_irritating", 
-    "smoke_cig", "smoke_food", "smoke_house", "urgent_bill", "urgent_died", 
-    "urgent_junk", "vision_glasses", "vision_illness", "vision_strained", 
-    "visitors_bored", "visitors_engagement", "visitors_outstay")
-
-test <- compute_n_rows_col_means(dat$bbsiq, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 bbsiq_items)
-
-test <- compute_n_rows_col_means(dat$oa, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 c("axf", "axs", "avo", "wrk", "soc"))
-
-test <- compute_n_rows_col_means(dat$task_log, 
-                                 c("participant_id", "session_only", "task_name", "tag"),
-                                 "time_on_task",
-                                 "task_name")
-
-
-
-
-
-
-# TODO: Check "dat_no_dup" to ensure it's what expected
-
-
-
-
-
-
-
-# Define functions to report and remove duplicated rows. "report_remove_dups_df"
+# TODO: Define functions to report and remove duplicated rows. "report_remove_dups_df"
 # is used within "report_remove_dups_list".
+
+
+
+
 
 report_remove_dups_df <- function(df, df_name, target_cols, index_col) {
   duplicated_rows <- df[duplicated(df[, target_cols]), ]
@@ -2578,9 +2409,178 @@ report_remove_dups_list <- function(data) {
   return(output)
 }
 
-# "dat_no_dup" is list of tables without any duplication based on "target_cols"
+# TODO: "dat_no_dup" is list of tables without any duplication based on "target_cols"
 
 dat_no_dup <- report_remove_dups_list(dat)
+
+
+
+
+
+# ---------------------------------------------------------------------------- #
+# Resolve unexpected multiple entries ----
+# ---------------------------------------------------------------------------- #
+
+# TODO: Note that repeated "dass21_as" screening attempts are reflected in
+# "task_log" only for some participants. Thus, "task_log" should not be used
+# to identify repeated screening attempters.
+
+View(dat$task_log[dat$task_log$participant_id == 177, ])
+View(dat$dass21_as[dat$dass21_as$participant_id %in% 177, ])
+
+View(dat$task_log[dat$task_log$participant_id == 1529, ])
+View(dat$dass21_as[dat$dass21_as$participant_id %in% 1529, ])
+
+
+
+
+
+# TODO: Investigate other tables yielding duplicates
+
+#   2 duplicated rows for table: credibility
+#   With these ' participant_id ':  174 174
+
+View(dat$credibility[dat$credibility$participant_id == 174, ]) # SAME DATA
+
+#   1 duplicated rows for table: return_intention
+#   With these ' participant_id ':  1762
+
+View(dat$return_intention[dat$return_intention$participant_id == 1762, ]) # SAME DATA AND DATE
+
+#   1 duplicated rows for table: bbsiq
+#   With these ' participant_id ':  1529
+
+View(dat$bbsiq[dat$bbsiq$participant_id == 1529, ]) # SAME DATA AND DATE
+
+#   1 duplicated rows for table: oa
+#   With these ' participant_id ':  1860
+
+View(dat$oa[dat$oa$participant_id == 1860, ]) # SAME DATA AND DATE
+
+#   3 duplicated rows for other tasks in table: task_log
+#   With these 'participant_id':  1762 1529 1860
+
+View(dat$task_log[dat$task_log$participant_id == 1762, ]) # CONSISTENT WITH ABOVE
+View(dat$task_log[dat$task_log$participant_id == 1529, ]) # CONSISTENT WITH ABOVE
+View(dat$task_log[dat$task_log$participant_id == 1860, ]) # CONSISTENT WITH ABOVE
+
+
+
+
+
+# TODO: Define function
+
+compute_n_rows_col_means <- function(df, index_cols, time_on_col, item_cols) {
+  # Compute number of rows per index columns
+  
+  n_rows <- df %>%
+    group_by(across(all_of(index_cols))) %>%
+    summarise(count=n()) %>%
+    as.data.frame()
+  
+  names(n_rows)[names(n_rows) == "count"] <- "n_rows"
+  
+  df2 <- merge(df, n_rows, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # Compute mean "time_on_" column across multiple rows per index columns
+  
+  time_on_col_mean_name <- paste0(time_on_col, "_mean")
+  
+  time_on_col_mean <- aggregate(df2[, time_on_col], 
+                                as.list(df2[, index_cols]), 
+                                mean)
+  names(time_on_col_mean) <- c(index_cols, time_on_col_mean_name)
+  
+  time_on_col_mean[is.nan(time_on_col_mean[, time_on_col_mean_name]), 
+                   time_on_col_mean_name] <- NA
+  
+  df3 <- merge(df2, time_on_col_mean, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # Compute number of unique rows on item columns per index columns. We will 
+  # compute the column mean across the unique item entries.
+  
+  unique_items <- unique(df[, c(index_cols, item_cols)])
+  
+  n_unq_item_rows <- unique_items %>% 
+    group_by(across(all_of(index_cols))) %>% 
+    summarise(count=n()) %>%
+    as.data.frame()
+  
+  names(n_unq_item_rows)[names(n_unq_item_rows) == "count"] <- "n_unq_item_rows"
+  
+  df4 <- merge(df3, n_unq_item_rows, index_cols, all.x = TRUE, sort = FALSE)
+  
+  # If multiple unique values on any item per index columns are present, compute 
+  # column means across unique values for all items, treating values of "Prefer
+  # Not to Answer" as NA without recoding them as NA in the actual dataset
+  
+  df5 <- df4
+  
+  unique_items[, item_cols][unique_items[, item_cols] == 555] <- NA
+  
+  if (any(df5$n_unq_item_rows > 1)) {
+    for (i in 1:length(item_cols)) {
+      col_name <- item_cols[i]
+      col_mean_name <- paste0(item_cols[i], "_mean")
+      
+      item_mean <- aggregate(unique_items[, col_name], 
+                             as.list(unique_items[, index_cols]),
+                             mean, 
+                             na.rm = TRUE)
+      names(item_mean) <- c(index_cols, col_mean_name)
+      
+      item_mean[is.nan(item_mean[, col_mean_name]), col_mean_name] <- NA
+      
+      df5 <- merge(df5, item_mean, index_cols, all.x = TRUE, sort = FALSE)
+    }
+  }
+  
+  return(df5)
+}
+
+# TODO: Run function
+
+test <- compute_n_rows_col_means(dat$credibility, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 c("confident_online", "important"))
+
+test <- compute_n_rows_col_means(dat$return_intention, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 "days_till_returning")
+
+bbsiq_items <- 
+  c("breath_flu", "breath_physically", "breath_suffocate", "chest_heart", 
+    "chest_indigestion", "chest_sore", "confused_cold", "confused_outofmind", 
+    "confused_work", "dizzy_ate", "dizzy_ill", "dizzy_overtired", "friend_helpful", 
+    "friend_incompetent", "friend_moreoften", "heart_active", "heart_excited", 
+    "heart_wrong", "jolt_burglar", "jolt_dream", "jolt_wind", "lightheaded_eat", 
+    "lightheaded_faint", "lightheaded_sleep", "party_boring", "party_hear", 
+    "party_preoccupied", "shop_bored", "shop_concentrating", "shop_irritating", 
+    "smoke_cig", "smoke_food", "smoke_house", "urgent_bill", "urgent_died", 
+    "urgent_junk", "vision_glasses", "vision_illness", "vision_strained", 
+    "visitors_bored", "visitors_engagement", "visitors_outstay")
+
+test <- compute_n_rows_col_means(dat$bbsiq, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 bbsiq_items)
+
+test <- compute_n_rows_col_means(dat$oa, 
+                                 c("participant_id", "session_only"),
+                                 "time_on_page",
+                                 c("axf", "axs", "avo", "wrk", "soc"))
+
+test <- compute_n_rows_col_means(dat$task_log, 
+                                 c("participant_id", "session_only", "task_name", "tag"),
+                                 "time_on_task",
+                                 "task_name")
+
+
+
+
+# TODO: Recheck for multiple entries
 
 
 
