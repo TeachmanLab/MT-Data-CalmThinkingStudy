@@ -2232,20 +2232,8 @@ dat$participant$exclude_analysis[dat$participant$participant_id %in%
                                    exclude_enrolled_participant_ids] <- 1
 
 # ---------------------------------------------------------------------------- #
-# Identify and remove INSERT duplicates ----
+# Identify unexpected multiple entries ----
 # ---------------------------------------------------------------------------- #
-
-# TODO: 4 rows of "js_psych_trial" have "internal_node_id" == "", where "trial
-# _index" is 0. Codebook says these columns should correspond to each other.
-
-table(dat$js_psych_trial$internal_node_id, useNA = "always")
-table(dat$js_psych_trial$trial_index, useNA = "always")
-
-View(dat$js_psych_trial[dat$js_psych_trial$internal_node_id == "", ])
-
-
-
-
 
 # TODO: Note that repeated "dass21_as" screening attempts are reflected in
 # "task_log" only for some participants. Thus, "task_log" should not be used
@@ -2256,58 +2244,6 @@ View(dat$dass21_as[dat$dass21_as$participant_id %in% 177, ])
 
 View(dat$task_log[dat$task_log$participant_id == 1529, ])
 View(dat$dass21_as[dat$dass21_as$participant_id %in% 1529, ])
-
-
-
-
-# TODO: Check Changes/Issues log about "angular_training" repeated tasks. Didn't 
-# see anything. Asked Henry to confirm the columns and give potential reasons for
-# multiple entries on 11/4/21.
-
-test <- dat$angular_training[dat$angular_training$participant_id == 164, ]
-View(test)
-View(test[duplicated(test[, c("participant_id", 
-                              "session_and_task_info",
-                              "session_counter",
-                              "step_title",
-                              "stimulus",
-                              "stimulus_name")]), ])
-
-target_cols <- c("participant_id", 
-                 "session_and_task_info",
-                 "session_counter",
-                 "step_title",
-                 "stimulus",
-                 "stimulus_name")
-angular_training_dup <- 
-  dat$angular_training[duplicated(dat$angular_training[, target_cols]), ]
-write.csv(angular_training_dup, file = "./temp_cleaning/angular_training_dup.csv",
-          row.names = FALSE)
-
-
-
-
-
-
-
-# TODO: Asked Henry to confirm these columns and give potential reasons for multiple 
-# entries on 11/4/21.
-
-test2 <- dat$js_psych_trial[dat$js_psych_trial$participant_id == 247, ]
-View(test2)
-View(test2[duplicated(test2[, c("participant_id",
-                                "session_only",
-                                "internal_node_id", 
-                                "stimulus"), ]), ])
-
-target_cols <- c("participant_id",
-                 "session_only",
-                 "internal_node_id", 
-                 "stimulus")
-js_psych_trial_dup <- 
-  dat$js_psych_trial[duplicated(dat$js_psych_trial[, target_cols]), ]
-write.csv(js_psych_trial_dup, file = "./temp_cleaning/js_psych_trial_dup.csv",
-          row.names = FALSE)
 
 
 
@@ -2507,7 +2443,16 @@ report_remove_dups_list <- function(data) {
                              "reasons_for_ending_change_med", "reasons_for_ending_device_use",
                              "reasons_for_ending_location", "reasons_for_ending_reasons",
                              "session_review_distractions",
-                             "sms_log")) {
+                             "sms_log") |
+        
+        # Note: It is unclear how to check for unexpected multiple entries in
+        # "angular_training" and "js_psych_trial" tables. In "angular_training",
+        # for example, there does not appear to be a set of columns such that for 
+        # each unique combination of values across the set only one row would be 
+        # expected. Additional data cleaning of these tables would be needed.
+        # Thus, here we check for multiple entries only based on "X" and "id".
+        
+        names(dat[i]) %in% c("angular_training", "js_psych_trial")) {
       output[[i]] <- report_remove_dups_df(dat[[i]], 
                                            names(dat[i]), 
                                            c("X", "id"), 
@@ -2519,16 +2464,6 @@ report_remove_dups_list <- function(data) {
                                              "session_only", 
                                              "tag"), 
                                            "participant_id")
-    } else if (names(dat[i]) == "angular_training") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_and_task_info",
-                                             "session_counter",
-                                             "step_title",
-                                             "stimulus",
-                                             "stimulus_name"), 
-                                           "participant_id")
     } else if (names(dat[i]) %in% c("attrition_prediction", "participant")) {
       output[[i]] <- report_remove_dups_df(dat[[i]], 
                                            names(dat[i]), 
@@ -2537,9 +2472,8 @@ report_remove_dups_list <- function(data) {
     } else if (names(dat[i]) == "dass21_as") {
       duplicated_rows_eligibility <- 
         dat[[i]][dat[[i]][, "session_only"] == "Eligibility" &
-                   (duplicated(dat[[i]][, c("participant_id",
-                                            "session_only",
-                                            "session_id")])), ]
+                   (duplicated(dat[[i]][, c("session_id",
+                                            "session_only")])), ]
       duplicated_rows_other <-
         dat[[i]][dat[[i]][, "session_only"] != "Eligibility" &
                    (duplicated(dat[[i]][, c("participant_id",
@@ -2588,14 +2522,6 @@ report_remove_dups_list <- function(data) {
                                            c("participant_id", 
                                              "session_and_admin_awarded_info",
                                              "order_id"), 
-                                           "participant_id")
-    } else if (names(dat[i]) == "js_psych_trial") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id",
-                                             "session_only",
-                                             "internal_node_id", 
-                                             "stimulus"), 
                                            "participant_id")
     } else if (names(dat[i]) == "task_log") {
       output[[i]] <- report_remove_dups_df(dat[[i]], 
