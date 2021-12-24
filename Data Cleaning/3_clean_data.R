@@ -1605,11 +1605,12 @@ ang_study_cond_mismatch_s5_complete_ids <-
 #   error after participant completed the study in "CONTROL". Thus, change condition 
 #   in "study" table back to "CONTROL".
 
-# TODO once Henry confirms this is what happened. Asked on 12/22/21.
+dat$study$conditioning[dat$study$participant_id == 1458] <- "CONTROL"
 
+ang_study_cond_mismatch_s5_complete_ids_ignore <- 1458
 
-
-
+setdiff(ang_study_cond_mismatch_s5_complete_ids, 
+        ang_study_cond_mismatch_s5_complete_ids_ignore)
 
 # Check for participants in "NONE", which should not occur because participants
 # are assigned to "TRAINING" or "CONTROL" prior to starting first training session.
