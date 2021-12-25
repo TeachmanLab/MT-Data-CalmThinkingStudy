@@ -1986,11 +1986,13 @@ dass21_as_items <- c("bre", "dry", "hea", "pan", "sca", "tre", "wor")
 # After removing nonmeaningful duplicates (see above), for remaining rows that 
 # have duplicated values on DASS-21-AS items, "over18", and "time_on_page" for 
 # a given "session_id" and "session_only", keep only the last row after sorting
-# based on "id"
+# based on "session_id", "session_only", and "id"
 
 response_cols <- c(dass21_as_items, "over18", "time_on_page")
 
-dat$dass21_as <- dat$dass21_as[order(dat$dass21_as$id), ]
+dat$dass21_as <- dat$dass21_as[order(dat$dass21_as$session_id,
+                                     dat$dass21_as$session_only,
+                                     dat$dass21_as$id), ]
 
 dat$dass21_as <- dat$dass21_as[!duplicated(dat$dass21_as[, c(response_cols, 
                                                              "session_id", 
@@ -2064,7 +2066,7 @@ dat$dass21_as <- merge(dat$dass21_as,
 
 # Compute column mean of unique values on DASS-21-AS items per "session_id",
 # treating values of "Prefer Not to Answer" as NA without recoding them as NA in 
-# the actual dataset. Note that this currently only applies to rows at screening.
+# the actual table. Note that this currently only applies to rows at screening.
 
 unique_items <- unique_dass21_as_eligibility_items
 
@@ -2235,35 +2237,48 @@ dat$participant$exclude_analysis[dat$participant$participant_id %in%
 # Identify unexpected multiple entries ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Define functions to report and remove duplicated rows. "report_remove_dups_df"
-# is used within "report_remove_dups_list".
+# Define functions to report multiple entries based on a given set of target columns 
+# ("target_cols"). The target columns (e.g., "participant_id" and "session_only") for 
+# each table should be chosen such that for each unique combination of values across 
+# the target columns only one row is expected in the table ("df", named "df_name"). 
+# For each unexpected entry, we report the value of a given index column ("index_col"; 
+# e.g., "participant_id") that the unexpected entry belongs to.
 
+# The function "report_dups_df" defines the general procedure for a given table and
+# is used in the function "report_dups_list" to apply the procedure to each table in 
+# a list. However, because we expect multiple entries at "Eligibility" for "dass21_as" 
+# table and for "DASS21_AS" values of "task_name" in "task_log" table (representing 
+# multiple screening attempts, which were already handled in a code section above), 
+# we use a special procedure for "dass21_as" and "task_log" tables.
 
-
-
-
-report_remove_dups_df <- function(df, df_name, target_cols, index_col) {
+report_dups_df <- function(df, df_name, target_cols, index_col) {
   duplicated_rows <- df[duplicated(df[, target_cols]), ]
+  
   if (nrow(duplicated_rows) > 0) {
     cat(nrow(duplicated_rows), "duplicated rows for table:", df_name)
     cat("\n")
     cat("With these '", index_col, "': ", duplicated_rows[, index_col])
     cat("\n-------------------------\n")
-    output <- df[!duplicated(df[, target_cols]), ]
-    rownames(output) <- 1:nrow(output)
   } else {
     cat("No duplicated rows for table:", df_name)
     cat("\n-------------------------\n")
-    output <- df
   }
-  return(output)
 }
 
-report_remove_dups_list <- function(data) {
-  output <- vector("list", length(dat))
-  
+# Note: It is unclear how to check for multiple entries in "angular_training" and 
+# "js_psych_trial" tables. In "angular_training", for example, there does not appear 
+# to be a set of columns such that for each unique combination of values across the 
+# set only one row would be expected. Additional data cleaning of these tables would 
+# be needed. Thus, here we check for multiple entries only based on "X" and "id".
+
+# We also check for multiple entries only based on "X" and "id" for other tables in
+# which checking for multiple entries based on other columns is irrelevant given the
+# table's nature (e.g., "condition_assignment_settings", "demographics_race", "sms_log")
+
+report_dups_list <- function(dat) {
   for (i in 1:length(dat)) {
-    if (names(dat[i]) %in% c("condition_assignment_settings", 
+    if (names(dat[i]) %in% c("angular_training", "js_psych_trial") |
+        names(dat[i]) %in% c("condition_assignment_settings", 
                              "demographics_race",
                              "error_log",
                              "evaluation_coach_help_topics", "evaluation_devices",
@@ -2274,32 +2289,23 @@ report_remove_dups_list <- function(data) {
                              "reasons_for_ending_change_med", "reasons_for_ending_device_use",
                              "reasons_for_ending_location", "reasons_for_ending_reasons",
                              "session_review_distractions",
-                             "sms_log") |
-        
-        # Note: It is unclear how to check for unexpected multiple entries in
-        # "angular_training" and "js_psych_trial" tables. In "angular_training",
-        # for example, there does not appear to be a set of columns such that for 
-        # each unique combination of values across the set only one row would be 
-        # expected. Additional data cleaning of these tables would be needed.
-        # Thus, here we check for multiple entries only based on "X" and "id".
-        
-        names(dat[i]) %in% c("angular_training", "js_psych_trial")) {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("X", "id"), 
-                                           "id")
+                             "sms_log")) {
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("X", "id"), 
+                     "id")
     } else if (names(dat[i]) == "affect") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_only", 
-                                             "tag"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "session_only", 
+                       "tag"), 
+                     "participant_id")
     } else if (names(dat[i]) %in% c("attrition_prediction", "participant")) {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           "participant_id", 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     "participant_id", 
+                     "participant_id")
     } else if (names(dat[i]) == "dass21_as") {
       duplicated_rows_eligibility <- 
         dat[[i]][dat[[i]][, "session_only"] == "Eligibility" &
@@ -2331,37 +2337,33 @@ report_remove_dups_list <- function(data) {
           cat("With these 'participant_id': ", duplicated_rows_other$participant_id)
         }
         cat("\n-------------------------\n")
-        
-        output[[i]] <- setdiff(dat[[i]], duplicated_rows)
-        rownames(output[[i]]) <- 1:nrow(output[[i]])
       } else {
           cat("No duplicated rows for table:", names(dat[i]))
           cat("\n-------------------------\n")
-          output[[i]] <- dat[[i]]
         }
     } else if (names(dat[i]) == "email_log") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_only", 
-                                             "email_type", 
-                                             "date_sent"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "session_only", 
+                       "email_type", 
+                       "date_sent"), 
+                     "participant_id")
     } else if (names(dat[i]) == "gift_log") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_and_admin_awarded_info",
-                                             "order_id"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "session_and_admin_awarded_info",
+                       "order_id"), 
+                     "participant_id")
     } else if (names(dat[i]) == "task_log") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_only", 
-                                             "task_name", 
-                                             "tag"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "session_only", 
+                       "task_name", 
+                       "tag"), 
+                     "participant_id")
 
       duplicated_rows_dass21_as_eligibility <- 
         dat[[i]][duplicated(dat[[i]][, c("participant_id", 
@@ -2391,84 +2393,94 @@ report_remove_dups_list <- function(data) {
         cat("\n-------------------------\n")
       }
     } else if (names(dat[i]) == "study") {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "current_session"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "current_session"), 
+                     "participant_id")
     } else {
-      output[[i]] <- report_remove_dups_df(dat[[i]], 
-                                           names(dat[i]), 
-                                           c("participant_id", 
-                                             "session_only"), 
-                                           "participant_id")
+      report_dups_df(dat[[i]], 
+                     names(dat[i]), 
+                     c("participant_id", 
+                       "session_only"), 
+                     "participant_id")
     }
   }
-  
-  names(output) <- names(dat)
-  return(output)
 }
 
-# TODO: "dat_no_dup" is list of tables without any duplication based on "target_cols"
+# Run function and then investigate and handle multiple entries in sections below
 
-dat_no_dup <- report_remove_dups_list(dat)
-
-
-
-
+report_dups_list(dat)
 
 # ---------------------------------------------------------------------------- #
-# Resolve unexpected multiple entries ----
+# Investigate unexpected multiple entries ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Note that repeated "dass21_as" screening attempts are reflected in
-# "task_log" only for some participants. Thus, "task_log" should not be used
-# to identify repeated screening attempters.
+# Note: The multiple entries at "Eligibility" in "dass21_as" table (and those for 
+# "DASS21_AS" "task_name" at "Eligibility" in "task_log" table) reflect multiple 
+# screening attempts. These were already handled in a code section above.
 
-View(dat$task_log[dat$task_log$participant_id == 177, ])
-View(dat$dass21_as[dat$dass21_as$participant_id %in% 177, ])
+# Note, however, that multiple "dass21_as" screening attempts are reflected in 
+# "task_log" only for some participants (e.g., 177 but not 1529--see below). Thus, 
+# "task_log" should not be used to identify repeated screening attempters.
 
-View(dat$task_log[dat$task_log$participant_id == 1529, ])
-View(dat$dass21_as[dat$dass21_as$participant_id %in% 1529, ])
+# View(dat$dass21_as[dat$dass21_as$participant_id %in% c(177, 1529), ])
+# View(dat$task_log[dat$task$task_name == "DASS21_AS" &
+#                     dat$task_log$participant_id %in% c(177, 1529), ])
 
+# Also note that "task_log" does not reflect other kinds of multiple entries. 
+# Participant 174 had multiple entries in "credibility" table, but "task_log" 
+# does not show any "Credibility" entries for this participant (see below). Do 
+# not rely on "task_log" to find multiple entries or reflect task completion.
 
+# View(dat$credibility[dat$credibility$participant_id %in% 174, ])
+# View(dat$task_log[dat$task$task_name == "Credibility" &
+#                     dat$task_log$participant_id %in% 174, ])
 
-
-
-# TODO: Investigate other tables yielding duplicates
+# We now investigate other cases of multiple entries based on the console output 
+# from the section above. In each case, multiple entries are identical responses 
+# but with different "time_on_page" or "time_on_task" (sometimes on same date).
 
 #   2 duplicated rows for table: credibility
 #   With these ' participant_id ':  174 174
 
-View(dat$credibility[dat$credibility$participant_id == 174, ]) # SAME DATA
+# View(dat$credibility[dat$credibility$participant_id == 174, ])
 
 #   1 duplicated rows for table: return_intention
 #   With these ' participant_id ':  1762
 
-View(dat$return_intention[dat$return_intention$participant_id == 1762, ]) # SAME DATA AND DATE
+# View(dat$return_intention[dat$return_intention$participant_id == 1762, ])
 
 #   1 duplicated rows for table: bbsiq
 #   With these ' participant_id ':  1529
 
-View(dat$bbsiq[dat$bbsiq$participant_id == 1529, ]) # SAME DATA AND DATE
+# View(dat$bbsiq[dat$bbsiq$participant_id == 1529, ])
 
 #   1 duplicated rows for table: oa
 #   With these ' participant_id ':  1860
 
-View(dat$oa[dat$oa$participant_id == 1860, ]) # SAME DATA AND DATE
+# View(dat$oa[dat$oa$participant_id == 1860, ])
 
 #   3 duplicated rows for other tasks in table: task_log
 #   With these 'participant_id':  1762 1529 1860
 
-View(dat$task_log[dat$task_log$participant_id == 1762, ]) # CONSISTENT WITH ABOVE
-View(dat$task_log[dat$task_log$participant_id == 1529, ]) # CONSISTENT WITH ABOVE
-View(dat$task_log[dat$task_log$participant_id == 1860, ]) # CONSISTENT WITH ABOVE
+# View(dat$task_log[dat$task_log$participant_id == 1762, ])
+# View(dat$task_log[dat$task_log$participant_id == 1529, ])
+# View(dat$task_log[dat$task_log$participant_id == 1860, ])
 
+# ---------------------------------------------------------------------------- #
+# Handle unexpected multiple entries ----
+# ---------------------------------------------------------------------------- #
 
-
-
-
-# TODO: Define function
+# Define function to compute number of entries ("n_rows") for a given set of index 
+# columns ("index_cols") in a table, mean values for the table's "time_on_" column
+# ("time_on_col"; e.g., "time_on_page") across the entries ("<time_on_col>_mean"), 
+# and number of entries that have unique responses ("n_unq_item_rows") to a given set 
+# of items ("item_cols"). If multiple unique entries are present (i.e., "n_unq_item_rows" 
+# > 1), we compute column means for all items ("<item>_mean"), treating "Prefer Not to 
+# Answer" as NA (i.e., take mean of available items) without recoding them as NA in the 
+# actual table. This way, column means can be analyzed while retaining the values that
+# comprise them. If multiple unique entries are absent, we do not compute column means.
 
 compute_n_rows_col_means <- function(df, index_cols, time_on_col, item_cols) {
   # Compute number of rows per index columns
@@ -2538,17 +2550,17 @@ compute_n_rows_col_means <- function(df, index_cols, time_on_col, item_cols) {
   return(df5)
 }
 
-# TODO: Run function
+# Run function on each table investigated in code section above
 
-test <- compute_n_rows_col_means(dat$credibility, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 c("confident_online", "important"))
+dat$credibility <- compute_n_rows_col_means(dat$credibility, 
+                                            c("participant_id", "session_only"),
+                                            "time_on_page",
+                                            c("confident_online", "important"))
 
-test <- compute_n_rows_col_means(dat$return_intention, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 "days_till_returning")
+dat$return_intention <- compute_n_rows_col_means(dat$return_intention, 
+                                                 c("participant_id", "session_only"),
+                                                 "time_on_page",
+                                                 "days_till_returning")
 
 bbsiq_items <- 
   c("breath_flu", "breath_physically", "breath_suffocate", "chest_heart", 
@@ -2562,29 +2574,21 @@ bbsiq_items <-
     "urgent_junk", "vision_glasses", "vision_illness", "vision_strained", 
     "visitors_bored", "visitors_engagement", "visitors_outstay")
 
-test <- compute_n_rows_col_means(dat$bbsiq, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 bbsiq_items)
+dat$bbsiq <- compute_n_rows_col_means(dat$bbsiq, 
+                                      c("participant_id", "session_only"),
+                                      "time_on_page",
+                                      bbsiq_items)
 
-test <- compute_n_rows_col_means(dat$oa, 
-                                 c("participant_id", "session_only"),
-                                 "time_on_page",
-                                 c("axf", "axs", "avo", "wrk", "soc"))
+dat$oa <- compute_n_rows_col_means(dat$oa, 
+                                   c("participant_id", "session_only"),
+                                   "time_on_page",
+                                   c("axf", "axs", "avo", "wrk", "soc"))
 
-test <- compute_n_rows_col_means(dat$task_log, 
-                                 c("participant_id", "session_only", "task_name", "tag"),
-                                 "time_on_task",
-                                 "task_name")
-
-
-
-
-# TODO: Recheck for multiple entries
-
-
-
-
+dat$task_log <- compute_n_rows_col_means(dat$task_log, 
+                                         c("participant_id", "session_only", 
+                                           "task_name", "tag"),
+                                         "time_on_task",
+                                         "task_name")
 
 # ---------------------------------------------------------------------------- #
 # Arrange columns and sort tables ----
