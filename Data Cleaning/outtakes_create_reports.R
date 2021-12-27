@@ -3,7 +3,7 @@
 # Author: Sonia Baee
 # ---------------------------------------------------------------------------- #
 
-# This code, drafted by Sonia Baee, was removed from "3_clean_data.R" as it was 
+# This code, drafted by Sonia Baee, was removed from "4_clean_data.R" as it was 
 # decided that these reports will not be part of centralized cleaning. The code
 # has not been checked and may no longer work.
 

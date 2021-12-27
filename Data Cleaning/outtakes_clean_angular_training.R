@@ -3,7 +3,7 @@
 # Author: Jeremy Eberle
 # ---------------------------------------------------------------------------- #
 
-# This code, drafted by Jeremy Eberle, was removed from "3_clean_data.R" as it was 
+# This code, drafted by Jeremy Eberle, was removed from "4_clean_data.R" as it was 
 # decided that cleaning "angular_training" table will not be part of centralized 
 # cleaning. The code is incomplete and has not been checked for accuracy.
 
