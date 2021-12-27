@@ -1063,28 +1063,31 @@ study_name <- "Calm"
 # Define enrollment period and participant_ids ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Further test best data type for filtering (e.g., POSIXct)
-
-
-
-
-
 # Define function that gets open/close dates for official enrollment period for 
-# desired study. Once TET enrollment closes, replace the NA with the close date.
-# The enrollment period is needed to filter eligibility screenings, which are
-# not indexed by "participant_id" (participant_ids are created only for eligible
-# participants who create an account).
+# desired study. The enrollment period is needed to filter eligibility screenings, 
+# which are not indexed by "participant_id" (participant_ids are created only for 
+# eligible participants who create an account).
+
+# Specify enrollment open/close dates using "YYYY-MM-DD HH:MM:SS". When exact time 
+# is unknown, use "00:00:00" for the time to specify midnight.
+
+# Specify timezone for study team's location based on the IANA Time Zone database 
+# (i.e., "America/New_York", not "EDT" or "EST", which can be ambiguous). See 
+# https://www.iana.org/time-zones, https://data.iana.org/time-zones/tz-link.html, 
+# and timezones() in R documentation for more details.
+
+# TODO: Once TET enrollment closes, replace the NA with the close date
 
 get_enroll_dates <- function(study_name) {
   if (study_name == "Calm") {
-    official_enroll_open_date <- "2019-03-18 17:00:00 America/New York"
-    official_enroll_close_date <- "2020-04-06 23:59:00 America/New York"
+    official_enroll_open_date <-  as.POSIXct("2019-03-18 17:00:00", tz = "America/New_York")
+    official_enroll_close_date <- as.POSIXct("2020-04-06 23:59:00", tz = "America/New_York")
   } else if (study_name == "TET") {
-    official_enroll_open_date <- "2020-04-07 00:00:00 America/New York"
+    official_enroll_open_date <-  as.POSIXct("2020-04-07 00:00:00", tz = "America/New_York")
     official_enroll_close_date <- NA
   } else if (study_name == "GIDI") {
-    official_enroll_open_date <- "2020-07-10 13:00:00 America/New York"
-    official_enroll_close_date <- "2020-12-12 23:59:00 America/New York"
+    official_enroll_open_date <-  as.POSIXct("2020-07-10 13:00:00", tz = "America/New_York")
+    official_enroll_close_date <- as.POSIXct("2020-12-12 23:59:00", tz = "America/New_York")
   }
   official_enroll_dates <- list(open = official_enroll_open_date,
                                 close = official_enroll_close_date)
@@ -1115,7 +1118,7 @@ get_participant_ids <- function(data, study_name) {
 # for which "participant_id" is irrelevant, is retained only for Calm Thinking study; 
 # it is not used in TET or GIDI studies.
 
-filter_all_data <- function(data, study_name) {
+filter_all_data <- function(dat, study_name) {
   official_enroll_dates <- get_enroll_dates(study_name)
   participant_ids <- get_participant_ids(dat, study_name)
   
@@ -1134,14 +1137,16 @@ filter_all_data <- function(data, study_name) {
   for (i in 1:length(dat)) {
     if (names(dat[i]) %in% screening_tbls) {
       if (!is.na(official_enroll_dates$close)) {
-        output[[i]] <- dat[[i]][(dat[[i]][, "session_only"] == "Eligibility" &
-                                   dat[[i]][, "date"] >= official_enroll_dates$open &
-                                   dat[[i]][, "date"] <= official_enroll_dates$close) |
-                                  dat[[i]][, "participant_id"] %in% participant_ids, ]
+        output[[i]] <- 
+          dat[[i]][(dat[[i]][, "session_only"] == "Eligibility" &
+                      dat[[i]][, "date_as_POSIXct"] >= official_enroll_dates$open &
+                      dat[[i]][, "date_as_POSIXct"] <= official_enroll_dates$close) |
+                     dat[[i]][, "participant_id"] %in% participant_ids, ]
       } else if (is.na(official_enroll_dates$close)) {
-        output[[i]] <- dat[[i]][(dat[[i]][, "session_only"] == "Eligibility" &
-                                   dat[[i]][, "date"] >= official_enroll_dates$open) |
-                                  dat[[i]][, "participant_id"] %in% participant_ids, ]
+        output[[i]] <- 
+          dat[[i]][(dat[[i]][, "session_only"] == "Eligibility" &
+                      dat[[i]][, "date_as_POSIXct"] >= official_enroll_dates$open) |
+                     dat[[i]][, "participant_id"] %in% participant_ids, ]
       }
     } else if ("participant_id" %in% names(dat[[i]])) {
       output[[i]] <- dat[[i]][dat[[i]][, "participant_id"] %in% participant_ids, ]
@@ -1345,7 +1350,8 @@ for (i in 1:length(dat)) {
 # Obtain time of last collected data ----
 # ---------------------------------------------------------------------------- #
 
-# Identify latest value for system-generated time stamps across all tables
+# Identify latest value for system-generated time stamps across all tables. Use
+# "EST" because all system-generated time stamps are stored as "EST".
 
 output <- data.frame(table = rep(NA, length(dat)),
                      max_system_date_time_latest = rep(NA, length(dat)))
