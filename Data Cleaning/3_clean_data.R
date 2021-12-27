@@ -54,19 +54,7 @@ library(groundhog)
 meta.groundhog("2021-07-01")
 groundhog_day <- "2021-01-01"
 
-groundhog.library(data.table, groundhog_day)
-groundhog.library(plyr, groundhog_day)
 groundhog.library(dplyr, groundhog_day)
-groundhog.library(reshape2, groundhog_day)
-groundhog.library(lubridate, groundhog_day)
-groundhog.library(anytime, groundhog_day)
-
-# TODO: At the end of data cleaning figure out whether all of these packages 
-# are actually used; we may be able to remove some of them.
-
-
-
-
 
 # ---------------------------------------------------------------------------- #
 # Define functions used throughout script ----
@@ -1163,6 +1151,14 @@ filter_all_data <- function(dat, study_name) {
 
 dat <- filter_all_data(dat, study_name)
 
+# Note: Warnings "In check_tzones(e1, e2) : 'tzone' attributes are inconsistent" 
+# are expected and OK because timezone was specified as "America/New_York" for 
+# enrollment open/close dates but as "EST" for system-generated timestamps
+
+attr(get_enroll_dates(study_name)$open, "tzone")
+attr(get_enroll_dates(study_name)$close, "tzone")
+attr(dat$dass21_as$date_as_POSIXct, "tzone")
+
 # ---------------------------------------------------------------------------- #
 # Part III. Calm Thinking Study-Specific Data Cleaning ----
 # ---------------------------------------------------------------------------- #
@@ -1702,8 +1698,8 @@ for (i in 1:length(dat)) {
   
   if (names(dat[i]) %in% c("attrition_prediction", "participant", "study")) {
     if (nrow(dat[[i]]) != length(unique(dat[[i]][, "participant_id"]))) {
-      error(paste0("Unexpectedly, table ", names(dat[i]), 
-                   "contains multiple rows for at least one participant_id"))
+      stop(paste0("Unexpectedly, table ", names(dat[i]), 
+                  "contains multiple rows for at least one participant_id"))
     }
   } else if ("id" %in% names(dat[[i]])) {
     dat[[i]] <- dat[[i]][order(dat[[i]][, "id"]), ]
@@ -2368,13 +2364,13 @@ dat$task_log <- compute_n_rows_col_means(dat$task_log,
 
 # Draft of code from Taylor
 # 
-# nameList = list('id', "session_name")
+# nameList = list("id", "session_name")
 # 
-# for (i in 1:length(data)){
+# for (i in 1:length(dat)){
 #   for(colName in nameList){
-#     if(colName %in% colnames(data[[i]])){
-#       colnames(data[[i]]) <- 
-#         c(colName, colnames(data[[i]])[(colnames(data[[i]]) != colName) == TRUE])
+#     if(colName %in% colnames(dat[[i]])){
+#       colnames(dat[[i]]) <-
+#         c(colName, colnames(dat[[i]])[(colnames(dat[[i]]) != colName) == TRUE])
 #     }
 #   }
 # }
@@ -2386,6 +2382,12 @@ dat$task_log <- compute_n_rows_col_means(dat$task_log,
 # ---------------------------------------------------------------------------- #
 # Write clean data files ----
 # ---------------------------------------------------------------------------- #
+
+# TODO: Check below
+
+
+
+
 
 # Ensure that consistent format with timezone will output when writing to CSV. 
 # Given that these columns will be read back into R as characters, they will need 

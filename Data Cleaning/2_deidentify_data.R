@@ -63,19 +63,7 @@ if(current_R_version != script_R_version) {
 library(groundhog)
 groundhog_day <- "2021-01-01"
 
-groundhog.library(data.table, groundhog_day)
-groundhog.library(plyr, groundhog_day)
-groundhog.library(dplyr, groundhog_day)
-groundhog.library(reshape2, groundhog_day)
-groundhog.library(lubridate, groundhog_day)
-groundhog.library(anytime, groundhog_day)
-
-# TODO: At the end of data cleaning figure out whether all of these packages 
-# are actually used; we may be able to remove some of them.
-
-
-
-
+# No packages loaded
 
 # ---------------------------------------------------------------------------- #
 # Import raw data ----
