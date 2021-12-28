@@ -305,21 +305,34 @@ redact_columns <- function(dat, redact_cols) {
 dat <- redact_columns(dat, redact_cols)
 
 # ---------------------------------------------------------------------------- #
-# TODO: Redact "order_id" data from "gift_log" and "import_log" ----
+# Redact "order_id" data from "gift_log" and "import_log" ----
 # ---------------------------------------------------------------------------- #
 
-# Redact "order_id" in "gift_log" table (and in "error" column of "import_log"
-# table) for security reasons
+# All "order_id" values start with "RA"
 
+length(dat$gift_log$order_id[dat$gift_log$order_id != ""]) ==
+  length(grep("RA", dat$gift_log$order_id))
 
+# Redact "order_id" in "gift_log" table for security reasons
 
+dat$gift_log$order_id[!(dat$gift_log$order_id == "")] <- "REDACTED_BY_CLEANING_SCRIPT"
 
+# Redact "order_id" values from "error" column of "import_log" table
+
+nrow(dat$import_log[grep("RA", dat$import_log$error), ]) ==
+  nrow(dat$import_log[grep("orderId\":\"RA.*\",\"sessionName", dat$import_log$error), ])
+
+dat$import_log$error <- sub("orderId\":\"RA.*\",\"sessionName", 
+                            "orderId\":\"REDACTED_BY_CLEANING_SCRIPT\",\"sessionName",
+                            dat$import_log$error)
+
+nrow(dat$import_log[grep("RA", dat$import_log$error), ]) == 0
 
 # ---------------------------------------------------------------------------- #
 # Redact phone numbers from "sms_log" ----
 # ---------------------------------------------------------------------------- #
 
-# Redact phone numbers from "exception" column of "sms_log"
+# Redact phone numbers from "exception" of "sms_log" table
 
 ignored_values <- c("A 'To' phone number is required.",
                     "Authenticate",
@@ -328,11 +341,13 @@ ignored_values <- c("A 'To' phone number is required.",
 temp <- dat$sms_log[dat$sms_log$exception != "" &
                       !(dat$sms_log$exception %in% ignored_values), ]
 temp <- temp[order(temp$exception), ]
-View(temp)
+nrow(temp)
 
-dat$sms_log[grepl("Permission to send an SMS has not been enabled for the region indicated by the 'To' number:", 
+dat$sms_log[grepl(paste0("Permission to send an SMS has not been enabled for the ",
+                         "region indicated by the 'To' number:"), 
                   dat$sms_log$exception), ]$exception <-
-  "Permission to send an SMS has not been enabled for the region indicated by the 'To' number: [REDACTED_BY_CLEANING_SCRIPT]"
+  paste0("Permission to send an SMS has not been enabled for the ",
+         "region indicated by the 'To' number: [REDACTED_BY_CLEANING_SCRIPT]")
 
 dat$sms_log[grepl("The 'To' number", 
                   dat$sms_log$exception) &
@@ -346,15 +361,16 @@ dat$sms_log[grepl("To number", dat$sms_log$exception) &
   "To number: [REDACTED_BY_CLEANING_SCRIPT], is not a mobile number"
 
 deidentified_values <- 
-  c("Permission to send an SMS has not been enabled for the region indicated by the 'To' number: [REDACTED_BY_CLEANING_SCRIPT]",
+  c(paste0("Permission to send an SMS has not been enabled for the region ",
+           "indicated by the 'To' number: [REDACTED_BY_CLEANING_SCRIPT]"),
     "The 'To' number [REDACTED_BY_CLEANING_SCRIPT] is not a valid phone number.",
     "To number: [REDACTED_BY_CLEANING_SCRIPT], is not a mobile number")
 
 temp2 <- dat$sms_log[dat$sms_log$exception != "" &
-                       !(dat$sms_log$exception %in% ignored_values) &
-                       !(dat$sms_log$exception %in% deidentified_values), ]
+                       !(dat$sms_log$exception %in% c(ignored_values, 
+                                                      deidentified_values)), ]
 temp2 <- temp2[order(temp2$exception), ]
-View(temp2)
+nrow(temp2) == 0
 
 # ---------------------------------------------------------------------------- #
 # Save deidentified data ----
