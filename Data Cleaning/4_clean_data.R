@@ -320,8 +320,8 @@ dat <- remove_admin_test_accounts(dat, admin_test_account_ids)
 # ---------------------------------------------------------------------------- #
 
 # Specify a character vector of columns ("<table_name>$<column_name>") whose values 
-# should be labeled as "REDACTED_BY_SERVER". If no column is to be labeled as such,
-# specify NULL without quotes (i.e., "redacted_columns <- NULL").
+# should be labeled as "REDACTED_ON_DATA_SERVER". If no column is to be labeled as 
+# such, specify NULL without quotes (i.e., "redacted_columns <- NULL").
 
 # On 1/11/2021, Dan Funk said that the following columns are redacted but should
 # not be given that they could be useful for analysis. These logical columns
@@ -379,7 +379,7 @@ necessarily_redacted_columns <- c(necessarily_redacted_columns,
 redacted_columns <- c(unnecessarily_redacted_columns, necessarily_redacted_columns)
 
 # Define function to convert redacted columns to characters and label as 
-# "REDACTED_BY_SERVER"
+# "REDACTED_ON_DATA_SERVER"
 
 label_redacted_columns <- function(dat, redacted_columns) {
   output <- vector("list", length(dat))
@@ -394,7 +394,7 @@ label_redacted_columns <- function(dat, redacted_columns) {
       
       if (table_i_column_j_name %in% redacted_columns) {
         output[[i]][, column_j_name] <- as.character(output[[i]][, column_j_name])
-        output[[i]][, column_j_name] <- "REDACTED_BY_SERVER"
+        output[[i]][, column_j_name] <- "REDACTED_ON_DATA_SERVER"
       }
     }
   }
