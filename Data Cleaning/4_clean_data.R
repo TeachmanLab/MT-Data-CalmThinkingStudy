@@ -59,11 +59,11 @@ identify_columns <- function(df, grep_pattern) {
 raw_data_dir <- paste0(wd_dir, "/data/raw")
 filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
-# Import data files and store them in a list
+# Import data files into list
 
 dat <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
 
-# Name each data file in the list
+# Name each data table in list
 
 split_char <- "-"
 names(dat) <- unlist(lapply(filenames, 
@@ -74,7 +74,7 @@ names(dat) <- unlist(lapply(filenames,
                             }
                             ))
 
-# Report the names of the imported tables
+# Report names of imported tables
 
 cat("Imported tables: ")
 names(dat)
@@ -150,7 +150,7 @@ dat <- dat[!(names(dat) %in% c(unused_tables, system_tables))]
 # Define function to rename "id" in "participant" table to "participant_id"
 # and to rename "id" in "study" table to "study_id".
 
-rename_id_columns <- function(data) {
+rename_id_columns <- function(dat) {
   dat$participant <- dat$participant %>% select(participant_id = id,
                                                 everything())
   dat$study <- dat$study %>% select(study_id = id, everything())
@@ -230,7 +230,7 @@ session_review_support_table <- "session_review_distractions"
 # columns from each main table and the list of the main table's support 
 # tables to add "participant_id" to each support table based on the "id"
 
-add_participant_id <- function(data, id_match, support_tables) {
+add_participant_id <- function(dat, id_match, support_tables) {
   output <- vector("list", length(dat))
   
   for (i in 1:length(dat)) {
@@ -247,23 +247,23 @@ add_participant_id <- function(data, id_match, support_tables) {
 
 # Run the function for each set of support tables
 
-dat <- add_participant_id(data = dat,
+dat <- add_participant_id(dat = dat,
                           id_match = participant_id_demographics_id_match,
                           support_tables = demographics_support_table)
 
-dat <- add_participant_id(data = dat,
+dat <- add_participant_id(dat = dat,
                           id_match = participant_id_evaluation_id_match,
                           support_tables = evaluation_support_tables)
 
-dat <- add_participant_id(data = dat,
+dat <- add_participant_id(dat = dat,
                           id_match = participant_id_mental_health_history_id_match,
                           support_tables = mental_health_history_support_tables)
 
-dat <- add_participant_id(data = dat,
+dat <- add_participant_id(dat = dat,
                           id_match = participant_id_reasons_for_ending_id_match,
                           support_tables = reasons_for_ending_support_tables)
 
-dat <- add_participant_id(data = dat,
+dat <- add_participant_id(dat = dat,
                           id_match = participant_id_session_review_id_match,
                           support_tables = session_review_support_table)
 
@@ -295,7 +295,7 @@ admin_test_account_ids <-
 # Define function that removes in each table rows indexed by participant_ids of 
 # admin and test accounts
 
-remove_admin_test_accounts <- function(data, admin_test_account_ids) {
+remove_admin_test_accounts <- function(dat, admin_test_account_ids) {
   output <- vector("list", length(dat))
   
   for (i in 1:length(dat)) {
@@ -316,13 +316,12 @@ remove_admin_test_accounts <- function(data, admin_test_account_ids) {
 dat <- remove_admin_test_accounts(dat, admin_test_account_ids)
 
 # ---------------------------------------------------------------------------- #
-# Label redacted columns ----
+# Label columns redacted by server ----
 # ---------------------------------------------------------------------------- #
 
-# Specify a character vector of columns whose values should be labeled as "REDACTED", 
-# with each column listed as "<table_name>$<column_name>" (e.g., "participant$email"). 
-# If no column is to be labeled as "REDACTED", specify NULL without quotes (i.e., 
-# "redacted_columns <- NULL").
+# Specify a character vector of columns ("<table_name>$<column_name>") whose values 
+# should be labeled as "REDACTED_BY_SERVER". If no column is to be labeled as such,
+# specify NULL without quotes (i.e., "redacted_columns <- NULL").
 
 # On 1/11/2021, Dan Funk said that the following columns are redacted but should
 # not be given that they could be useful for analysis. These logical columns
@@ -379,9 +378,10 @@ necessarily_redacted_columns <- c(necessarily_redacted_columns,
 
 redacted_columns <- c(unnecessarily_redacted_columns, necessarily_redacted_columns)
 
-# Define function to convert redacted columns to characters and label as "REDACTED"
+# Define function to convert redacted columns to characters and label as 
+# "REDACTED_BY_SERVER"
 
-label_redacted_columns <- function(data, redacted_columns) {
+label_redacted_columns <- function(dat, redacted_columns) {
   output <- vector("list", length(dat))
   
   for (i in 1:length(dat)) {
@@ -394,7 +394,7 @@ label_redacted_columns <- function(data, redacted_columns) {
       
       if (table_i_column_j_name %in% redacted_columns) {
         output[[i]][, column_j_name] <- as.character(output[[i]][, column_j_name])
-        output[[i]][, column_j_name] <- "REDACTED"
+        output[[i]][, column_j_name] <- "REDACTED_BY_SERVER"
       }
     }
   }
@@ -447,7 +447,7 @@ unused_columns <- c(unused_columns, "action_log$action_value",
 
 # Define function to remove irrelevant columns
 
-remove_columns <- function(data, columns_to_remove) {
+remove_columns <- function(dat, columns_to_remove) {
   output <- vector("list", length(dat))
   
   for (i in 1:length(dat)) {
@@ -496,7 +496,7 @@ dat <- remove_columns(dat, columns_to_remove)
 # been used during testing but not during the study itself. If no columns are 
 # blank besides those that are ignored in the search, nothing will be outputted.
 
-find_blank_columns <- function(data, ignored_columns) {
+find_blank_columns <- function(dat, ignored_columns) {
   for (i in 1:length(dat)) {
     for (j in 1:length(dat[[i]])) {
       table_i_name <- names(dat[i])
@@ -628,7 +628,7 @@ user_date_time_cols <- "return_date"
 # Define function to reformat system-generated time stamps and user-provided dates 
 # and times and add time zone
 
-recode_date_time_timezone <- function(data) {
+recode_date_time_timezone <- function(dat) {
   for (i in 1:length(dat)) {
     table_name <- names(dat[i])
     colnames <- names(dat[[i]])
@@ -734,7 +734,7 @@ user_date_cols <- c("symptoms_date", "test_antibody_date", "test_covid_date")
 # Define function to reformat participant-provided dates so that they do not
 # contain empty times, which were not assessed
 
-recode_date <- function(data) {
+recode_date <- function(dat) {
   for (i in 1:length(dat)) {
     colnames <- names(dat[[i]])
     target_colnames <- colnames[colnames %in% user_date_cols]
@@ -781,7 +781,7 @@ lapply(dat, identify_columns, grep_pattern = "session")
 
 # View structure of columns containing "session" in each table
 
-view_session_str <- function(data) {
+view_session_str <- function(dat) {
   for (i in 1:length(dat)) {
     print(paste0("Table: ", names(dat[i])))
     cat("\n")
@@ -892,7 +892,7 @@ for (i in 1:length(dat)) {
 # This is used to identify potential columns to check as to whether their values
 # are the same for a given "participant_id" across tables.
 
-find_repeated_column_names <- function(data, ignored_columns) {
+find_repeated_column_names <- function(dat, ignored_columns) {
   for (i in 1:length(dat)) {
     for (j in 1:length(dat[[i]])) {
       if (!(names(dat[[i]][j]) %in% ignored_columns)) {
@@ -1062,7 +1062,7 @@ get_enroll_dates <- function(study_name) {
 
 # Define function that gets participant_ids for desired study
 
-get_participant_ids <- function(data, study_name) {
+get_participant_ids <- function(dat, study_name) {
   if (study_name == "Calm") {
     participant_ids <- dat$study[dat$study$study_extension == "", "participant_id"]
   } else if (study_name == "TET") {
@@ -1182,7 +1182,7 @@ dat$anxiety_triggers[dat$anxiety_triggers$coronavirus %in% c(0, 999),
 # versus the true launch of the study, how high/low risk was classified, and 
 # whether accounts are for coaches
 
-add_participant_info <- function(data, study_name) {
+add_participant_info <- function(dat, study_name) {
   if (study_name == "Calm") {
     
     # Create new variable describing how participants were assigned to condition.
