@@ -2369,26 +2369,32 @@ dat$task_log <- compute_n_rows_col_means(dat$task_log,
 # Arrange columns and sort tables ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Make basic columns specific and sort tables in consistent way. Consider
-# starting with "participant_id", "study_id" (if present), and then "id" (if 
-# present). Consider ordering by "id". Also consider removing "X".
+# Arrange columns "X", "id", "participant_id", "session_only", and "tag" to left
+# in tables that contain them
 
-# Draft of code from Taylor
-# 
-# nameList = list("id", "session_name")
-# 
-# for (i in 1:length(dat)){
-#   for(colName in nameList){
-#     if(colName %in% colnames(dat[[i]])){
-#       colnames(dat[[i]]) <-
-#         c(colName, colnames(dat[[i]])[(colnames(dat[[i]]) != colName) == TRUE])
-#     }
-#   }
-# }
+start_cols <- c("X", "id", "participant_id", "session_only", "tag")
+start_cols_rev <- rev(start_cols)
 
+for (i in 1:length(dat)) {
+  for (j in 1:length(start_cols_rev)) {
+    if (start_cols_rev[j] %in% names(dat[[i]])) {
+      col_names <- c(start_cols_rev[j], 
+                     names(dat[[i]])[names(dat[[i]]) != start_cols_rev[j]])
+      dat[[i]] <- dat[[i]][, col_names]
+    }
+  }
+}
 
+# "X" (row name in Data Server database) is in every table and uniquely identifies 
+# every row, whereas "id", though in every table, does not distinguish all rows
 
+all(as.logical(lapply(dat, function(x) { length(x$X) == length(unique(x$X)) })))
 
+lapply(dat, function(x) { length(x$id) == length(unique(x$id)) })
+
+# Sort tables by "X", mimicking the sorting upon dump of Data Server database
+
+dat <- lapply(dat, function(x) { x[order(x$X), ] })
 
 # ---------------------------------------------------------------------------- #
 # Export intermediately cleaned data ----
