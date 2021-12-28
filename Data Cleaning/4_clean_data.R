@@ -2402,7 +2402,7 @@ dat <- lapply(dat, function(x) { x[order(x$X), ] })
 
 # Ensure that consistent format with timezone will output when writing to CSV. 
 # Given that these columns will be read back into R as characters, they will need 
-# to be reconverted back to POSIXct using the "as.POSIXct" function after import.
+# to be reconverted back to POSIXct using the "as.POSIXct" function.
 
 for (i in 1:length(dat)) {
   POSIXct_colnames <- c(names(dat[[i]])[grep("as_POSIXct", names(dat[[i]]))],
