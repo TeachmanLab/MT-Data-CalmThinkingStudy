@@ -221,19 +221,11 @@ remaining <- dat$angular_training[!(dat$angular_training$id %in% ignored_ids) &
 nrow(remaining) == 0
 
 # ---------------------------------------------------------------------------- #
-# Redact certain "button_pressed" entries in "angular_training" ----
+# Redact "button_pressed" data for "FillInBlank" rows in "angular_training" ----
 # ---------------------------------------------------------------------------- #
 
-# TODO
-
-
-
-
-
-
-
-
-
+dat$angular_training$button_pressed[dat$angular_training$trial_type == "FillInBlank"] <- 
+  "REDACTED_BY_CLEANING_SCRIPT"
 
 # ---------------------------------------------------------------------------- #
 # Redact columns in other tables ----
@@ -318,8 +310,6 @@ dat <- redact_columns(dat, redact_cols)
 
 # Redact "order_id" in "gift_log" table (and in "error" column of "import_log"
 # table) for security reasons
-
-View(dat$import_log)
 
 
 
