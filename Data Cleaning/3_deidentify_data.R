@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------- #
-# Deidentify Data
+# Redact Data
 # Author: Jeremy W. Eberle
 # ---------------------------------------------------------------------------- #
 
@@ -7,27 +7,30 @@
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
-# This script ensures that the raw data are deidentified so that subsequent 
-# cleaning scripts can be run on a deidentified dataset that can be shared and 
-# made public. This way all data cleaning steps can be transparent and 
-# reproducible without compromising identifiable information.
+# Before running this script, restart R (CTRL+SHIFT+F10 on Windows), set your
+# working directory to the parent folder, and ensure that the raw data obtained
+# from "1_get_raw_data.ipynb" are in "./data/raw". This script will import raw 
+# data from "./data/raw" and output redacted data into "./data/redacted".
 
-# Before running this script, set your working directory and put the raw data
-# obtained from "1_get_raw_data.ipynb" in a folder called "data/raw". The 
-# script will import the raw data from that folder and, for files that require
-# redaction, output the redacted files into the same folder with "-redacted"
-# appended to the file name. The unredacted file can then be manually deleted.
+# For raw data files that contain potential identifiers, this script redacts the
+# relevant data so that subsequent cleaning can be run on a dataset that can be 
+# shared and made public. This way all data cleaning steps are transparent and 
+# reproducible without compromising potentially identifiable information.
 
-# Rather than changing the structure of the raw data files, the present script 
-# is designed to label instances of redaction with "REDACTED". Because it does
-# not change the structure of the raw data files, the present script should run
-# on redacted raw data files in addition to unredacted raw data files. In this
-# way, the script reflects exactly what was redacted.
+# Rather than changing the structure of the raw data files, this script replaces
+# potentially identifiable values with the value "REDACTED_BY_CLEANING_SCRIPT".
+# Because it does not change the raw data structure, the script should run on 
+# already redacted data files in addition to raw data files without error.
 
 # Scope: This script is based on data dumped from "calm" database on the Data
 # Server ("teachmanlab") on 12/3/2020. The script may need to be updated when
 # applied to data downloaded after this date, as there may have been changes
 # to the database or newly collected data not accounted for by this script.
+
+# Note: Some data were already redacted upon export from the "ws-02" Web Server
+# to the "teachmanlab" Data Server. The following script "4_clean_data.R" labels
+# the values of the affected columns as "REDACTED_ON_DATA_SERVER". The present 
+# script did not perform that redaction.
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -60,16 +63,15 @@ filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
 dat <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
 
-# Name each data table in list
+# Name data tables in list
 
 split_char <- "-"
 names(dat) <- unlist(lapply(filenames,
-                            function(f) {
-                              unlist(strsplit(f, 
+                            function(x) {
+                              unlist(strsplit(x, 
                                               split = split_char, 
                                               fixed = FALSE))[1]
-                            }
-                            ))
+                            }))
 
 # Report names of imported tables
 
@@ -373,22 +375,41 @@ temp2 <- temp2[order(temp2$exception), ]
 nrow(temp2) == 0
 
 # ---------------------------------------------------------------------------- #
-# Save deidentified data ----
+# List tables that have been redacted ----
 # ---------------------------------------------------------------------------- #
 
-# TODO: Handle this better for the case that "-redacted.csv" is already in the
-# file name. Currently it would save the file as "-redacted-redacted.csv".
-# Also, note that it currently also saves the column X named by R.
+# List all tables that have been redacted by this script so that the redacted
+# files can be named appropriately when outputted
 
+redacted_tbls <- c("angular_training",
+                   unique(gsub("\\$.*", "", redact_cols)),
+                   "gift_log",
+                   "import_log",
+                   "sms_log")
 
+# ---------------------------------------------------------------------------- #
+# Export redacted data ----
+# ---------------------------------------------------------------------------- #
 
+# Prepare filenames, preventing "-redacted" from being appended multiple times
+# if the script is run on any files that had already been redacted
 
+redacted_filename_stems <- sub("*.csv", "", 
+                               filenames[grep(paste0(redacted_tbls, collapse = "-|"), 
+                                              filenames)])
 
-# Save redacted "sms_log". Remember to manually delete the original file.
+redacted_filename_stems <- gsub("-redacted", "", redacted_filename_stems)
 
-sms_log_redacted_filename <- paste0(gsub("*.csv", "",
-                                         filenames[grep("sms_log", filenames)]),
-                                    "-redacted.csv")
+redacted_filenames <- paste0(redacted_filename_stems, "-redacted.csv")
 
-write.csv(dat$sms_log, paste0("./data/raw/", sms_log_redacted_filename),
-          row.names = FALSE)
+# Write redacted CSV files. Remember not to share corresponding raw data files.
+
+dir.create("./data/redacted")
+
+dat_red <- dat[names(dat) %in% redacted_tbls]
+
+for (i in 1:length(dat_red)) {
+  write.csv(dat_red[[i]], 
+            paste0("./data/redacted/", redacted_filenames[i]),
+            row.names = FALSE)
+}

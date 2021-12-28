@@ -7,12 +7,19 @@
 # Notes ----
 # ---------------------------------------------------------------------------- #
 
-# Before running this script, set your working directory. The present script 
-# will import deidentified raw data obtained from "3_deidentify_data.R" (which 
-# outputted redacted raw data files in the "data/raw" folder with "-redacted" 
-# appended to the original file name for raw data files that needed redaction) 
-# and output intermediate data in a new folder called 
-# "data/intermediate/stage_1_cleaning".
+# Before running this script, restart R (CTRL+SHIFT+F10 on Windows) and set your
+# working directory to the parent folder. This script will import (a) raw data 
+# from "./data/raw" (outputted by "1_get_raw_data.ipynb") and (b) deidentified 
+# data from "./data/redacted" (outputted by "3_deidentify_data.R").
+
+# On redacted files and (where no redacted files exist) raw files, this script
+# (a) performs database-wide cleaning (Part I), (b) filters all data for a given 
+# study (in this case Calm Thinking, Part II), and (c) performs study-specific 
+# cleaning (in this case for Calm Thinking, Part III).
+
+# The script will output intermediate clean data into "data/intermediate_clean".
+# The outputted data are deemed only intermediately cleaned because additional 
+# analysis-specific data cleaning will be required for any given analysis.
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -51,33 +58,59 @@ identify_columns <- function(df, grep_pattern) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Import deidentified raw data ----
+# Import raw and redacted data ----
 # ---------------------------------------------------------------------------- #
 
-# Obtain file names of CSV data files
+# Obtain file names of raw and redacted CSV data files
 
 raw_data_dir <- paste0(wd_dir, "/data/raw")
-filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
+red_data_dir <- paste0(wd_dir, "/data/redacted")
 
-# Import data files into list
+raw_filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
+red_filenames <- list.files(red_data_dir, pattern = "*.csv", full.names = FALSE)
 
-dat <- lapply(paste0(raw_data_dir, "/", filenames), read.csv)
+# Import data files into lists
 
-# Name each data table in list
+raw_dat <- lapply(paste0(raw_data_dir, "/", raw_filenames), read.csv)
+red_dat <- lapply(paste0(red_data_dir, "/", red_filenames), read.csv)
+
+# Name data tables in lists
 
 split_char <- "-"
-names(dat) <- unlist(lapply(filenames, 
-                            function(f) {
-                              unlist(strsplit(f, 
-                                              split = split_char, 
-                                              fixed = FALSE))[1]
-                            }
-                            ))
+names(raw_dat) <- unlist(lapply(raw_filenames, 
+                                function(x) {
+                                  unlist(strsplit(x, 
+                                                  split = split_char, 
+                                                  fixed = FALSE))[1]
+                                }))
+names(red_dat) <- paste0(unlist(lapply(red_filenames, 
+                                       function(x) {
+                                         unlist(strsplit(x, 
+                                                         split = split_char, 
+                                                         fixed = FALSE))[1]
+                                       })),
+                         "-redacted")
 
 # Report names of imported tables
 
-cat("Imported tables: ")
+cat("Imported raw tables:")
+names(raw_dat)
+cat("Imported redacted tables:")
+names(red_dat)
+
+# Create single list with redacted tables (when redacted version is available)
+# and raw tables (when redacted version is unavailable). Alphabetize list.
+
+dat <- c(red_dat,
+         raw_dat[!(names(raw_dat) %in% sub("-redacted", "", names(red_dat)))])
+dat <- dat[order(names(dat))]
+
+cat("Selected tables:")
 names(dat)
+
+# Remove "-redacted" from table names, which rest of script requires
+
+names(dat) <- sub("-redacted", "", names(dat))
 
 # ---------------------------------------------------------------------------- #
 # Part I. Database-Wide Data Cleaning ----
@@ -2358,7 +2391,7 @@ dat$task_log <- compute_n_rows_col_means(dat$task_log,
 
 
 # ---------------------------------------------------------------------------- #
-# Write clean data files ----
+# Export intermediately cleaned data ----
 # ---------------------------------------------------------------------------- #
 
 # TODO: Check below
@@ -2379,14 +2412,12 @@ for (i in 1:length(dat)) {
                                          usetz = TRUE)
 }
 
-# Create folder for clean data
+# Write intermediately cleaned CSV files
 
-dir.create("./data/clean")
-
-# Write CSV files to clean data folder
+dir.create("./data/intermediate_clean")
 
 for (i in 1:length(dat)) {
   write.csv(dat[[i]], 
-            paste0("./data/clean/", names(dat[i]), ".csv"),
+            paste0("./data/intermediate_clean/", names(dat[i]), ".csv"),
             row.names = FALSE)
 }
