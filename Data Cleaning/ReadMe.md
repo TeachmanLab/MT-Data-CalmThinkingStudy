@@ -1,6 +1,3 @@
-NOTE: This README is outdated. Ignore it for now. It will be upated after the
-cleaning scripts are finalized.
-
 # Data Cleaning scripts
 You can see the following information in this document:
 1. [Main data cleaning steps](#main-data-cleaning)
