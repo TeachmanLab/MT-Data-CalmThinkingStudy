@@ -2402,7 +2402,9 @@ dat <- lapply(dat, function(x) { x[order(x$X), ] })
 
 # Ensure that consistent format with timezone will output when writing to CSV. 
 # Given that these columns will be read back into R as characters, they will need 
-# to be reconverted back to POSIXct using the "as.POSIXct" function.
+# to be converted back to POSIXct using "as.POSIXct" function (with "tz = 'UTC'"
+# for user-provided "return_date_as_POSIXct" of "return_intention" table and "tz 
+# = 'EST'" for all system-generated timestamps).
 
 for (i in 1:length(dat)) {
   POSIXct_colnames <- c(names(dat[[i]])[grep("as_POSIXct", names(dat[[i]]))],
@@ -2411,6 +2413,11 @@ for (i in 1:length(dat)) {
   dat[[i]][, POSIXct_colnames] <- format(dat[[i]][, POSIXct_colnames],
                                          usetz = TRUE)
 }
+
+# Given that all user-defined date columns are NA for Calm Thinking, they will
+# not need to be converted back to Date using "as.Date" function
+
+all(is.na(dat$covid19[, paste0(user_date_cols, "_as_Date")]))
 
 # Write intermediately cleaned CSV files
 
