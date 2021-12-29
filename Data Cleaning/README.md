@@ -1,9 +1,10 @@
 # README
 Author: Jeremy W. Eberle
 
-## Overview
-
 This README describes the data and centralized data cleaning for the MindTrails Calm Thinking Study.
+
+**Table of Contents**
+TODO
 
 ## Data on MindTrails Calm Thinking Study OSF Project
 
