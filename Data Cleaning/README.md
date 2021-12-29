@@ -14,7 +14,9 @@ The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52
 
 ### Private Component
 
-The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data tables (with some exceptions) dumped from the SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)). The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](code/3_redact_data.R)). The folder structure is below.
+The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data tables (with some exceptions) dumped from the SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)). The folder structure is below.
+
+The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](code/3_redact_data.R)). 
 
 ```
 .
