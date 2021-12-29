@@ -3,7 +3,8 @@ Author: Jeremy W. Eberle
 
 This README describes the data and centralized data cleaning for the MindTrails Calm Thinking Study.
 
-**Table of Contents**
+###Table of Contents
+
 1. [Data](#data)
 2. [Cleaning Scripts](#cleaning-scripts)
 
