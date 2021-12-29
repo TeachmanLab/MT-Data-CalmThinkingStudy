@@ -17,7 +17,8 @@ The folder structure is as follows.
 ```
 .
 ├── data
-└── └── 1_raw_full               # 67 CSV files (e.g., "dass21_as-03_12_2020.csv", "angular_training-03_12_2020.csv", "gift_log-03_12_2020-redacted.csv")
+└── └── 1_raw_full               # 67 CSV files (e.g., "dass21_as-03_12_2020.csv", "angular_training-03_12_2020.csv", 
+                                 #   "gift_log-03_12_2020-redacted.csv")
 ```
 
 Researchers can request access to files on the Private Component by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
@@ -33,7 +34,8 @@ The folder structure is as follows.
 .
 ├── data                    
 ├── ├── 1_raw_partial            # 53 CSV files (did not need redaction; e.g., "dass21_as-03_12_2020.csv")
-├── ├── 2_redacted               # 14 CSV files (needed redaction; e.g., "angular_training-03_12_2020-redacted.csv", "gift_log-03_12_2020-redacted.csv")
+├── ├── 2_redacted               # 14 CSV files (needed redaction; e.g., "angular_training-03_12_2020-redacted.csv", 
+│   │                            #   "gift_log-03_12_2020-redacted.csv")
 ├── ├── 3_intermediate_clean     # 50 CSV files (note: 17 files were deemed irrelevant and removed during cleaning)
 ├── materials
 ├── ├── appendices               # Appendices
