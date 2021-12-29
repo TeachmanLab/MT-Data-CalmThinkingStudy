@@ -1,7 +1,7 @@
 # README
 Author: Jeremy W. Eberle
 
-This README describes the data and centralized data cleaning for the MindTrails Calm Thinking Study.
+This README describes the data and centralized cleaning scripts for the MindTrails Calm Thinking Study.
 
 ### Table of Contents
 
@@ -16,8 +16,8 @@ The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52
 
 The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data tables (with some exceptions) dumped from the SQL database on the "teachmanlab" Data Server on December 3, 2020 (using the script [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb). The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included.
 
-The folder structure is as follows.
 ```
+# Folder structure
 .
 ├── data
 └── └── 1_raw_full               # 67 CSV files (e.g., "dass21_as-03_12_2020.csv", "angular_training-03_12_2020.csv", 
