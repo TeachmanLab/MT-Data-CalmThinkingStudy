@@ -4,9 +4,10 @@ Author: Jeremy W. Eberle
 This README describes the data and centralized data cleaning for the MindTrails Calm Thinking Study.
 
 **Table of Contents**
-TODO
+[Data](#data)
+[Cleaning Scripts](#cleaning-scripts)
 
-## Data on MindTrails Calm Thinking Study OSF Project
+## Data
 
 The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). This project contains two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
 
@@ -43,6 +44,6 @@ The folder structure is as follows.
 └── └── codebooks                # Codebooks
 ```
 
-## Data Cleaning Scripts in Present Folder
+## Cleaning Scripts
 
 TODO
