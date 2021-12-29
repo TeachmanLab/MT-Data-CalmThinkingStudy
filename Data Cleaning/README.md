@@ -29,7 +29,7 @@ Researchers can request access to files on this component by contacting the stud
 
 The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb) that did not need redaction), redacted data tables (from [3_redact_data.R](code/3_redact_data.R)), and intermediately clean data tables (from [4_clean_data.R](code/4_clean_data.R)). The folder structure is below.
 
-Note: Tables in the "1_raw_full" folder of the Private Component that are not in the "1_raw_partial" folder of the Public Component contain free-text responses that may or may not have identifiers. In the Public Component, redacted versions of such tables are in "2_redacted".
+Note: Tables in the "1_raw_full" folder of the [Private Component](https://osf.io/jwvnb/) that are not in the "1_raw_partial" folder of this [Public Component](https://osf.io/s8v3h/) contain free-text responses that may or may not have identifiers. In the [Public Component](https://osf.io/s8v3h/), redacted versions of such tables are in "2_redacted".
 
 ```
 .
