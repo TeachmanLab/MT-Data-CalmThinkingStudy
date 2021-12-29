@@ -9,8 +9,8 @@
 
 # Before running this script, restart R (CTRL+SHIFT+F10 on Windows), set your
 # working directory to the parent folder, and ensure that the raw data obtained
-# from "1_get_raw_data.ipynb" are in "./data/raw". This script will import raw 
-# data from "./data/raw" and output redacted data into "./data/redacted".
+# from "1_get_raw_data.ipynb" are in "./data/1_raw_full". This script will import 
+# raw data from "./data/1_raw_full" and output redacted data to "./data/2_redacted".
 
 # For raw data files that contain potential identifiers, this script redacts the
 # relevant data so that subsequent cleaning can be run on a dataset that can be 
@@ -23,8 +23,8 @@
 # already redacted data files in addition to raw data files without error.
 
 # Scope: This script is based on data dumped from "calm" database on the Data
-# Server ("teachmanlab") on 12/3/2020. The script may need to be updated when
-# applied to data downloaded after this date, as there may have been changes
+# Server ("teachmanlab") on December 3, 2020. The script may need to be updated 
+# when applied to data downloaded after this date, as there may have been changes
 # to the database or newly collected data not accounted for by this script.
 
 # Note: Some data were already redacted upon export from the "ws-02" Web Server
@@ -56,7 +56,7 @@ groundhog_day <- version_control()
 
 # Obtain file names of raw CSV data files
 
-raw_data_dir <- paste0(wd_dir, "/data/raw")
+raw_data_dir <- paste0(wd_dir, "/data/1_raw_full")
 filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 
 # Import data files into list
@@ -404,12 +404,12 @@ redacted_filenames <- paste0(redacted_filename_stems, "-redacted.csv")
 
 # Write redacted CSV files. Remember not to share corresponding raw data files.
 
-dir.create("./data/redacted")
+dir.create("./data/2_redacted")
 
 dat_red <- dat[names(dat) %in% redacted_tbls]
 
 for (i in 1:length(dat_red)) {
   write.csv(dat_red[[i]], 
-            paste0("./data/redacted/", redacted_filenames[i]),
+            paste0("./data/2_redacted/", redacted_filenames[i]),
             row.names = FALSE)
 }

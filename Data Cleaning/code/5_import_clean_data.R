@@ -9,9 +9,9 @@
 
 # Before running this script, restart R (CTRL+SHIFT+F10 on Windows) and set your
 # working directory to the parent folder. This script will import intermediate
-# clean data from "./data/clean" (outputted by "4_clean_data.R") and show how to
-# convert POSIXct date columns back to POSIXct data types. It outputs no files
-# but can serve as a starting point for additional cleaning or analysis.
+# clean data from "./data/3_intermediate_clean" (outputted by "4_clean_data.R") 
+# and show how to convert POSIXct date columns back to POSIXct data types. It 
+# outputs no files but serves as a starting point for further cleaning/analysis.
 
 # ---------------------------------------------------------------------------- #
 # Store working directory, install correct R version, load packages ----
@@ -39,7 +39,7 @@ groundhog.library(dplyr, groundhog_day)
 
 # Obtain file names of intermediate clean CSV data files
 
-cln_data_dir <- paste0(wd_dir, "/data/intermediate_clean")
+cln_data_dir <- paste0(wd_dir, "/data/3_intermediate_clean")
 
 filenames <- list.files(cln_data_dir, pattern = "*.csv", full.names = FALSE)
 

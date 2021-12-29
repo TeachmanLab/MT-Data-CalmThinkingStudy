@@ -9,15 +9,16 @@
 
 # Before running this script, restart R (CTRL+SHIFT+F10 on Windows) and set your
 # working directory to the parent folder. This script will import (a) raw data 
-# from "./data/raw" (outputted by "1_get_raw_data.ipynb") and (b) deidentified 
-# data from "./data/redacted" (outputted by "3_deidentify_data.R").
+# (outputted by "1_get_raw_data.ipynb") from "./data/1_raw_full" (if available;
+# only privately shared) or "./data/1_raw_partial" (otherwise; publicly shared) 
+# and (b) redacted data from "./data/2_redacted" (outputted by "3_redact_data.R").
 
-# On redacted files and (where no redacted files exist) raw files, this script
+# On redacted tables and raw tables in which no redaction was needed, this script
 # (a) performs database-wide cleaning (Part I), (b) filters all data for a given 
-# study (in this case Calm Thinking, Part II), and (c) performs study-specific 
-# cleaning (in this case for Calm Thinking, Part III).
+# study (in this case Calm Thinking; Part II), and (c) performs study-specific 
+# cleaning (in this case for Calm Thinking; Part III).
 
-# The script will output intermediate clean data into "data/intermediate_clean".
+# The script will output intermediate clean data into "./data/3_intermediate_clean".
 # The outputted data are deemed only intermediately cleaned because additional 
 # analysis-specific data cleaning will be required for any given analysis.
 
@@ -61,10 +62,16 @@ identify_columns <- function(df, grep_pattern) {
 # Import raw and redacted data ----
 # ---------------------------------------------------------------------------- #
 
-# Obtain file names of raw and redacted CSV data files
+# Obtain file names of raw and redacted CSV data files. Obtain the full set of
+# raw data files if available; otherwise, obtain the partial set.
 
-raw_data_dir <- paste0(wd_dir, "/data/raw")
-red_data_dir <- paste0(wd_dir, "/data/redacted")
+if (dir.exists(paste0(wd_dir, "/data/1_raw_full"))) {
+  raw_data_dir <- paste0(wd_dir, "/data/1_raw_full")
+} else {
+  raw_data_dir <- paste0(wd_dir, "/data/1_raw_partial")
+}
+
+red_data_dir <- paste0(wd_dir, "/data/2_redacted")
 
 raw_filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 red_filenames <- list.files(red_data_dir, pattern = "*.csv", full.names = FALSE)
@@ -2421,10 +2428,10 @@ all(is.na(dat$covid19[, paste0(user_date_cols, "_as_Date")]))
 
 # Write intermediately cleaned CSV files
 
-dir.create("./data/intermediate_clean")
+dir.create("./data/3_intermediate_clean")
 
 for (i in 1:length(dat)) {
   write.csv(dat[[i]], 
-            paste0("./data/intermediate_clean/", names(dat[i]), ".csv"),
+            paste0("./data/3_intermediate_clean/", names(dat[i]), ".csv"),
             row.names = FALSE)
 }
