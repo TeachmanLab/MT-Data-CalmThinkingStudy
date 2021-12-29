@@ -4,7 +4,7 @@
 
 Author: Jeremy W. Eberle
 
-This README describes the data and centralized cleaning scripts for the Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) study of the [MindTrails Project](https://mindtrails.virginia.edu/) targeting interpretation bias in anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1))
+This README describes centralized data cleaning for the Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) study of the [MindTrails Project](https://mindtrails.virginia.edu/) targeting interpretation bias in anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1))
 
 ### Table of Contents
 
