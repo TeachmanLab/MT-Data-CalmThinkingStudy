@@ -23,7 +23,7 @@ The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data
                                  #   "gift_log-03_12_2020-redacted.csv")
 ```
 
-Researchers can request access to files on the Private Component by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+Researchers can request access to files on this component by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
 ### Public Component
 
