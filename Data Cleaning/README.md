@@ -1,7 +1,10 @@
 # README
+
+## Overview
+
 Author: Jeremy W. Eberle
 
-This README describes the data and centralized cleaning scripts for the MindTrails Calm Thinking Study.
+This README describes the data and centralized cleaning scripts for the Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) study of the [MindTrails Project](https://mindtrails.virginia.edu/).
 
 ### Table of Contents
 
