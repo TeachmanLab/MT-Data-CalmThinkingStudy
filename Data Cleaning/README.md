@@ -269,7 +269,7 @@ Part I of [4_clean_data.R](#4_clean_dataR) corrects test accounts: Participant 1
 
 #### Launch of TET Study
 
-Part III of [4_clean_data.R](#4_clean_dataR) reveals that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
+Part III of [4_clean_data.R](#4_clean_dataR) reveals that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET. The data are retained to reflect the tasks completed.
 
 #### Dropout Risk
 
