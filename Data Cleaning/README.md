@@ -7,8 +7,8 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 ## Table of Contents
 
 1. [Data on Open Science Framework](#data-on-open-science-framework)
-  - [Private Component](#private-component)
-  - [Public Component](#public-component)
+   - [Private Component](#private-component)
+   - [Public Component](#public-component)
 2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
 3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
 4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
