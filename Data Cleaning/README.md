@@ -10,7 +10,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
 3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
 4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
-5. [Cleaning and Analysis Considerations](#cleaning-and-analyis-considerations)
+5. [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
 6. [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
