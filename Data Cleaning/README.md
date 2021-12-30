@@ -283,7 +283,7 @@ Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "par
 
 Part III of [4_clean_data.R](#4_clean_dataR) reveals various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
 
-Importantly, participant 382 received CBM-I training at Session 1 and then psychoeducation at Sessions 2-5. How this participant is handled will depend on the specific analysis.
+Notably, participant 382 received CBM-I training at Session 1 and psychoeducation at Sessions 2-5. Their handling will depend on the analysis.
 
 #### Multiple Screening Attempts
 
