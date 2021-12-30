@@ -223,7 +223,7 @@ This section highlights some considerations prompted by data cleaning that may b
 
 ### Indexing Participants
 
-Part I of [4_clean_data.R](code/4_clean_data.R) ensured that all participant-specific information is indexed by "participant_id". Thus, use "participant_id" (not "study_id") to refer to participants.
+Part I of [4_clean_data.R](code/4_clean_data.R) ensured that all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
 
 ### Test Accounts
 
