@@ -29,9 +29,9 @@ Raw and centrally cleaned data from the "calm" SQL database are stored in the [M
 
 ### Private Component
 
-The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)). The folder structure is below.
+The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](#1_get_raw_dataipynb)). The folder structure is below.
 
-The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](code/3_redact_data.R)). 
+The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](#3_redact_dataR)). 
 
 ```
 .
@@ -44,7 +44,7 @@ Researchers can request access to files on this component by contacting the stud
 
 ### Public Component
 
-The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb) that did not need redaction), redacted data tables (from [3_redact_data.R](code/3_redact_data.R)), and intermediately clean data tables (from [4_clean_data.R](code/4_clean_data.R)). The folder structure is below.
+The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](#1_get_raw_dataipynb) that did not need redaction), redacted data tables (from [3_redact_data.R](#3_redact_dataR)), and intermediately clean data tables (from [4_clean_data.R](#4_clean_dataR)). The folder structure is below.
 
 Note: Tables in the `1_raw_full` folder of the [Private Component](#private-component) that are not in the `1_raw_partial` folder of this [Public Component](https://osf.io/s8v3h/) contain free-text responses that may or may not have identifiers. In the [Public Component](https://osf.io/s8v3h/), redacted versions of such tables are in `2_redacted`.
 
@@ -100,7 +100,7 @@ If you have access to the partial raw data and the redacted data (from the [Publ
 └── ...
 ```
 
-Put the cleaning scripts in the `code` subfolder of the parent folder. The scripts are to be run in the order listed. Assuming you already have full or partial raw data, start with [2_define_functions.R](code/2_define_functions.R). If you have full raw data, run [3_redact_data.R](3_redact_data.R) next; otherwise, skip it. Run the remaining scripts.
+Put the cleaning scripts in the `code` subfolder of the parent folder. The scripts are to be run in the order listed. Assuming you already have full or partial raw data, start with [2_define_functions.R](code/2_define_functions.R). If you have full raw data, run [3_redact_data.R](code/3_redact_data.R) next; otherwise, skip it. Run the remaining scripts.
 
 At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your working directory to the parent folder (CTRL+SHIFT+H on Windows).
 
@@ -118,15 +118,15 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 
 ## Cleaning Scripts: Functionality
 
-### 1_get_raw_data.ipynb
+### [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)
 
-This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)) dumps the full set of 67 raw CSV data files from the "calm" SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump defines the end of data collection for the study. [4_clean_data.R](code/4_clean_data.R) below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
+This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)) dumps the full set of 67 raw CSV data files from the "calm" SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump defines the end of data collection for the study. [4_clean_data.R](#4_clean_dataR) below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
 
-### 2_define_functions.R
+### [2_define_functions.R](code/2_define_functions.R)
 
 This R script defines functions for use by subsequent R scripts, which source this file at the top of each script.
 
-### 3_redact_data.R
+### [3_redact_data.R](code/3_redact_data.R)
 
 This R script performs the following functions. Here, *redact* means to replace relevant values with "REDACTED_BY_CLEANING_SCRIPT", retaining the structure of the raw data files.
 
@@ -137,11 +137,11 @@ This R script performs the following functions. Here, *redact* means to replace 
 - Redact "order_id" data from "gift_log" and "import_log" tables
 - Redact phone numbers from "sms_log" table
 
-Note: So that "order_id" and phone number data are not retained in the full raw data, only redacted versions of the "gift_log", "import_log", and "sms_log" tables are stored in `1_raw_full`, and the unredacted versions dumped by [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb) were deleted.
+Note: So that "order_id" and phone number data are not retained in the full raw data, only redacted versions of the "gift_log", "import_log", and "sms_log" tables are stored in `1_raw_full`, and the unredacted versions dumped by [1_get_raw_data.ipynb](#1_get_raw_dataipynb) were deleted.
 
 By contrast, unredacted versions of other redacted tables are retained in `1_raw_full` on the [Private Component](#private-component) because these tables contain free-text responses that may or may not contain identifiers. Notably, participants were not asked to provide identifiers in their responses.
 
-### 4_clean_data.R
+### [4_clean_data.R](code/4_clean_data.R)
 
 This R script performs the following functions.
 
@@ -223,9 +223,9 @@ TODO: Jeremy to continue here
 - Handle unexpected multiple entries
 - Arrange columns and sort tables
 
-### 5_import_clean_data.R
+### [5_import_clean_data.R](code/5_import_clean_data.R)
 
-This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](code/4_clean_data.R) outputted them as characters. As such, this script serves as a starting point for further cleaning and analysis.
+This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](#4_clean_dataR) outputted them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
 ## Cleaning and Analysis Considerations
 
@@ -235,29 +235,29 @@ This section highlights some considerations prompted by data cleaning that may b
 
 #### Participant Indexing
 
-Part I of [4_clean_data.R](code/4_clean_data.R) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
+Part I of [4_clean_data.R](#4_clean_dataR) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
 
 #### Filtering on System-Generated Timestamps
 
-Part I of [4_clean_data.R](code/4_clean_data.R) creates variables "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. "system_date_time_earliest" and "system_date_time_latest" represent the earliest and latest time stamps, respectively, for each row in the table. These can be useful for filtering the entire dataset on certain timestamps.
+Part I of [4_clean_data.R](#4_clean_dataR) creates variables "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. "system_date_time_earliest" and "system_date_time_latest" represent the earliest and latest time stamps, respectively, for each row in the table. These can be useful for filtering the entire dataset on certain timestamps.
 
 #### Session-Related Columns
 
-Part I of [4_clean_data.R](code/4_clean_data.R) revealed that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" was renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" was created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it was unclear how to extract the time point, so these tables lack "session_only". In tables where "session" did not conflate time point with other information, "session" was renamed "session_only".
+Part I of [4_clean_data.R](#4_clean_dataR) revealed that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" was renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" was created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it was unclear how to extract the time point, so these tables lack "session_only". In tables where "session" did not conflate time point with other information, "session" was renamed "session_only".
 
 Thus, "session_only" is the preferred column for filtering by time point, but not all tables have it. Moreover, "session_only" includes values of "COMPLETE" in some tables (i.e., "action_log", "email_log") but not others (i.e., "task_log"). As a result, care must be taken when filtering data by time point.
 
 #### Repeated Column Names
 
-Part I of [4_clean_data.R](code/4_clean_data.R) revealed that although some tables contain the same column name, the meanings of the columns differ. As a result, care must be taken when comparing columns between tables. See the cleaning script for explanations of repeated column names.
+Part I of [4_clean_data.R](#4_clean_dataR) revealed that although some tables contain the same column name, the meanings of the columns differ. As a result, care must be taken when comparing columns between tables. See the cleaning script for explanations of repeated column names.
 
 #### Study Extensions
 
-Part I of [4_clean_data.R](code/4_clean_data.R) corrects the "study_extension" for participants 2004 and 2005, who are enrolled in Calm Thinking.
+Part I of [4_clean_data.R](#4_clean_dataR) corrects the "study_extension" for participants 2004 and 2005, who are enrolled in Calm Thinking.
 
 #### Enrollment Period
 
-Part II of [4_clean_data.R](code/4_clean_data.R) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is timezone where the study team is based. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" because this is how they are stored in the "calm" SQL database on the "teachmanlab" Data Server.
+Part II of [4_clean_data.R](#4_clean_dataR) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is timezone where the study team is based. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" because this is how they are stored in the "calm" SQL database on the "teachmanlab" Data Server.
 
 The enrollment period is needed to filter screening data, most of which is not indexed by "participant_id" but is required for the participant flow diagram.
 
@@ -265,23 +265,23 @@ The enrollment period is needed to filter screening data, most of which is not i
 
 #### Test Accounts
 
-Part I of [4_clean_data.R](code/4_clean_data.R) corrected test accounts: Participant 1097 should not be a test account and participant 1663 should.
+Part I of [4_clean_data.R](#4_clean_dataR) corrected test accounts: Participant 1097 should not be a test account and participant 1663 should.
 
 #### Launch of TET Study
 
-Part III of [4_clean_data.R](code/4_clean_data.R) revealed that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
+Part III of [4_clean_data.R](#4_clean_dataR) revealed that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
 
 #### Dropout Risk
 
-Part III of [4_clean_data.R](code/4_clean_data.R) indicates that some official-launch participants were manually classified as high risk for dropout (vs. classified by the attrition algorithm) and then Stage 2 randomized to condition. See "risk_classification_method" in "participant" table.
+Part III of [4_clean_data.R](#4_clean_dataR) indicates that some official-launch participants were manually classified as high risk for dropout (vs. classified by the attrition algorithm) and then Stage 2 randomized to condition. See "risk_classification_method" in "participant" table.
 
 #### "active" Column
 
-Part III of [4_clean_data.R](code/4_clean_data.R) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. However, because the "active" column may have affected final reminder emails or notices of account closure, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
+Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. However, because the "active" column may have affected final reminder emails or notices of account closure, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
 
 #### Condition Switching
 
-Part III of [4_clean_data.R](code/4_clean_data.R) revealed various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
+Part III of [4_clean_data.R](#4_clean_dataR) revealed various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
 
 Importantly, participant 382 received CBM-I training at Session 1 and then psychoeducation at Sessions 2-5. How this participant is handled will depend on the specific analysis.
 
@@ -297,7 +297,7 @@ TODO
 
 #### Participant Flow
 
-Part I of [4_clean_data.R](code/4_clean_data.R) revealed that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET flow diagram.
+Part I of [4_clean_data.R](#4_clean_dataR) revealed that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET flow diagram.
 
 ## Next Steps
 
