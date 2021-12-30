@@ -301,7 +301,7 @@ Fifth, the script seeks to distinguish whether a given ineligible screening atte
 
 Sixth, this per-attempt "dass21_as_total" score is multiplied by 2 to get "dass21_as_total_interp", which is compared with the criterion (>= 10 is eligible). Seventh, the script creates "dass21_as_eligible" to indicate eligibility status on the DASS-21-AS--used to report [participant flow](#participant-flow-and-analysis-exclusions).
 
-Eighth, the script computes a per-"session_id" total DASS-21-AS score for analysis ("dass21_as_total_anal") by taking the mean of available DASS-21-AS column means (from above; again treating values of "prefer not to answer" as NA without actually recoding them) and multiplying by 7. Given that this score accounts for multiple unique rows on DASS-21-AS items, use this as the baseline score in analysis.
+Finally, the script computes a per-"session_id" total DASS-21-AS score for analysis ("dass21_as_total_anal") by taking the mean of available DASS-21-AS column means (from above; again treating values of "prefer not to answer" as NA without actually recoding them) and multiplying by 7. Given that this score accounts for multiple unique rows on DASS-21-AS items, use this as the baseline score in analysis.
 
 #### Participant Flow and Analysis Exclusions
 
