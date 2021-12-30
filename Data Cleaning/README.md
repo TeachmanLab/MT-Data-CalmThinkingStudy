@@ -102,7 +102,7 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 
 ### 1_get_raw_data.ipynb
 
-This Jupyter Notebook script, authored by [Sonia Baee](https://github.com/soniabaee), dumps the full set of 67 raw CSV data files from the SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump of data defines the end of data collection for the study. The [4_clean_data.R](code/4_clean_data.R) script below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
+This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)) dumps the full set of 67 raw CSV data files from the SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump of data defines the end of data collection for the study. The [4_clean_data.R](code/4_clean_data.R) script below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
 
 ### 2_define_functions.R
 
