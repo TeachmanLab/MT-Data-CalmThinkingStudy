@@ -62,7 +62,7 @@ To run the cleaning scripts, create a parent folder (with any desired name, indi
 └── code                         # Code subfolder
 ```
 
-If you have access to the full raw data (from the [Private Component](#private-component)), you can reproduce the redaction. Put all the raw data files in a subfolder of `data` called `1_raw_full`. When you run the scripts, "3_redact_data.R" will create `2_redacted` and files therein, and `4_clean_data.R` will create `3_intermediate_clean` and files therein.
+If you have access to the full raw data (from the [Private Component](#private-component)), you can reproduce the redaction. Put all the raw data files in a subfolder of `data` called `1_raw_full`. When you run the scripts, [3_redact_data.R](code/3_redact_data.R) will create `2_redacted` and files therein, and [4_clean_data.R](code/4_clean_data.R) will create `3_intermediate_clean` and files therein.
 
 ```
 .
@@ -73,7 +73,7 @@ If you have access to the full raw data (from the [Private Component](#private-c
 └── ...
 ```
 
-If you have access to the partial raw data and the redacted data (from the [Public Component](#public-component)), put the partial raw data files in a subfolder of `data` called `1_raw_partial` and the redacted data files in a subfolder called `2_redacted`. When you run the scripts, `4_clean_data.R` will create `3_intermediate_clean` and files therein.
+If you have access to the partial raw data and the redacted data (from the [Public Component](#public-component)), put the partial raw data files in a subfolder of `data` called `1_raw_partial` and the redacted data files in a subfolder called `2_redacted`. When you run the scripts, [4_clean_data.R](code/4_clean_data.R) will create `3_intermediate_clean` and files therein.
 
 ```
 .
