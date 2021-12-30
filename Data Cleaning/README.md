@@ -239,11 +239,11 @@ Part I of [4_clean_data.R](#4_clean_dataR) indexes all participant-specific data
 
 #### Filtering on System-Generated Timestamps
 
-Part I of [4_clean_data.R](#4_clean_dataR) creates "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. They are the earliest and latest timestamps, respectively, for each row in the table. These can be useful for filtering the entire dataset by timestamp.
+Part I of [4_clean_data.R](#4_clean_dataR) creates "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. They are the earliest and latest timestamps for each row in the table--useful for filtering the entire dataset.
 
 #### Session-Related Columns
 
-Part I of [4_clean_data.R](#4_clean_dataR) reveals that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" is renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" is created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it is unclear how to extract the time point, so these tables lack "session_only". In tables where "session" does not conflate time point with other information, "session" is renamed "session_only".
+Part I of [4_clean_data.R](#4_clean_dataR) reveals that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). Here, "session" is renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" is created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it is unclear how to extract the time point, so these tables lack "session_only". In tables where "session" does not conflate time point with other information, "session" is renamed "session_only".
 
 Thus, "session_only" is the preferred column for filtering by time point, but not all tables have it. Moreover, "session_only" includes values of "COMPLETE" in some tables (i.e., "action_log", "email_log") but not others (i.e., "task_log"). As a result, care must be taken when filtering by time point.
 
@@ -293,7 +293,7 @@ Second, the script removes duplicates on DASS-21-AS items, "over18", and "time_o
 
 Third, the script counts the number of multiple screening attempts remaining for each "session_id" at screening ("n_eligibility_rows") and computes the mean "time_on_page" across those rows for each "session_id". This "time_on_page_mean" is used for analysis. It represents the mean time a given "session_id" spent on the page across their screening attempts, which could reflect different responses on DASS-21-AS items, different responses on "over18", or both.
 
-To isolate unique responses on DASS-21-AS items, the script counts the number of unique rows on DASS-21-AS items for each "session_id" at screening ("n_eligibility_unq_item_rows"). The study team decided that participants with more than two sets of unique rows on DASS-21-AS items will be excluded from analysis due to concerns about data integrity, whereas those with two sets of unique rows on DASS-21-AS items will be included, even if they have two or more entries for "over18". The script does not exclude the former participants, but rather marks them for exclusion with the indicator "exclude_analysis" (see [Participant Flow and Analysis Exclusions](#participant-flow-and-analysis-exclusions)).
+To isolate unique responses on DASS-21-AS items, the script counts the number of unique rows on DASS-21-AS items for each "session_id" at screening ("n_eligibility_unq_item_rows"). The study team decided that participants with more than two sets of unique rows on DASS-21-AS items will be excluded from analysis due to concerns about data integrity, whereas those with two sets of unique rows on DASS-21-AS items will be included, even if they have two or more entries for "over18". The script does not exclude the former participants, but rather marks them for exclusion (see [Participant Flow and Analysis Exclusions](#participant-flow-and-analysis-exclusions)).
 
 Fourth, the script computes column means for DASS-21-AS items across these unique DASS-21-AS item rows for each "session_id", treating values of "prefer not to answer" as NA without recoding them as NA in the actual table. These column means are used to compute a total score for analysis ("dass21_as_total_anal") below.
 
@@ -305,15 +305,17 @@ Eighth, the script computes a per-"session_id" total DASS-21-AS score for analys
 
 #### Participant Flow and Analysis Exclusions
 
-TODO
+Part III of [4_clean_data.R](#4_clean_dataR) reports number of participants screened (*n* = 5267), enrolled (*n* = 1748), and not enrolled (*n* = 3519). 
 
-created "exclude_analysis" column in "dass21_as" and "participant" tables indicating participants to exclude from analysis because they had more than 2 unique rows on DASS-21-AS items at screening. For reporting reasons people did not enroll, based the reason on the most recent entry (according to "id"), acknowledging that lack of enrollment following each attempt when there were multiple attempts could have occurred for a different reason (e.g., not eligible on age, not eligible on DASS, eligible but not interested).
+For participants with multiple entries who did not enroll, the script bases the reason they did not enroll on their last entry, though recognizing that non-enrollment following each attempt could have occurred for a different reason. Of the 3519 who did not enroll, 774 were ineligible on DASS but eligible on age, 23 were ineligible on both DASS and age, 111 were eligible on DASS but ineligible on age, and 2611 were eligible on both DASS and age (but did not create an account).
+
+Participants with more than two unique rows on DASS-21-AS items ("n_eligibility_unq_item_rows" > 2) are marked for exclusion from analysis using "exclude_analysis" in "dass21_as" and "participant" tables. 17 non-enrolled participants should be excluded from any analysis of screening data, and 6 enrolled participants should be excluded from any analysis.
 
 ### For TET Study
 
 #### Participant Flow
 
-Part I of [4_clean_data.R](#4_clean_dataR) revealed that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET flow diagram.
+Part I of [4_clean_data.R](#4_clean_dataR) reveals that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET participant flow diagram.
 
 ## Next Steps
 
