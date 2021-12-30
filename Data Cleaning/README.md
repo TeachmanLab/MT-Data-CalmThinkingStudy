@@ -50,7 +50,7 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 
 ## Cleaning Scripts
 
-The scripts in the `code` subfolder of this Data Cleaning folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
+The scripts in the `[code](code)` subfolder of this [Data Cleaning](https://github.com/jwe4ec/MT-Data-CalmThinkingStudy/tree/jeremy/Data%20Cleaning) folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
 
 ### Setup
 
