@@ -129,7 +129,7 @@ This R script performs the following functions.
 
 #### Part I. Database-Wide Data Cleaning
 
-The "calm" SQL database contains data for three studies (Calm Thinking, TET, GIDI). Part I applies to the entire database.
+Part I applies to data for all three studies (Calm Thinking, TET, GIDI) in the "calm" SQL database.
 
 - Remove irrelevant tables
 - Rename "id" columns in "participant" and "study" tables
