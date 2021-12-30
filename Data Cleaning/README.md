@@ -7,10 +7,20 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 ## Table of Contents
 
 1. [Data on Open Science Framework](#data-on-open-science-framework)
+  - [Private Component](#private-component)
+  - [Public Component](#public-component)
 2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
 3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
 4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
+  - [1_get_raw_data.ipynb](#1)
+  - [2_define_functions.R](#2)
+  - [3_redact_data.R](#3)
+  - [4_clean_data.R](#4)
+  - [5_import_clean_data.R](#5)
 5. [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
+  - [For Calm Thinking, TET, and GIDI Studies](#for-calm-thinking-tet-and-gidi-studies)
+  - [For Calm Thinking Study](#for-calm-thinking-study)
+  - [For TET Study](#for-tet-study)
 6. [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
@@ -194,7 +204,7 @@ Part III cleans the Calm Thinking Study data. Most of the tasks will also be nee
 - Handle multiple screenings (see [Multiple Screening Attempts](#multiple-screening-attempts) for details)
   - Correct "participant_id" not linking to all screening attempts for corresponding "session_id"
   - For duplicated values on DASS-21-AS items, "over18", and "time_on_page" for a given "session_id" and "session_only", keep last row
-  - Compute number of multiple rows per "session_id" at screening, mean "time_on_page" across multiple rows, and number of unique rows
+  - Compute number of multiple rows per "session_id" at screening, mean "time_on_page" across these rows, and number of unique rows
   - Compute column mean of unique values on DASS-21-AS items per "session_id"
   - Compute DASS-21-AS total score "dass21_as_total" (as computed by system, not accounting for multiple entries)
   - Multiply "dass21_as_total" score by 2 to compute "dass21_as_total_interp" for interpretation against eligibility criterion
@@ -221,67 +231,73 @@ This R script imports the intermediately cleaned Calm Thinking Study data and co
 
 This section highlights some considerations prompted by data cleaning that may be relevant to further cleaning or to analysis. Refer to the actual script for more details.
 
-### Indexing Participants
+### For Calm Thinking, TET, and GIDI Studies
 
-Part I of [4_clean_data.R](code/4_clean_data.R) ensured that all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
+#### Indexing Participants
 
-### Test Accounts
+Part I of [4_clean_data.R](code/4_clean_data.R) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
 
-Part I of [4_clean_data.R](code/4_clean_data.R) corrected test accounts: Participant 1097 should not be a test account and participant 1663 should.
-
-### TET Participant Flow
-
-Part I of [4_clean_data.R](code/4_clean_data.R) revealed that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET flow diagram.
-
-### Filtering on System-Generated Timestamps
+#### Filtering on System-Generated Timestamps
 
 Part I of [4_clean_data.R](code/4_clean_data.R) creates variables "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. "system_date_time_earliest" and "system_date_time_latest" represent the earliest and latest time stamps, respectively, for each row in the table. These can be useful for filtering the entire dataset on certain timestamps.
 
-### Session-Related Columns
+#### Session-Related Columns
 
 Part I of [4_clean_data.R](code/4_clean_data.R) revealed that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" was renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" was created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it was unclear how to extract the time point, so these tables lack "session_only". In tables where "session" did not conflate time point with other information, "session" was renamed "session_only".
 
 Thus, "session_only" is the preferred column for filtering by time point, but not all tables have it. Moreover, "session_only" includes values of "COMPLETE" in some tables (i.e., "action_log", "email_log") but not others (i.e., "task_log"). As a result, care must be taken when filtering data by time point.
 
-### Repeated Column Names
+#### Repeated Column Names
 
 Part I of [4_clean_data.R](code/4_clean_data.R) revealed that although some tables contain the same column name, the meanings of the columns differ. As a result, care must be taken when comparing columns between tables. See the cleaning script for explanations of repeated column names.
 
-### Study Extensions
+#### Study Extensions
 
 Part I of [4_clean_data.R](code/4_clean_data.R) corrects the "study_extension" for participants 2004 and 2005, who are enrolled in Calm Thinking.
 
-### Enrollment Period
+#### Enrollment Period
 
 Part II of [4_clean_data.R](code/4_clean_data.R) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is timezone where the study team is based. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" because this is how they are stored in the "calm" SQL database on the "teachmanlab" Data Server.
 
 The enrollment period is needed to filter screening data, most of which is not indexed by "participant_id" but is required for the participant flow diagram.
 
-### Launch of TET Study
+### For Calm Thinking Study
+
+#### Test Accounts
+
+Part I of [4_clean_data.R](code/4_clean_data.R) corrected test accounts: Participant 1097 should not be a test account and participant 1663 should.
+
+#### Launch of TET Study
 
 Part III of [4_clean_data.R](code/4_clean_data.R) revealed that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
 
-### Dropout Risk
+#### Dropout Risk
 
 Part III of [4_clean_data.R](code/4_clean_data.R) indicates that some official-launch participants were manually classified as high risk for dropout (vs. classified by the attrition algorithm) and then Stage 2 randomized to condition. See "risk_classification_method" in "participant" table.
 
-### "active" Column
+#### "active" Column
 
 Part III of [4_clean_data.R](code/4_clean_data.R) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. However, because the "active" column may have affected final reminder emails or notices of account closure, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
 
-### Condition Switching
+#### Condition Switching
 
 Part III of [4_clean_data.R](code/4_clean_data.R) revealed various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
 
 Importantly, participant 382 received CBM-I training at Session 1 and then psychoeducation at Sessions 2-5. How this participant is handled will depend on the specific analysis.
 
-### Multiple Screening Attempts
+#### Multiple Screening Attempts
 
 TODO
 
-### Participant Flow and Analysis Exclusions
+#### Participant Flow and Analysis Exclusions
 
 TODO
+
+### For TET Study
+
+#### Participant Flow
+
+Part I of [4_clean_data.R](code/4_clean_data.R) revealed that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET flow diagram.
 
 ## Next Steps
 
