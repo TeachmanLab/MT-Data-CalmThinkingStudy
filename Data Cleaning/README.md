@@ -277,7 +277,7 @@ Part III of [4_clean_data.R](#4_clean_dataR) indicates that some official-launch
 
 #### "active" Column
 
-Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. The "active" column may have affected final reminder emails or notices of account closure. Thus, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
+Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and participants 191, 329, 723 are mislabeled as inactive. The "active" column may have affected final reminder emails or notices of account closure. Thus, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
 
 #### Condition Switching
 
