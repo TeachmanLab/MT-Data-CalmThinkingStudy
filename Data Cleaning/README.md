@@ -53,7 +53,7 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 
 Additional coaching-related data were not centrally cleaned. These measures (Coach Session Review, Coach Session Tracking, Nonresponder Coaching Survey) were collected via Qualtrics or Google Sheets and are stored privately on UVA Box.
 
-For more details about these data, cleaned by Alex Werntz and Allie Silverman, see the Measures Appendix and Codebook available on the [Public Component](#public-component). Researchers can request access to the data by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+For more details about these data, cleaned by Alex Werntz and Allie Silverman, see the Measures Appendix and Measures Codebook on the [Public Component](#public-component). Researchers can request access to the data by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
 ## Cleaning Scripts: Setup and File Relations
 
