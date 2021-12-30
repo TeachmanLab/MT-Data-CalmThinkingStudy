@@ -330,7 +330,7 @@ Part I of [4_clean_data.R](#4_clean_dataR) reveals that participant 3659 lacks s
 
 ## Next Steps
 
-As mentioned above, this centralized cleaning of the Calm Thinking data yields data considered intermediately cleaned because further cleaning will be needed for any given analysis. Centralized cleaning focused on issues that cut across multiple tables or that will affect almost any analysis. And in many cases, we opted to flag issues for further cleaning and analysis rather than implement decisions suitable for only a narrow application.
+As noted above, this centralized cleaning of Calm Thinking data yields data deemed intermediately cleaned because further cleaning will be needed for any given analysis. We focused on issues that cut across multiple tables or that will affect almost any analysis. And in many cases, we opted to flag issues for further cleaning and analysis rather than implement decisions suitable for only a narrow application.
 
 Here are some known next steps for further cleaning and analysis:
 
