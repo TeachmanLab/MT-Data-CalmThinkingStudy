@@ -215,13 +215,10 @@ Part III cleans the Calm Thinking Study data. Most of the tasks will also be nee
   - Identify session_ids of participants who did not enroll to be excluded from any analysis of screening data
   - Identify participant_ids of participants who did enroll to be excluded from any analysis
   - Create indicator "exclude_analysis" to reflect participants who should be excluded from analysis and add it to "participant" table
-
-TODO: Jeremy to continue here
-
-- Identify unexpected multiple entries
-- Investigate unexpected multiple entries
-- Handle unexpected multiple entries
-- Arrange columns and sort tables
+- Identify unexpected multiple entries (see [Unexpected Multiple Entries](#unexpected-multiple-entries) for details)
+- Investigate unexpected multiple entries (see [Unexpected Multiple Entries](#unexpected-multiple-entries) for details)
+- Handle unexpected multiple entries (see [Unexpected Multiple Entries](#unexpected-multiple-entries) for details)
+- Arrange columns and sort tables (see [Table Sorting](#table-sorting) for details)
 
 ### [5_import_clean_data.R](code/5_import_clean_data.R)
 
@@ -311,7 +308,21 @@ For participants with multiple entries who did not enroll, the script bases the 
 
 Participants with more than two unique rows on DASS-21-AS items ("n_eligibility_unq_item_rows" > 2) are marked for exclusion from analysis using "exclude_analysis" in "dass21_as" and "participant" tables. 17 non-enrolled participants should be excluded from any analysis of screening data, and 6 enrolled participants should be excluded from any analysis.
 
-### For TET Study
+#### Unexpected Multiple Entries
+
+After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", keep last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) checks for unexpected multiple entries for all tables (e.g., multiple rows for a given "participant_id" and "session_only" time point where only one row is expected). However, it is unclear how to check for multiple entries in "angular_training" and "js_psych_trial" tables, so they are not precisely checked.
+
+Note: "task_log" does not reflect some entries in other tables ("dass21_as", "credibility"). Thus, do not rely on "task_log" to find multiple entries or reflect task completion.
+
+Besides [multiple screening attempts](#multiple-screening-attempts), multiple entries (found in "credibility", "return_intention", "bbsiq", "oa", and "task_log" tables) are handled by computing (a) number of rows ("n_rows") for a given set of index columns (e.g., "participant_id", "session_only"); (b) mean "time_on_" values (e.g., "time_on_page") across those rows, for use in analysis (e.g., "time_on_page_mean"); and (c) number of rows with unique values for a given set of items  ("n_unq_item_rows"). If multiple unique rows are present ("n_unq_item_rows" > 1), we compute column means for all items, treating values of "prefer not to answer" as NA without actually recoding them.
+
+#### Table Sorting
+
+Given that "X" (row name in "calm" SQL database on "teachmanlab" Data Server) is in every table and uniquely identifies every row, whereas "id", though in every table, does not distinguish all rows, all tables are sorted on "X" before export.
+
+### For TET and GIDI Studies
+
+Note: In addition to considering the issue below, consider how the Calm Thinking issues may similarly apply to TET and GIDI. They likely do.
 
 #### Participant Flow
 
