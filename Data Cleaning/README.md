@@ -50,4 +50,50 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 
 ## Cleaning Scripts
 
-TODO
+The scripts in the `code` subfolder of this Data Cleaning folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
+
+### Setup
+
+To run the cleaning scripts, create a parent folder (with any desired name, indicated by `.` below) with two subfolders: `data` and `code`. The working directory must be set to the parent folder in order for the scripts to import and export data correctly using relative file paths.
+
+```
+.                                # Parent folder (i.e., working directory)
+├── data                         # Data subfolder
+└── code                         # Code subfolder
+```
+
+If you have access to the full raw data (from the Private Component), you can reproduce the redaction. In this case, put all the raw data files in a subfolder of `data` called `1_raw_full`. When you run the scripts, "3_redact_data.R" will create `2_redacted` and files therein, and `4_clean_data.R` will create `3_intermediate_clean` and files therein.
+
+```
+.
+├── data                    
+├── ├── 1_raw_full               # 67 CSV files from Private Component
+├── ├── (2_redacted)             # Folder with 14 CSV files will be created by "3_redact_data.R"
+├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
+└── ...
+```
+
+If you have access to the partial raw data and the redacted data (from the Public Component), put the partial raw data files in a subfolder of `data` called `1_raw_partial` and the redacted data files in a subfolder called `2_redacted`. When you run the scripts, `4_clean_data.R` will create `3_intermediate_clean` and files therein.
+
+```
+.
+├── data                    
+├── ├── 1_raw_partial            # 53 CSV files from Public Component
+├── ├── 2_redacted               # 14 CSV files from Public Component
+├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
+└── ...
+```
+
+Put the cleaning scripts in the `code` subfolder of the parent folder.
+
+```
+.
+├── ...
+├── code
+├── ├── 1_get_raw_data.ipynb     # Dump 67 CSV files from "teachmanlab" Data Server (for "1_raw_full")
+├── ├── 2_define_functions.R     # Define functions for use by subsequent R scripts
+├── ├── 3_redact_data.R          # Redact 14 CSV files from "1_raw_full" and output them to "2_redacted"
+├── ├── 4_clean_data.R           # Clean 14 CSV files from "2_redacted" and 53 CSV files from "1_raw_full"
+│   │                            #   and output 50 CSV files to "3_intermediate_clean"
+└── └── 5_import_clean_data.R    # Import 50 CSV files from "3_intermediate_clean"
+```
