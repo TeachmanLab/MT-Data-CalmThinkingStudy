@@ -154,7 +154,7 @@ In this case, data are filtered for the Calm Thinking Study.
 
 #### Part III: Calm Thinking Study-Specific Data Cleaning
 
-- Notes on lack of data for some tables
+- Note lack of data for some tables
 - Recode "coronavirus" column of "anxiety_triggers" table
   - Note: Column was not intended for Calm Thinking participants
 - Add participant information
