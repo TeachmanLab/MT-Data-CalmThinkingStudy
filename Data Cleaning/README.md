@@ -67,7 +67,7 @@ If you have access to the full raw data (from the [Private Component](#private-c
 ```
 .
 ├── data                    
-├── ├── 1_raw_full               # 67 CSV files from [Private Component](#private-component)
+├── ├── 1_raw_full               # 67 CSV files from Private Component
 ├── ├── (2_redacted)             # Folder with 14 CSV files will be created by "3_redact_data.R"
 ├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
 └── ...
@@ -78,8 +78,8 @@ If you have access to the partial raw data and the redacted data (from the [Publ
 ```
 .
 ├── data                    
-├── ├── 1_raw_partial            # 53 CSV files from [Public Component](#public-component)
-├── ├── 2_redacted               # 14 CSV files from [Public Component](#public-component)
+├── ├── 1_raw_partial            # 53 CSV files from Public Component
+├── ├── 2_redacted               # 14 CSV files from Public Component
 ├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
 └── ...
 ```
