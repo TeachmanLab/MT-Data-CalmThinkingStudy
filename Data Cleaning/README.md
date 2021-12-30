@@ -233,7 +233,7 @@ This section highlights some considerations prompted by data cleaning that may b
 
 ### For Calm Thinking, TET, and GIDI Studies
 
-#### Indexing Participants
+#### Participant Indexing
 
 Part I of [4_clean_data.R](code/4_clean_data.R) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
 
