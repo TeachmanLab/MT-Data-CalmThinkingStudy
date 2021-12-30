@@ -7,7 +7,7 @@ This README describes centralized data cleaning for the Calm Thinking Study, an 
 ## Table of Contents
 
 1. [Data on Open Science Framework](#data-on-open-science-framework)
-2. [Cleaning Scripts: Setup](#cleaning-scripts-setup)
+2. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
 3. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
 4. [Next Steps](#next-steps)
 
@@ -48,7 +48,7 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 └── └── codebooks                # Codebooks
 ```
 
-## Cleaning Scripts: Setup
+## Cleaning Scripts: Setup and File Relations
 
 The scripts in the [`code`](code) subfolder of this [Data Cleaning](https://github.com/jwe4ec/MT-Data-CalmThinkingStudy/tree/jeremy/Data%20Cleaning) folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
 
@@ -118,6 +118,10 @@ This R script performs the following functions. Here, *redact* means to replace 
 - Redact free-text responses for certain other columns that may contain identifiers
 - Redact "order_id" data from "gift_log" and "import_log" tables
 - Redact phone numbers from "sms_log" table
+
+Note: So that "order_id" and phone number data are not retained in the full raw data, only redacted versions of the "gift_log", "import_log", and "sms_log" tables are stored in `1_raw_full`, and the unredacted versions dumped by [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb) were deleted.
+
+By contrast, unredacted versions of other redacted tables are retained in `1_raw_full` on the [Private Component](#private-component) because these tables contain free-text responses that may or may not contain identifiers. Notably, participants were not asked to provide identifiers in their responses.
 
 ### 4_clean_data.R
 
