@@ -17,7 +17,7 @@ The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52
 
 ### Private Component
 
-The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data tables (with some exceptions) dumped from the SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)). The folder structure is below.
+The [Private Component](https://osf.io/jwvnb/) contains the full set of raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)). The folder structure is below.
 
 The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](code/3_redact_data.R)). 
 
@@ -90,11 +90,11 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 .
 ├── ...
 ├── code
-├── ├── 1_get_raw_data.ipynb     # Dump 67 CSV files from "teachmanlab" Data Server (for "1_raw_full")
+├── ├── 1_get_raw_data.ipynb     # Dump 67 CSV files from "calm" SQL database on Data Server (for "1_raw_full")
 ├── ├── 2_define_functions.R     # Define functions for use by subsequent R scripts
 ├── ├── 3_redact_data.R          # Redact 14 CSV files from "1_raw_full" and output them to "2_redacted"
 ├── ├── 4_clean_data.R           # Clean 14 CSV files from "2_redacted" and 53 CSV files from "1_raw_full"
-│   │                            #   and output 50 CSV files to "3_intermediate_clean"
+│   │                            #   or "1_raw_partial" and output 50 CSV files to "3_intermediate_clean"
 └── └── 5_import_clean_data.R    # Import 50 CSV files from "3_intermediate_clean"
 ```
 
@@ -102,7 +102,7 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 
 ### 1_get_raw_data.ipynb
 
-This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)) dumps the full set of 67 raw CSV data files from the SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump defines the end of data collection for the study. [4_clean_data.R](code/4_clean_data.R) below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
+This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)) dumps the full set of 67 raw CSV data files from the "calm" SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump defines the end of data collection for the study. [4_clean_data.R](code/4_clean_data.R) below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
 
 ### 2_define_functions.R
 
@@ -125,7 +125,58 @@ By contrast, unredacted versions of other redacted tables are retained in `1_raw
 
 ### 4_clean_data.R
 
-TODO
+This R script performs the following functions.
+
+#### Part I. Database-Wide Data Cleaning
+
+The "calm" SQL database contains data for three studies (Calm Thinking, TET, GIDI). Part I applies to the entire database.
+
+- Remove irrelevant tables
+- Rename "id" columns in "participant" and "study" tables
+- Add "participant_id" to all participant-specific tables
+- Correct test accounts
+- Remove admin and test accounts
+- Label columns redacted by server with "REDACTED_ON_DATA_SERVER"
+- Remove irrelevant columns
+- Identify any remaining blank columns
+- Identify and recode time stamp and date columns
+  - Including create new variables for filtering data based on system-generated time stamps
+- Identify and rename session-related columns
+- Check for repeated columns across tables
+- Correct study extensions
+
+#### Part II. Filter Data for Desired Study
+
+In this case, data are filtered for the Calm Thinking Study.
+
+- Define enrollment period and participant_ids
+- Filter all data
+
+#### Part III: Calm Thinking Study-Specific Data Cleaning
+
+- Notes on lack of data for some tables
+- Recode "coronavirus" column of "anxiety_triggers" table
+  - Note: Column was not intended for Calm Thinking participants
+- Add participant information
+  - Create variable describing how participants were assigned to condition
+  - Create variable to differentiate soft and official launch participants
+  - Create variable describing how participants were classified as high/low dropout risk
+  - Create indicator variable for coaching accounts
+- Exclude participants
+  - Confirm that accounts for coaches have already been removed
+  - Identify official-launch participant_ids and exclude soft-launch participants
+- Edit participant information: Participant spanning two studies
+- Obtain time of last collected data
+- Identify participants with inaccurate "active" column
+- Check "conditioning" values in "angular_training" and "study" tables
+- Clean "reasons_for_ending" table
+- Exclude screenings resembling bots
+- Identify and remove nonmeaningful duplicates
+- Handle multiple screenings and report participant flow up to enrollment
+- Identify unexpected multiple entries
+- Investigate unexpected multiple entries
+- Handle unexpected multiple entries
+- Arrange columns and sort tables
 
 ### 5_import_clean_data.R
 
