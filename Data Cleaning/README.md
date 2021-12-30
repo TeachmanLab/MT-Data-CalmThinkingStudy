@@ -102,15 +102,22 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 
 ### 1_get_raw_data.ipynb
 
-TODO
+This Jupyter Notebook script, authored by [Sonia Baee](https://github.com/soniabaee), dumps the full set of 67 raw CSV data files from the SQL database on the "teachmanlab" Data Server as of December 3, 2020. This dump of data defines the end of data collection for the study. The [4_clean_data.R](code/4_clean_data.R) script below identifies that the last system-generated timestamp for a Calm Thinking participant in this dataset is "2020-11-13 22:13:27 EST".
 
 ### 2_define_functions.R
 
-TODO
+This R script defines functions for use by subsequent R scripts, which source this file at the top of each script.
 
 ### 3_redact_data.R
 
-TODO
+This R script performs the following functions. Here, *redact* means to replace relevant values with "REDACTED_BY_CLEANING_SCRIPT", retaining the structure of the raw data files.
+
+- Specify columns to retain that were considered for redaction
+- Determine which "button_pressed" data in "angular_training" table to redact
+- Redact "button_pressed" data for "FillInBlank" rows in "angular_training" table
+- Redact free-text responses for certain other columns that may contain identifiers
+- Redact "order_id" data from "gift_log" and "import_log" tables
+- Redact phone numbers from "sms_log" table
 
 ### 4_clean_data.R
 
