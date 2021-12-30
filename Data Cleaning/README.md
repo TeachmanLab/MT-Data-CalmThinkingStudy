@@ -7,13 +7,14 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 ## Table of Contents
 
 1. [Data on Open Science Framework](#data-on-open-science-framework)
-2. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
-3. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
-4. [Next Steps](#next-steps)
+2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
+3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
+4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
+5. [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
 
-The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
+Centrally cleaned data from the "teachmanlab" Data Server are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
 
 ### Private Component
 
@@ -47,6 +48,12 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 ├── ├── appendices               # Appendices
 └── └── codebooks                # Codebooks
 ```
+
+## Coaching-Related Data on UVA Box
+
+Additional coaching-related data were not centrally cleaned. These data (Coach Session Review, Coach Session Tracking, Nonresponder Coaching Survey) were collected via Qualtrics or Google Sheets and are stored privately on UVA Box. For more details about these data, see the Measures Appendix and Codebook available on the [Public Component](#public-component).
+
+These data were cleaned by Alex Werntz and Allie Silverman. Researchers can request access to the data by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
 ## Cleaning Scripts: Setup and File Relations
 
