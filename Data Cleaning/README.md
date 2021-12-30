@@ -14,7 +14,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 
 ## Data on Open Science Framework
 
-Centrally cleaned data from the "teachmanlab" Data Server are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
+Centrally cleaned data from the "calm" SQL database are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
 
 ### Private Component
 
