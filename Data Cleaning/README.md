@@ -6,22 +6,22 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 
 ## Table of Contents
 
-1. [Data on Open Science Framework](#data-on-open-science-framework)
-   - [Private Component](#private-component)
-   - [Public Component](#public-component)
-2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
-3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
-4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
+- [Data on Open Science Framework](#data-on-open-science-framework)
+  - [Private Component](#private-component)
+  - [Public Component](#public-component)
+- [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
+- [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
+- [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
   - [1_get_raw_data.ipynb](#1)
   - [2_define_functions.R](#2)
   - [3_redact_data.R](#3)
   - [4_clean_data.R](#4)
   - [5_import_clean_data.R](#5)
-5. [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
+- [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
   - [For Calm Thinking, TET, and GIDI Studies](#for-calm-thinking-tet-and-gidi-studies)
   - [For Calm Thinking Study](#for-calm-thinking-study)
   - [For TET Study](#for-tet-study)
-6. [Next Steps](#next-steps)
+- [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
 
