@@ -100,7 +100,7 @@ If you have access to the partial raw data and the redacted data (from the [Publ
 └── ...
 ```
 
-Put the cleaning scripts in the `code` subfolder of the parent folder. The scripts are to be run in the order listed. Assuming you already have full or partial raw data, start with [2_define_functions.R](code/2_define_functions.R). If you have full raw data, run [3_redact_data.R](code/3_redact_data.R) next; otherwise, skip it. Run the remaining scripts.
+Put the cleaning scripts in the `code` subfolder. The scripts are to be run in the order listed. Assuming you already have full or partial raw data, start with [2_define_functions.R](code/2_define_functions.R). If you have full raw data, run [3_redact_data.R](code/3_redact_data.R) next; otherwise, skip it. Run the remaining scripts.
 
 At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your working directory to the parent folder (CTRL+SHIFT+H on Windows).
 
