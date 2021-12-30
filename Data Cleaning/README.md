@@ -257,7 +257,7 @@ Part I of [4_clean_data.R](#4_clean_dataR) corrects the "study_extension" for pa
 
 #### Enrollment Period
 
-Part II of [4_clean_data.R](#4_clean_dataR) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is study team's timezone. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" because this is how they are stored in the "calm" SQL database on the "teachmanlab" Data Server.
+Part II of [4_clean_data.R](#4_clean_dataR) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is study team's timezone. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" as this is how they are stored in the "calm" SQL database.
 
 Enrollment periods are used to filter screening data, most of which is not indexed by "participant_id" but required for participant flow diagrams.
 
