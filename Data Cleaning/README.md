@@ -29,7 +29,7 @@ The exceptions are that only redacted versions of "gift_log", "import_log", and 
                                  #   "gift_log-03_12_2020-redacted.csv")
 ```
 
-Researchers can request access to files on this component by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+Researchers can request access to files on this component by contacting [Jeremy Eberle](mailto:jwe4ec@virginia.edu).
 
 ### Public Component
 
