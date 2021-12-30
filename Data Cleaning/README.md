@@ -151,51 +151,51 @@ Part I applies to data for all three studies (Calm Thinking, TET, GIDI) in the "
 
 - Remove irrelevant tables
 - Rename "id" columns in "participant" and "study" tables
-- Add "participant_id" to all participant-specific tables (see [Participant Indexing](#participant-indexing) for more details)
-- Correct test accounts (see [Test Accounts](#test-accounts) for more details)
+- Add "participant_id" to all participant-specific tables (see [Participant Indexing](#participant-indexing) for details)
+- Correct test accounts (see [Test Accounts](#test-accounts) for details)
 - Remove admin and test accounts
 - Label columns redacted by server with "REDACTED_ON_DATA_SERVER"
 - Remove irrelevant columns
 - Identify any remaining blank columns
 - Identify and recode time stamp and date columns
   - Correct blank "session", "date", and "date_submitted" in "js_psych_trial" table for some participants
-  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#tet_participant_flow) for more details)
+  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#tet_participant_flow) for details)
   - Recode system-generated timestamps as POSIXct data types in "EST" and user-provided timestamps as POSIXct data types in "UTC"
-  - Create variables for filtering on system-generated time stamps (see [Filtering on System-Generated Timestamps](#filtering-on-system-generated-timestamps) for more details)
+  - Create variables for filtering on system-generated time stamps (see [Filtering on System-Generated Timestamps](#filtering-on-system-generated-timestamps) for details)
   - Reformat user-provided dates so that they do not contain empty times, which were not assessed
-- Identify and rename session-related columns (see [Session-Related Columns](#session-related-columns) for more details)
-- Check for repeated columns across tables (see [Repeated Column Names](#repeated-column-names) for more details)
-- Correct study extensions (see [Study Extensions](#study-extensions) for more details)
+- Identify and rename session-related columns (see [Session-Related Columns](#session-related-columns) for details)
+- Check for repeated columns across tables (see [Repeated Column Names](#repeated-column-names) for details)
+- Correct study extensions (see [Study Extensions](#study-extensions) for details)
 
 #### Part II. Filter Data for Desired Study
 
 Part II filters data for the Calm Thinking Study, but the "study_name" can be changed to filter data for the TET or GIDI studies if desired.
 
-- Define enrollment period and participant_ids (see [Enrollment Period](#enrollment-period) for more details)
+- Define enrollment period and participant_ids (see [Enrollment Period](#enrollment-period) for details)
 - Filter all data
 
 #### Part III: Calm Thinking Study-Specific Data Cleaning
 
 Part III cleans the Calm Thinking Study data. Most of the tasks will also be needed for TET and GIDI, but the code will need to be revised.
 
-- Note lack of data for some tables (see [Launch of TET Study](#launch-of-tet-study) for more details)
-- Recode "coronavirus" column of "anxiety_triggers" table (see [Launch of TET Study](#launch-of-tet-study) for more details)
+- Note lack of data for some tables (see [Launch of TET Study](#launch-of-tet-study) for details)
+- Recode "coronavirus" column of "anxiety_triggers" table (see [Launch of TET Study](#launch-of-tet-study) for details)
 - Add participant information
   - Create variable describing how participants were assigned to condition
   - Create variable to differentiate soft and official launch participants
-  - Create variable describing how participants were classified as high/low dropout risk (see [Dropout Risk](#dropout-risk) for more details)
+  - Create variable describing how participants were classified as high/low dropout risk (see [Dropout Risk](#dropout-risk) for details)
   - Create indicator variable for coaching accounts
 - Exclude participants
   - Confirm that accounts for coaches have already been removed
   - Identify official-launch participant_ids and exclude soft-launch participants
 - Edit participant information: Participant spanning two studies
 - Obtain time of last collected data
-- Identify participants with inaccurate "active" column (see ["active" Column](#active-column) for more details)
+- Identify participants with inaccurate "active" column (see ["active" Column](#active-column) for details)
 - Check "conditioning" values in "angular_training" and "study" tables
   - Note that "conditioning" is blank for some rows of "angular_training"
   - Check for participants in "TRAINING" after "firstSession", which should not occur
   - Check that condition stays the same from "secondSession" through "fifthSession"
-  - Check for switching between "CONTROL" and another condition, which should not occur (see [Condition Switching](#condition-switching) for more details)
+  - Check for switching between "CONTROL" and another condition, which should not occur (see [Condition Switching](#condition-switching) for details)
   - Check for "conditioning" at Session 5 in "angular_training" table not matching "conditioning" at "COMPLETE" in "study" table
   - Check for participants in "NONE", which should not occur
 - Clean "reasons_for_ending" table
