@@ -82,7 +82,9 @@ If you have access to the partial raw data and the redacted data (from the [Publ
 └── ...
 ```
 
-Put the cleaning scripts in the `code` subfolder of the parent folder.
+Put the cleaning scripts in the `code` subfolder of the parent folder. The scripts are to be run in the order listed. Assuming you already have full or partial raw data, start with [2_define_functions.R](code/2_define_functions.R). If you have full raw data, run [3_redact_data.R](3_redact_data.R) next; otherwise, skip it. Run the remaining scripts.
+
+At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your working directory to the parent folder (CTRL+SHIFT+H on Windows).
 
 ```
 .
@@ -95,3 +97,29 @@ Put the cleaning scripts in the `code` subfolder of the parent folder.
 │   │                            #   and output 50 CSV files to "3_intermediate_clean"
 └── └── 5_import_clean_data.R    # Import 50 CSV files from "3_intermediate_clean"
 ```
+
+### Functionality
+
+#### 1_get_raw_data.ipynb
+
+TODO
+
+#### 2_define_functions.R
+
+TODO
+
+#### 3_redact_data.R
+
+TODO
+
+#### 4_clean_data.R
+
+TODO
+
+#### 5_import_clean_data.R
+
+TODO
+
+## Next Steps
+
+TODO
