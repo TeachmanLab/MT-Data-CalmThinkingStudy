@@ -225,7 +225,7 @@ TODO: Jeremy to continue here
 
 ### [5_import_clean_data.R](code/5_import_clean_data.R)
 
-This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](#4_clean_dataR) outputted them as characters. As such, this script serves as a starting point for further cleaning and analysis.
+This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](#4_clean_dataR) outputs them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
 ## Cleaning and Analysis Considerations
 
@@ -235,21 +235,21 @@ This section highlights some considerations prompted by data cleaning that may b
 
 #### Participant Indexing
 
-Part I of [4_clean_data.R](#4_clean_dataR) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
+Part I of [4_clean_data.R](#4_clean_dataR) ensures all participant-specific data is indexed by "participant_id". Refer to participants by "participant_id" (not "study_id").
 
 #### Filtering on System-Generated Timestamps
 
-Part I of [4_clean_data.R](#4_clean_dataR) creates variables "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. "system_date_time_earliest" and "system_date_time_latest" represent the earliest and latest time stamps, respectively, for each row in the table. These can be useful for filtering the entire dataset on certain timestamps.
+Part I of [4_clean_data.R](#4_clean_dataR) creates "system_date_time_earliest" and "system_date_time_latest" in each table given that some tables have multiple system-generated timestamps. They are the earliest and latest timestamps, respectively, for each row in the table. These can be useful for filtering the entire dataset by timestamp.
 
 #### Session-Related Columns
 
-Part I of [4_clean_data.R](#4_clean_dataR) revealed that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" was renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" was created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it was unclear how to extract the time point, so these tables lack "session_only". In tables where "session" did not conflate time point with other information, "session" was renamed "session_only".
+Part I of [4_clean_data.R](#4_clean_dataR) reveals that in some tables (e.g., "dass21_as") "session" conflates time point with other information (e.g., eligibility status). In these tables, "session" is renamed to reflect the information it contains (e.g., "session_and_eligibility_status"), and "session_only" is created to reflect only the time point. In some tables (i.e., "angular_training", "gift_log") it is unclear how to extract the time point, so these tables lack "session_only". In tables where "session" does not conflate time point with other information, "session" is renamed "session_only".
 
-Thus, "session_only" is the preferred column for filtering by time point, but not all tables have it. Moreover, "session_only" includes values of "COMPLETE" in some tables (i.e., "action_log", "email_log") but not others (i.e., "task_log"). As a result, care must be taken when filtering data by time point.
+Thus, "session_only" is the preferred column for filtering by time point, but not all tables have it. Moreover, "session_only" includes values of "COMPLETE" in some tables (i.e., "action_log", "email_log") but not others (i.e., "task_log"). As a result, care must be taken when filtering by time point.
 
 #### Repeated Column Names
 
-Part I of [4_clean_data.R](#4_clean_dataR) revealed that although some tables contain the same column name, the meanings of the columns differ. As a result, care must be taken when comparing columns between tables. See the cleaning script for explanations of repeated column names.
+Part I of [4_clean_data.R](#4_clean_dataR) reveals that although some tables contain the same column name, the meanings of the columns differ. As a result, care must be taken when comparing columns between tables. See the cleaning script for explanations of repeated column names.
 
 #### Study Extensions
 
@@ -259,49 +259,49 @@ Part I of [4_clean_data.R](#4_clean_dataR) corrects the "study_extension" for pa
 
 Part II of [4_clean_data.R](#4_clean_dataR) defines the enrollment periods for Calm Thinking, TET, and GIDI in the "America/New_York" timezone, as this is timezone where the study team is based. "America/New_York" is preferred to "EST" because "America/New_York" accounts for switches between "EST" and "EDT". By contrast, system-generated timestamps are stored only in "EST" because this is how they are stored in the "calm" SQL database on the "teachmanlab" Data Server.
 
-The enrollment period is needed to filter screening data, most of which is not indexed by "participant_id" but is required for the participant flow diagram.
+The enrollment period is used to filter screening data, most of which is not indexed by "participant_id" but required for the participant flow diagram.
 
 ### For Calm Thinking Study
 
 #### Test Accounts
 
-Part I of [4_clean_data.R](#4_clean_dataR) corrected test accounts: Participant 1097 should not be a test account and participant 1663 should.
+Part I of [4_clean_data.R](#4_clean_dataR) corrects test accounts: Participant 1097 should not be a test account and participant 1663 should.
 
 #### Launch of TET Study
 
-Part III of [4_clean_data.R](#4_clean_dataR) revealed that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
+Part III of [4_clean_data.R](#4_clean_dataR) reveals that Calm Thinking participants who accessed the site after TET launched on 4/7/2020 completed some tasks (e.g., "covid19" table, "coronavirus" in "anxiety_triggers" table) designed for TET participants. The data are retained to reflect the tasks participants completed.
 
 #### Dropout Risk
 
-Part III of [4_clean_data.R](#4_clean_dataR) indicates that some official-launch participants were manually classified as high risk for dropout (vs. classified by the attrition algorithm) and then Stage 2 randomized to condition. See "risk_classification_method" in "participant" table.
+Part III of [4_clean_data.R](#4_clean_dataR) indicates that some official-launch participants were manually classified as high risk for dropout (vs. classified by attrition algorithm) and then randomized to Stage 2 condition. See "risk_classification_method" in "participant" table.
 
 #### "active" Column
 
-Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. However, because the "active" column may have affected final reminder emails or notices of account closure, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
+Part III of [4_clean_data.R](#4_clean_dataR) indicates that for "active" in "participant" table, participants 891, 1627, 1852 are mislabeled as active and that participants 191, 329, 723 are mislabeled as inactive. The "active" column may have affected final reminder emails or notices of account closure. Thus, the mislabeled data are retained to reflect potential unexpected behavior of the site for these participants.
 
 #### Condition Switching
 
-Part III of [4_clean_data.R](#4_clean_dataR) revealed various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
+Part III of [4_clean_data.R](#4_clean_dataR) reveals various cases of unexpected values for "conditioning" in "angular_training". See cleaning script for details.
 
 Importantly, participant 382 received CBM-I training at Session 1 and then psychoeducation at Sessions 2-5. How this participant is handled will depend on the specific analysis.
 
 #### Multiple Screening Attempts
 
-After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", kept last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) first corrected cases where "participant_id" was not linked to all screening attempts by its corresponding "session_id" in "dass21_as" table.
+After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", keep last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) first corrects cases where "participant_id" is not linked to all screening attempts by its corresponding "session_id" in "dass21_as" table.
 
-Second, the script removed duplicates on DASS-21-AS items, "over18", and "time_on_page" columns in "dass21_as" table for a given "session_id" and "session_only" time point by keeping the last row after sorting by "session_id", "session_only", and "id". The idea is that duplicates on these columns do not reflect unique screening attempts.
+Second, the script removes duplicates on DASS-21-AS items, "over18", and "time_on_page" columns in "dass21_as" table for a given "session_id" and "session_only" time point by keeping the last row after sorting by "session_id", "session_only", and "id". The idea is that duplicates on these columns do not reflect unique screening attempts.
 
-Third, the script counted the number of multiple screening attempts remaining for each "session_id" at screening ("n_eligibility_rows") and computed the mean "time_on_page" across those rows for each "session_id". This "time_on_page_mean" is for analysis; it represents the mean time a given "session_id" spent on the page across their screening attempts.
+Third, the script counts the number of multiple screening attempts remaining for each "session_id" at screening ("n_eligibility_rows") and computes the mean "time_on_page" across those rows for each "session_id". This "time_on_page_mean" is used for analysis. It represents the mean time a given "session_id" spent on the page across their screening attempts, which could reflect different responses on DASS-21-AS items, different responses on "over18", or both.
 
-Multiple screening attempts could reflect different responses on DASS-21-AS items, different responses on "over18", or both. To isolate different responses on DASS-21-AS items, the script counted the number of unique rows only on DASS-21-AS items for a given "session_id" at screening ("n_eligibility_unq_item_rows"). The study team decided that participants with more than two sets of unique rows on DASS-21-AS items will be excluded from analysis due to concerns about data integrity, whereas those with two sets of unique rows on DASS-21-AS items will be included in analysis, even if they have two or more entries for "over18". The script does not exclude participants with more than two sets of unique rows on DASS-21-AS items, but rather marks them for exclusion with the indicator "exclude_analysis" (see [Participant Flow and Analysis Exclusions](#participant-flow-and-analysis-exclusions)).
+To isolate unique responses on DASS-21-AS items, the script counts the number of unique rows on DASS-21-AS items for each "session_id" at screening ("n_eligibility_unq_item_rows"). The study team decided that participants with more than two sets of unique rows on DASS-21-AS items will be excluded from analysis due to concerns about data integrity, whereas those with two sets of unique rows on DASS-21-AS items will be included, even if they have two or more entries for "over18". The script does not exclude the former participants, but rather marks them for exclusion with the indicator "exclude_analysis" (see [Participant Flow and Analysis Exclusions](#participant-flow-and-analysis-exclusions)).
 
-Fourth, the script computed column means for DASS-21-AS items across these unique DASS-21-AS item rows for each "session_id", treating values of "prefer not to answer" as NA without recoding them as NA in the actual table. These column means are used to compute a total score for analysis ("dass21_as_total_anal") below.
+Fourth, the script computes column means for DASS-21-AS items across these unique DASS-21-AS item rows for each "session_id", treating values of "prefer not to answer" as NA without recoding them as NA in the actual table. These column means are used to compute a total score for analysis ("dass21_as_total_anal") below.
 
-Fifth, the script sought to distinguish whether a given ineligible screening attempt was ineligible due to the DASS-21-AS responses or due to age. Given that the site allows multiple screening attempts and scores each one in isolation from the others, the script computed a total score for each attempt ("dass21_as_total") by taking the mean of available DASS-21-AS items (again treating values of "prefer not to answer" as NA without recoding them as NA in the actual table) and multiplying by 7.
+Fifth, the script seeks to distinguish whether a given ineligible screening attempt is ineligible due to the DASS-21-AS responses or due to age. Given that the site allows multiple screening attempts and scores each in isolation from the others, the script computes a total score for each attempt ("dass21_as_total") by taking the mean of available DASS-21-AS items (again treating values of "prefer not to answer" as NA without actually recoding them) and multiplying by 7.
 
-Sixth, this per-attempt "dass21_as_total" score was multiplied by 2 to get "dass21_as_total_interp", which can be interpreted against the eligibility criterion (>= 10 is eligible). Seventh, the script created the indicator "dass21_as_eligible" to reflect eligibility status based on the DASS-21-AS itself. This is used to report [participant flow](#participant-flow-and-analysis-exclusions).
+Sixth, this per-attempt "dass21_as_total" score is multiplied by 2 to get "dass21_as_total_interp", which is compared against the eligibility criterion (>= 10 is eligible). Seventh, the script creates "dass21_as_eligible" to indicate eligibility status on the DASS-21-AS itself. This is used to report [participant flow](#participant-flow-and-analysis-exclusions).
 
-Eighth, the script computed a per-"session_id" total DASS-21-AS score for analysis ("dass21_as_total_anal") by taking the mean of the available DASS-21-AS column means (from above; again treating values of "prefer not to answer" as NA without recoding them as NA in the actual table) and multiplying by 7. Given that this score accounts for multiple unique rows on "DASS-21-AS" items, use this as the baseline score in analysis.
+Eighth, the script computes a per-"session_id" total DASS-21-AS score for analysis ("dass21_as_total_anal") by taking the mean of available DASS-21-AS column means (from above; again treating values of "prefer not to answer" as NA without actually recoding them) and multiplying by 7. Given that this score accounts for multiple unique rows on DASS-21-AS items, use this as the baseline score in analysis.
 
 #### Participant Flow and Analysis Exclusions
 
