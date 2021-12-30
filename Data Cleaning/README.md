@@ -235,7 +235,7 @@ This section highlights some considerations prompted by data cleaning that may b
 
 #### Participant Indexing
 
-Part I of [4_clean_data.R](#4_clean_dataR) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
+[Part I](#part-i) of [4_clean_data.R](#4_clean_dataR) ensured all participant-specific data is indexed by "participant_id". Use "participant_id" (not "study_id") to refer to participants.
 
 #### Filtering on System-Generated Timestamps
 
