@@ -154,12 +154,14 @@ Part I applies to data for all three studies (Calm Thinking, TET, GIDI) in the "
 
 #### Part II. Filter Data for Desired Study
 
-In this case, data are filtered for the Calm Thinking Study.
+Part II filters data for the Calm Thinking Study, but the "study_name" can be changed to filter data for the TET or GIDI studies if desired.
 
 - Define enrollment period and participant_ids
 - Filter all data
 
 #### Part III: Calm Thinking Study-Specific Data Cleaning
+
+Part III cleans the Calm Thinking Study data. Most of the tasks will also be needed for TET and GIDI, but the code will need to be revised.
 
 - Note lack of data for some tables
 - Recode "coronavirus" column of "anxiety_triggers" table
@@ -187,7 +189,7 @@ In this case, data are filtered for the Calm Thinking Study.
 
 ### 5_import_clean_data.R
 
-TODO
+This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](code/4_clean_data.R) outputted them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
 ## Next Steps
 
