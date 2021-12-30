@@ -10,7 +10,8 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 2. [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
 3. [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
 4. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
-5. [Next Steps](#next-steps)
+5. [Cleaning and Analysis Considerations](#cleaning-and-analyis-considerations)
+6. [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
 
@@ -216,7 +217,7 @@ TODO: Jeremy to continue here
 
 This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](code/4_clean_data.R) outputted them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
-## Cleaning Scripts: Considerations
+## Cleaning and Analysis Considerations
 
 This section highlights some considerations prompted by data cleaning that may be relevant to further cleaning or to analysis. Refer to the actual script for more details.
 
