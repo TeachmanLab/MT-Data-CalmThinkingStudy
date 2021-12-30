@@ -287,11 +287,27 @@ Importantly, participant 382 received CBM-I training at Session 1 and then psych
 
 #### Multiple Screening Attempts
 
-TODO
+After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", kept last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) first corrected cases where "participant_id" was not linked to all screening attempts by its corresponding "session_id" in "dass21_as" table.
+
+Second, the script removed duplicates on DASS-21-AS items, "over18", and "time_on_page" columns in "dass21_as" table for a given "session_id" and "session_only" time point by keeping the last row after sorting by "session_id", "session_only", and "id". The idea is that duplicates on these columns do not reflect unique screening attempts.
+
+Third, the script counted the number of multiple screening attempts remaining for each "session_id" at screening ("n_eligibility_rows") and computed the mean "time_on_page" across those rows for each "session_id". This "time_on_page_mean" is for analysis; it represents the mean time a given "session_id" spent on the page across their screening attempts.
+
+Multiple screening attempts could reflect different responses on DASS-21-AS items, different responses on "over18", or both. To isolate different responses on DASS-21-AS items, the script counted the number of unique rows only on DASS-21-AS items for a given "session_id" at screening ("n_eligibility_unq_item_rows"). The study team decided that participants with more than two sets of unique rows on DASS-21-AS items will be excluded from analysis due to concerns about data integrity, whereas those with two sets of unique rows on DASS-21-AS items will be included in analysis, even if they have two or more entries for "over18". The script does not exclude participants with more than two sets of unique rows on DASS-21-AS items, but rather marks them for exclusion with the indicator "exclude_analysis" (see [Participant Flow and Analysis Exclusions](#participant-flow-and-analysis-exclusions)).
+
+Fourth, the script computed column means for DASS-21-AS items across these unique DASS-21-AS item rows for each "session_id", treating values of "prefer not to answer" as NA without recoding them as NA in the actual table. These column means are used to compute a total score for analysis ("dass21_as_total_anal") below.
+
+Fifth, the script sought to distinguish whether a given ineligible screening attempt was ineligible due to the DASS-21-AS responses or due to age. Given that the site allows multiple screening attempts and scores each one in isolation from the others, the script computed a total score for each attempt ("dass21_as_total") by taking the mean of available DASS-21-AS items (again treating values of "prefer not to answer" as NA without recoding them as NA in the actual table) and multiplying by 7.
+
+Sixth, this per-attempt "dass21_as_total" score was multiplied by 2 to get "dass21_as_total_interp", which can be interpreted against the eligibility criterion (>= 10 is eligible). Seventh, the script created the indicator "dass21_as_eligible" to reflect eligibility status based on the DASS-21-AS itself. This is used to report [participant flow](#participant-flow-and-analysis-exclusions).
+
+Eighth, the script computed a per-"session_id" total DASS-21-AS score for analysis ("dass21_as_total_anal") by taking the mean of the available DASS-21-AS column means (from above; again treating values of "prefer not to answer" as NA without recoding them as NA in the actual table) and multiplying by 7. Given that this score accounts for multiple unique rows on "DASS-21-AS" items, use this as the baseline score in analysis.
 
 #### Participant Flow and Analysis Exclusions
 
 TODO
+
+created "exclude_analysis" column in "dass21_as" and "participant" tables indicating participants to exclude from analysis because they had more than 2 unique rows on DASS-21-AS items at screening. For reporting reasons people did not enroll, based the reason on the most recent entry (according to "id"), acknowledging that lack of enrollment following each attempt when there were multiple attempts could have occurred for a different reason (e.g., not eligible on age, not eligible on DASS, eligible but not interested).
 
 ### For TET Study
 
