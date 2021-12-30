@@ -1730,7 +1730,7 @@ for (i in 1:length(dat)) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Handle multiple screenings and report participant flow up to enrollment ----
+# Handle multiple screenings ----
 # ---------------------------------------------------------------------------- #
 
 # Six participants did not have their "participant_id" connected to all screening 
@@ -1932,6 +1932,10 @@ for (i in 1:nrow(dat$dass21_as)) {
     dat$dass21_as$dass21_as_total_anal[i] <- dat$dass21_as$dass21_as_total[i]
   }
 }
+
+# ---------------------------------------------------------------------------- #
+# Report participant flow up to enrollment and identify analysis exclusions ----
+# ---------------------------------------------------------------------------- #
 
 # Report number of participants screened, enrolled, and not enrolled. For not 
 # enrolled, report the reason; for people with multiple entries, base the
