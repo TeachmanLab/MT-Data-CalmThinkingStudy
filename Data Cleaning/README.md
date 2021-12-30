@@ -6,10 +6,12 @@ This README describes centralized data cleaning for the Calm Thinking Study, an 
 
 ## Table of Contents
 
-1. [Data](#data)
-2. [Cleaning Scripts](#cleaning-scripts)
+1. [Data on Open Science Framework](#data-on-open-science-framework)
+2. [Cleaning Scripts: Setup](#cleaning-scripts-setup)
+3. [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
+4. [Next Steps](#next-steps)
 
-## Data
+## Data on Open Science Framework
 
 The data are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
 
@@ -46,11 +48,9 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 └── └── codebooks                # Codebooks
 ```
 
-## Cleaning Scripts
+## Cleaning Scripts: Setup
 
 The scripts in the [`code`](code) subfolder of this [Data Cleaning](https://github.com/jwe4ec/MT-Data-CalmThinkingStudy/tree/jeremy/Data%20Cleaning) folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
-
-### Setup
 
 To run the cleaning scripts, create a parent folder (with any desired name, indicated by `.` below) with two subfolders: `data` and `code`. The working directory must be set to the parent folder in order for the scripts to import and export data correctly using relative file paths.
 
@@ -98,21 +98,21 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 └── └── 5_import_clean_data.R    # Import 50 CSV files from "3_intermediate_clean"
 ```
 
-### Functionality
+## Cleaning Scripts: Functionality
 
-#### 1_get_raw_data.ipynb
-
-TODO
-
-#### 2_define_functions.R
+### 1_get_raw_data.ipynb
 
 TODO
 
-#### 3_redact_data.R
+### 2_define_functions.R
 
 TODO
 
-#### 4_clean_data.R
+### 3_redact_data.R
+
+TODO
+
+### 4_clean_data.R
 
 TODO
 
