@@ -20,7 +20,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 - [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
   - [For Calm Thinking, TET, and GIDI Studies](#for-calm-thinking-tet-and-gidi-studies)
   - [For Calm Thinking Study](#for-calm-thinking-study)
-  - [For TET Study](#for-tet-study)
+  - [For TET and GIDI Studies](#for-tet-and-gidi-studies)
 - [Next Steps](#next-steps)
 
 ## Data on Open Science Framework
