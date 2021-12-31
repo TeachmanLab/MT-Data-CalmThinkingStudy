@@ -356,7 +356,7 @@ Here are some known next steps for further cleaning and analysis:
 
 ### Appendices and Codebooks
 
-TODO
+Several appendices and codebooks for the Calm Thinking study are on the [Public Component](#public-component).
 
 ### MindTrails Changes and Issues Log
 
@@ -366,7 +366,7 @@ Researchers can request access to relevant information from the log by contactin
 
 ### MindTrails Wiki
 
-This is a wiki with study-related information that is privately stored by the study team.
+This is a wiki with MindTrails Project-wide and study-specific information that is privately stored by the study team.
 
 Researchers can request access to relevant information from the wiki by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
