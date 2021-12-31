@@ -26,8 +26,8 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [Appendices and Codebooks](#appendices-and-codebooks)
   - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log)
   - [MindTrails Wiki](#mindtrails-wiki)
-  - [Outtakes: Clean "angular_training"](#outtakes-clean-"angular-training")
-  - [Outtakes: Create Reports](#outtakes-create-reports)
+  - [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR)
+  - [outtakes_create_reports.R](#outtakes_create_reportsR)
 
 ## Data on Open Science Framework
 
@@ -372,13 +372,13 @@ This is a wiki with MindTrails Project-wide and study-specific information that 
 
 Researchers can request access to relevant information from the wiki by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
-### Outtakes: Clean "angular_training"
+### outtakes_clean_angular_training.R
 
 [3_redact_data.R](#3_redact_dataR) mentions various issues encountered with "angular_training" when determining which "button_pressed" data to redact. Although it was decided not to clean "angular_training" centrally, referring to these issues may be a starting point.
 
 In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/outtakes/outtakes_clean_angular_training.R) started to address these and other issues but was abandoned. Refer to this script with caution; it is incomplete and may be inaccurate.
 
-### Outtakes: Create Reports
+### outtakes_create_reports.R
 
 The script [old/outtakes/outtakes_create_reports.R](old/outtakes/outtakes_create_reports.R) was an initial attempt to create reports related to (a) "prefer not to answer" values, (b) response ranges of items, and (c) instances of missing data. However, it was decided not to include such reports in centralized cleaning.
 
