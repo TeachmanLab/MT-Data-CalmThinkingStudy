@@ -347,7 +347,7 @@ Here are some known next steps for further cleaning and analysis:
 - Further consider the following issues not addressed by centralized cleaning
   - Exclude participants indicated by "exclude_analysis" in "dass21_as" and "participant" tables
   - Clean "angular_training" and "js_psych_trial" tables (see [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training) for details)
-  - Handle values of "prefer not to answer" (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Handle values of "prefer not to answer" (coded as 555; see [Outtakes: Create Reports](#outtakes-create-reports) for details)
   - Check the response ranges of each item (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
   - Appropriately handle missing data (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
   - Reconcile [coaching-related data](#coaching-related-data-on-uva-box) with `3_intermediate_clean` data
@@ -362,8 +362,10 @@ Researchers can request access to relevant information from the log by contactin
 
 ### Outtakes: Clean "angular_training"
 
-[3_redact_data.R](#3_redact_dataR) mentions various issues encountered with "angular_training" when determining which "button_pressed" data to redact. Although it was decided not to clean "angular_training" centrally, referring to these issues may be a starting point. In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/outtakes/outtakes_clean_angular_training.R) started to address these and other issues but was abandoned. Refer to this script with caution; it is incomplete and may be inaccurate.
+[3_redact_data.R](#3_redact_dataR) mentions various issues encountered with "angular_training" when determining which "button_pressed" data to redact. Although it was decided not to clean "angular_training" centrally, referring to these issues may be a starting point.
+
+In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/outtakes/outtakes_clean_angular_training.R) started to address these and other issues but was abandoned. Refer to this script with caution; it is incomplete and may be inaccurate.
 
 ### Outtakes: Create Reports
 
-TODO
+The script [old/outtakes/outtakes_create_reports.R](old/outtakes/outtakes_create_reports.R) was an initial attempt to create reports related to (a) "prefer not to answer" values, (b) response ranges of items, and (c) instances of missing data. However, it was decided not to include such reports in centralized cleaning. This script may be a starting point for such reports, but refer to it with caution, as it is incompatible with the current cleaning scripts and may be incomplete or inaccurate.
