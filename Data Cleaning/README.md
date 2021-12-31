@@ -22,6 +22,10 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [For Calm Thinking Study](#for-calm-thinking-study)
   - [For TET and GIDI Studies](#for-tet-and-gidi-studies)
 - [Next Steps](#next-steps)
+- [Resources](#resources)
+  - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log)
+  - [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training)
+  - [Outtakes: Create Reports](#outtakes-create-reports)
 
 ## Data on Open Science Framework
 
