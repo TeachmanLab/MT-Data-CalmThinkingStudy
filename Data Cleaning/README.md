@@ -314,7 +314,7 @@ For participants with multiple entries who did not enroll, the script bases the 
 
 Participants with more than two unique rows on DASS-21-AS items ("n_eligibility_unq_item_rows" > 2) are marked for exclusion from analysis using "exclude_analysis" in "dass21_as" and "participant" tables. 17 non-enrolled participants should be excluded from any analysis of screening data, and 6 enrolled participants should be excluded from any analysis.
 
-However, note that, per CONSORT, analysis exclusions still appear in participant flow diagrams until the analysis stage, where numbers excluded (with reasons) are listed. Therefore, ensure these participants are not excluded too early in your procedure for generating the flow diagram.
+However, note that, per [CONSORT](http://www.consort-statement.org/consort-statement/flow-diagram), analysis exclusions still appear in participant flow diagrams until the analysis stage, where numbers excluded (with reasons) are listed. Therefore, ensure these participants are not excluded too early in your procedure for generating the flow diagram.
 
 #### Unexpected Multiple Entries
 
