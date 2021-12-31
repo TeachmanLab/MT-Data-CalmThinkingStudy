@@ -2,7 +2,7 @@
 
 Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
-This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) randomized controlled trial of interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
+This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
 
 ## Table of Contents
 
@@ -10,22 +10,24 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [Private Component](#private-component)
   - [Public Component](#public-component)
 - [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
-- [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
+- [Cleaning Scripts: Setup and File Relations](#cleaning-scripts-setup-and-file-relations)
 - [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
   - [1_get_raw_data.ipynb](#1_get_raw_dataipynb)
   - [2_define_functions.R](#2_define_functionsR)
   - [3_redact_data.R](#3_redact_dataR)
   - [4_clean_data.R](#4_clean_dataR)
   - [5_import_clean_data.R](#5_import_clean_dataR)
-- [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
+- [Further Cleaning and Analysis Considerations](#further-cleaning-and-analysis-considerations)
   - [For Calm Thinking, TET, and GIDI Studies](#for-calm-thinking-tet-and-gidi-studies)
   - [For Calm Thinking Study](#for-calm-thinking-study)
   - [For TET and GIDI Studies](#for-tet-and-gidi-studies)
 - [Next Steps](#next-steps)
 - [Resources](#resources)
+  - [Appendices and Codebooks](#appendices-and-codebooks)
   - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log)
-  - [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training)
-  - [Outtakes: Create Reports](#outtakes-create-reports)
+  - [MindTrails Wiki](#mindtrails-wiki)
+  - [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR)
+  - [outtakes_create_reports.R](#outtakes_create_reportsR)
 
 ## Data on Open Science Framework
 
@@ -178,7 +180,7 @@ Part I applies to data for all three studies (Calm Thinking, TET, GIDI) in the "
 - Identify any remaining blank columns
 - Identify and recode time stamp and date columns
   - Correct blank "session", "date", and "date_submitted" in "js_psych_trial" table for some participants
-  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#tet_participant_flow) for details)
+  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#tet-participant_flow) for details)
   - Recode system-generated timestamps as POSIXct data types in "EST" and user-provided timestamps as POSIXct data types in "UTC"
   - Create variables for filtering on system-generated time stamps (see [Filtering on System-Generated Timestamps](#filtering-on-system-generated-timestamps) for details)
   - Reformat user-provided dates so that they do not contain empty times, which were not assessed
@@ -243,7 +245,7 @@ Part III cleans the Calm Thinking Study data. Most of the tasks will also be nee
 
 This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](#4_clean_dataR) outputs them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
-## Cleaning and Analysis Considerations
+## Further Cleaning and Analysis Considerations
 
 This section highlights some considerations prompted by data cleaning that may be relevant to further cleaning or to analysis. Refer to the actual script for more details.
 
@@ -327,6 +329,8 @@ For participants with multiple entries who did not enroll, the script bases the 
 
 Participants with more than two unique rows on DASS-21-AS items ("n_eligibility_unq_item_rows" > 2) are marked for exclusion from analysis using "exclude_analysis" in "dass21_as" and "participant" tables. 17 non-enrolled participants should be excluded from any analysis of screening data, and 6 enrolled participants should be excluded from any analysis.
 
+However, note that, per [CONSORT](http://www.consort-statement.org/consort-statement/flow-diagram), analysis exclusions still appear in participant flow diagrams until the analysis stage, where numbers excluded (with reasons) are listed. Therefore, ensure these participants are not excluded too early in your procedure for generating the flow diagram.
+
 #### Unexpected Multiple Entries
 
 After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", keep last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) checks for unexpected multiple entries for all tables (e.g., multiple rows for a given "participant_id" and "session_only" time point where only one row is expected). However, it is unclear how to check for multiple entries in "angular_training" and "js_psych_trial" tables, so they are not precisely checked.
@@ -345,7 +349,7 @@ Given that "X" (row name in "calm" SQL database on "teachmanlab" Data Server) is
 
 Note: In addition to considering the issue below, consider how the Calm Thinking issues may similarly apply to TET and GIDI. They likely do.
 
-#### Participant Flow
+#### TET Participant Flow
 
 Part I of [4_clean_data.R](#4_clean_dataR) reveals that participant 3659 lacks screening data but is considered officially enrolled in TET. Thus, care should be taken to ensure that this participant is reflected appropriately in the TET participant flow diagram.
 
@@ -357,14 +361,14 @@ Here are some known next steps for further cleaning and analysis:
 
 - Use [5_import_clean_data.R](#5_import_clean_dataR) as a starting point for further cleaning and analysis
 - Review the following items and conduct further cleaning as needed for your analysis
-  - [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations) above
-  - [MindTrails Changes and Issues log](#mindtrails-changes-and-issues-log) entries
+  - [Further Cleaning and Analysis Considerations](#further-cleaning-and-analysis-considerations) above
+  - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log) entries
 - Further consider the following issues not addressed by centralized cleaning
   - Exclude participants indicated by "exclude_analysis" in "dass21_as" and "participant" tables
-  - Clean "angular_training" and "js_psych_trial" tables (see [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training) for details)
-  - Handle values of "prefer not to answer" (coded as 555; see [Outtakes: Create Reports](#outtakes-create-reports) for details)
-  - Check the response ranges of each item (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
-  - Appropriately handle missing data (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Clean "angular_training" and "js_psych_trial" tables (see [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR) for details)
+  - Handle values of "prefer not to answer" (coded as 555; see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
+  - Check the response ranges of each item (see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
+  - Appropriately handle missing data (see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
   - Reconcile [coaching-related data](#coaching-related-data-on-uva-box) with `3_intermediate_clean` data
 
 ## Resources
@@ -375,7 +379,7 @@ Several appendices and codebooks for the Calm Thinking study are on the [Public 
 
 ### MindTrails Changes and Issues Log
 
-This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); and (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
+This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); or (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
 
 Researchers can request access to relevant information from the log by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
@@ -385,13 +389,13 @@ This is a wiki with MindTrails Project-wide and study-specific information that 
 
 Researchers can request access to relevant information from the wiki by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
-### Outtakes: Clean "angular_training"
+### outtakes_clean_angular_training.R
 
 [3_redact_data.R](#3_redact_dataR) mentions various issues encountered with "angular_training" when determining which "button_pressed" data to redact. Although it was decided not to clean "angular_training" centrally, referring to these issues may be a starting point.
 
 In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/outtakes/outtakes_clean_angular_training.R) started to address these and other issues but was abandoned. Refer to this script with caution; it is incomplete and may be inaccurate.
 
-### Outtakes: Create Reports
+### outtakes_create_reports.R
 
 The script [old/outtakes/outtakes_create_reports.R](old/outtakes/outtakes_create_reports.R) was an initial attempt to create reports related to (a) "prefer not to answer" values, (b) response ranges of items, and (c) instances of missing data. However, it was decided not to include such reports in centralized cleaning.
 
