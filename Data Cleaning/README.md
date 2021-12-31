@@ -10,7 +10,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [Private Component](#private-component)
   - [Public Component](#public-component)
 - [Coaching-Related Data on UVA Box](#coaching-related-data-on-uva-box)
-- [Cleaning Scripts: Setup](#cleaning-scripts-setup-and-file-relations)
+- [Cleaning Scripts: Setup and File Relations](#cleaning-scripts-setup-and-file-relations)
 - [Cleaning Scripts: Functionality](#cleaning-scripts-functionality)
   - [1_get_raw_data.ipynb](#1_get_raw_dataipynb)
   - [2_define_functions.R](#2_define_functionsR)
