@@ -362,7 +362,7 @@ Researchers can request access to relevant information from the log by contactin
 
 ### Outtakes: Clean "angular_training"
 
-TODO
+[3_redact_data.R](#3_redact_dataR) mentions various issues encountered with "angular_training" when determining which "button_pressed" data to redact. Although it was decided not to clean "angular_training" centrally, referring to these issues may be a starting point. In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/outtakes/outtakes_clean_angular_training.R) started to address these and other issues but was abandoned. Refer to this script with caution; it is incomplete and may be inaccurate.
 
 ### Outtakes: Create Reports
 
