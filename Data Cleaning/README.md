@@ -17,7 +17,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [3_redact_data.R](#3_redact_dataR)
   - [4_clean_data.R](#4_clean_dataR)
   - [5_import_clean_data.R](#5_import_clean_dataR)
-- [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations)
+- [Further Cleaning and Analysis Considerations](#further-cleaning-and-analysis-considerations)
   - [For Calm Thinking, TET, and GIDI Studies](#for-calm-thinking-tet-and-gidi-studies)
   - [For Calm Thinking Study](#for-calm-thinking-study)
   - [For TET and GIDI Studies](#for-tet-and-gidi-studies)
