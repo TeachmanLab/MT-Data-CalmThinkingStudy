@@ -230,7 +230,7 @@ Part III cleans the Calm Thinking Study data. Most of the tasks will also be nee
 
 This R script imports the intermediately cleaned Calm Thinking Study data and converts system-generated timestamps back to POSIXct data types given that [4_clean_data.R](#4_clean_dataR) outputs them as characters. As such, this script serves as a starting point for further cleaning and analysis.
 
-## Cleaning and Analysis Considerations
+## Further Cleaning and Analysis Considerations
 
 This section highlights some considerations prompted by data cleaning that may be relevant to further cleaning or to analysis. Refer to the actual script for more details.
 
