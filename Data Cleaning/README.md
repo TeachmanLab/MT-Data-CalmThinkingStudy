@@ -370,4 +370,4 @@ In addition, the script [old/outtakes/outtakes_clean_angular_training.R](old/out
 
 The script [old/outtakes/outtakes_create_reports.R](old/outtakes/outtakes_create_reports.R) was an initial attempt to create reports related to (a) "prefer not to answer" values, (b) response ranges of items, and (c) instances of missing data. However, it was decided not to include such reports in centralized cleaning.
 
-This script may be a starting point for such reports, but refer to it with caution, as it is incompatible with the current cleaning scripts and may be incomplete or inaccurate.
+This script may be a starting point for such reports, but refer to it with caution, as it was abandoned, is incompatible with the current cleaning scripts, and may be incomplete or inaccurate.
