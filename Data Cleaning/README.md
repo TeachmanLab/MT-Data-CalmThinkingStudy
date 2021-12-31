@@ -26,7 +26,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [Appendices and Codebooks](#appendices-and-codebooks)
   - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log)
   - [MindTrails Wiki](#mindtrails-wiki)
-  - [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training)
+  - [Outtakes: Clean "angular_training"](#outtakes-clean-"angular-training")
   - [Outtakes: Create Reports](#outtakes-create-reports)
 
 ## Data on Open Science Framework
