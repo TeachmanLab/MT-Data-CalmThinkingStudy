@@ -344,7 +344,7 @@ Here are some known next steps for further cleaning and analysis:
 
 - Use [5_import_clean_data.R](#5_import_clean_dataR) as a starting point for further cleaning and analysis
 - Review the following items and conduct further cleaning as needed for your analysis
-  - [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations) above
+  - [Further Cleaning and Analysis Considerations](#further-cleaning-and-analysis-considerations) above
   - [MindTrails Changes and Issues log](#mindtrails-changes-and-issues-log) entries
 - Further consider the following issues not addressed by centralized cleaning
   - Exclude participants indicated by "exclude_analysis" in "dass21_as" and "participant" tables
