@@ -314,6 +314,8 @@ For participants with multiple entries who did not enroll, the script bases the 
 
 Participants with more than two unique rows on DASS-21-AS items ("n_eligibility_unq_item_rows" > 2) are marked for exclusion from analysis using "exclude_analysis" in "dass21_as" and "participant" tables. 17 non-enrolled participants should be excluded from any analysis of screening data, and 6 enrolled participants should be excluded from any analysis.
 
+However, note that, per CONSORT, analysis exclusions still appear in participant flow diagrams until the analysis stage, where numbers excluded (with reasons) are listed. Therefore, ensure these participants are not excluded too early in your procedure for generating the flow diagram.
+
 #### Unexpected Multiple Entries
 
 After removing nonmeaningful duplicates (i.e., for duplicated values on every column in table except "X" and "id", keep last row after sorting by "id") for all tables, Part III of [4_clean_data.R](#4_clean_dataR) checks for unexpected multiple entries for all tables (e.g., multiple rows for a given "participant_id" and "session_only" time point where only one row is expected). However, it is unclear how to check for multiple entries in "angular_training" and "js_psych_trial" tables, so they are not precisely checked.
