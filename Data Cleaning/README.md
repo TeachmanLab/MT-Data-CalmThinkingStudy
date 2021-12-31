@@ -23,7 +23,9 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [For TET and GIDI Studies](#for-tet-and-gidi-studies)
 - [Next Steps](#next-steps)
 - [Resources](#resources)
+  - [Appendices and Codebooks](#appendices-and-codebooks)
   - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log)
+  - [MindTrails Wiki](#mindtrails-wiki)
   - [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training)
   - [Outtakes: Create Reports](#outtakes-create-reports)
 
@@ -360,7 +362,7 @@ Several appendices and codebooks for the Calm Thinking study are on the [Public 
 
 ### MindTrails Changes and Issues Log
 
-This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); and (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
+This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); or (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
 
 Researchers can request access to relevant information from the log by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
