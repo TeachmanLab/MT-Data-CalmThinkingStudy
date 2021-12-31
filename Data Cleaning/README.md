@@ -2,7 +2,7 @@
 
 Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
-This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial (SMART) of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
+This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
 
 ## Table of Contents
 
