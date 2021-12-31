@@ -120,6 +120,11 @@ At the top of each R script, restart R (CTRL+SHIFT+F10 on Windows) and set your 
 └── └── 5_import_clean_data.R    # Import 50 CSV files from "3_intermediate_clean"
 ```
 
+On a Windows 10 Pro laptop (12 GB of RAM; Intel Core i5-4300U CPU @ 1.90GHz, 2494 Mhz, 2 cores, 4 logical processors), the R scripts run in 11 min. As noted in [2_define_functions.R](code/2_define_functions.R), packages may take longer to load the first time you load them with `groundhog.library`. After that, the runtimes below should apply.
+- [3_redact_data.R](code/3_redact_data.R) = 3 min
+- [4_clean_data.R](4_clean_data.R) = 7 min
+- [5_import_clean_data.R](5_import_clean_data.R) = 1 min
+
 ## Cleaning Scripts: Functionality
 
 ### [1_get_raw_data.ipynb](code/1_get_raw_data.ipynb)
@@ -129,6 +134,8 @@ This Jupyter Notebook script (author: [Sonia Baee](https://github.com/soniabaee)
 ### [2_define_functions.R](code/2_define_functions.R)
 
 This R script defines functions for use by subsequent R scripts, which source this file at the top of each script.
+
+Version control for R scripts is achieved by checking that the R version used to write the scripts ("R version 4.0.3 (2020-10-10)") matches the user's R version and by defining dates for `meta.groundhog` and `groundhog_day`, which are used by the [`groundhog`](https://groundhogr.com/) package to load the versions of R packages that were used to write the scripts. See script for details.
 
 ### [3_redact_data.R](code/3_redact_data.R)
 
