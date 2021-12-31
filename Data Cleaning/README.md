@@ -68,7 +68,7 @@ Note: Tables in the `1_raw_full` folder of the [Private Component](#private-comp
 
 Additional coaching-related data were not centrally cleaned. These measures (Coach Session Review, Coach Session Tracking, Nonresponder Coaching Survey) were collected via Qualtrics or Google Sheets and are stored privately in a [MindTrails UVA Box folder](https://virginia.app.box.com/folder/118765162561).
 
-For more details about these data, cleaned by Alex Werntz and Allie Silverman, see the Measures Appendix and Measures Codebook on the [Public Component](#public-component). Researchers can request access to the data by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+For more details about these data, cleaned by Alex Werntz and Allie Silverman, see the measures-related [appendix and codebook](#appendices-and-codebooks) on the [Public Component](#public-component). Researchers can request access to the data by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
 ## Cleaning Scripts: Setup and File Relations
 
@@ -354,11 +354,21 @@ Here are some known next steps for further cleaning and analysis:
 
 ## Resources
 
+### Appendices and Codebooks
+
+TODO
+
 ### MindTrails Changes and Issues Log
 
 This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); and (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
 
 Researchers can request access to relevant information from the log by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+
+### MindTrails Wiki
+
+This is a wiki with study-related information that is privately stored by the study team.
+
+Researchers can request access to relevant information from the wiki by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
 
 ### Outtakes: Clean "angular_training"
 
