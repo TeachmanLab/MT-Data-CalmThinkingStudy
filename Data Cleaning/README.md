@@ -84,16 +84,22 @@ To run the cleaning scripts, create a parent folder (with any desired name, indi
 
 If you have access to the full raw data (from the [Private Component](#private-component)), you can reproduce the redaction. Put all the raw data files in a subfolder of `data` called `1_raw_full`. When you run the scripts, [3_redact_data.R](code/3_redact_data.R) will create `2_redacted` and files therein, and [4_clean_data.R](code/4_clean_data.R) will create `3_intermediate_clean` and files therein.
 
+[4_clean_data.R](code/4_clean_data.R) will also create [`docs`](docs) containing [data_filenames.txt](docs/data_filenames.txt), which documents the names of the data files the cleaning scripts are based on.
+
 ```
 .
 ├── data                    
 ├── ├── 1_raw_full               # 67 CSV files from Private Component
 ├── ├── (2_redacted)             # Folder with 14 CSV files will be created by "3_redact_data.R"
 ├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
+├── (docs)
+├── └── (data_filenames.txt)     # Names of CSV files cleaning scripts are based on
 └── ...
 ```
 
 If you have access to the partial raw data and the redacted data (from the [Public Component](#public-component)), put the partial raw data files in a subfolder of `data` called `1_raw_partial` and the redacted data files in a subfolder called `2_redacted`. When you run the scripts, [4_clean_data.R](code/4_clean_data.R) will create `3_intermediate_clean` and files therein.
+
+[4_clean_data.R](code/4_clean_data.R) will also create `docs` containing data_filenames.txt, which documents the names of the data files the cleaning scripts are based on.
 
 ```
 .
@@ -101,6 +107,8 @@ If you have access to the partial raw data and the redacted data (from the [Publ
 ├── ├── 1_raw_partial            # 53 CSV files from Public Component
 ├── ├── 2_redacted               # 14 CSV files from Public Component
 ├── └── (3_intermediate_clean)   # Folder with 50 CSV files will be created by "4_clean_data.R"
+├── (docs)
+├── └── (data_filenames.txt)     # Names of CSV files cleaning scripts are based on
 └── ...
 ```
 
@@ -154,7 +162,7 @@ By contrast, unredacted versions of other redacted tables are retained in `1_raw
 
 ### [4_clean_data.R](code/4_clean_data.R)
 
-This R script performs the following functions.
+After documenting names of data files the cleaning scripts are based on, this R script performs the following functions.
 
 #### Part I. Database-Wide Data Cleaning
 
