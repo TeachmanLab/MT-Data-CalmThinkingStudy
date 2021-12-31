@@ -165,7 +165,7 @@ Part I applies to data for all three studies (Calm Thinking, TET, GIDI) in the "
 - Identify any remaining blank columns
 - Identify and recode time stamp and date columns
   - Correct blank "session", "date", and "date_submitted" in "js_psych_trial" table for some participants
-  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#tet_participant_flow) for details)
+  - Note that participant 3659 is considered enrolled in TET but lacks screening data (see [TET Participant Flow](#participant_flow) for details)
   - Recode system-generated timestamps as POSIXct data types in "EST" and user-provided timestamps as POSIXct data types in "UTC"
   - Create variables for filtering on system-generated time stamps (see [Filtering on System-Generated Timestamps](#filtering-on-system-generated-timestamps) for details)
   - Reformat user-provided dates so that they do not contain empty times, which were not assessed
