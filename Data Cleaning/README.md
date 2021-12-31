@@ -345,13 +345,13 @@ Here are some known next steps for further cleaning and analysis:
 - Use [5_import_clean_data.R](#5_import_clean_dataR) as a starting point for further cleaning and analysis
 - Review the following items and conduct further cleaning as needed for your analysis
   - [Further Cleaning and Analysis Considerations](#further-cleaning-and-analysis-considerations) above
-  - [MindTrails Changes and Issues log](#mindtrails-changes-and-issues-log) entries
+  - [MindTrails Changes and Issues Log](#mindtrails-changes-and-issues-log) entries
 - Further consider the following issues not addressed by centralized cleaning
   - Exclude participants indicated by "exclude_analysis" in "dass21_as" and "participant" tables
-  - Clean "angular_training" and "js_psych_trial" tables (see [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training) for details)
-  - Handle values of "prefer not to answer" (coded as 555; see [Outtakes: Create Reports](#outtakes-create-reports) for details)
-  - Check the response ranges of each item (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
-  - Appropriately handle missing data (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Clean "angular_training" and "js_psych_trial" tables (see [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR) for details)
+  - Handle values of "prefer not to answer" (coded as 555; see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
+  - Check the response ranges of each item (see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
+  - Appropriately handle missing data (see [outtakes_create_reports.R](#outtakes_create_reportsR) for details)
   - Reconcile [coaching-related data](#coaching-related-data-on-uva-box) with `3_intermediate_clean` data
 
 ## Resources
