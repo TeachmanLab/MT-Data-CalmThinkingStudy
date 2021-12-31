@@ -314,7 +314,9 @@ After removing nonmeaningful duplicates (i.e., for duplicated values on every co
 
 Note: "task_log" does not reflect some entries in other tables ("dass21_as", "credibility"). Thus, do not rely on "task_log" to find multiple entries or reflect task completion.
 
-Besides [multiple screening attempts](#multiple-screening-attempts), multiple entries (found in "credibility", "return_intention", "bbsiq", "oa", and "task_log" tables) are handled by computing (a) number of rows ("n_rows") for a given set of index columns (e.g., "participant_id", "session_only"); (b) mean "time_on_" values (e.g., "time_on_page") across those rows, for use in analysis (e.g., "time_on_page_mean"); and (c) number of rows with unique values for a given set of items  ("n_unq_item_rows"). If multiple unique rows are present ("n_unq_item_rows" > 1), we compute column means for all items, treating values of "prefer not to answer" as NA without actually recoding them.
+Besides [multiple screening attempts](#multiple-screening-attempts), multiple entries (found in "credibility", "return_intention", "bbsiq", "oa", and "task_log" tables) are handled by computing (a) number of rows ("n_rows") for a given set of index columns (e.g., "participant_id", "session_only"); (b) mean "time_on_" values (e.g., "time_on_page") across those rows, for use in analysis (e.g., "time_on_page_mean"); and (c) number of rows with unique values for a given set of items  ("n_unq_item_rows").
+
+If multiple unique rows are present ("n_unq_item_rows" > 1), we compute column means for all items for analysis, treating values of "prefer not to answer" as NA without actually recoding them. However, in this dataset the multiple entries have identical item responses (just different "time_on_page" or "time_on_task" values), so column means are unneeded.
 
 #### Table Sorting
 
@@ -334,4 +336,30 @@ As noted above, this centralized cleaning of Calm Thinking data yields data deem
 
 Here are some known next steps for further cleaning and analysis:
 
-- INSERT
+- Use [5_import_clean_data.R](#5_import_clean_dataR) as a starting point for further cleaning and analysis
+- Review the following items and conduct further cleaning as needed for your analysis
+  - [Cleaning and Analysis Considerations](#cleaning-and-analysis-considerations) above
+  - [MindTrails Changes and Issues log](#mindtrails-changes-and-issues-log) entries
+- Further consider the following issues not addressed by centralized cleaning
+  - Exclude participants indicated by "exclude_analysis" in "dass21_as" and "participant" tables
+  - Clean "angular_training" and "js_psych_trial" tables (see [Outtakes: Clean "angular_training"](#outtakes-clean-angular-training) for details)
+  - Handle values of "prefer not to answer" (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Check the response ranges of each item (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Appropriately handle missing data (see [Outtakes: Create Reports](#outtakes-create-reports) for details)
+  - Reconcile [coaching-related data](#coaching-related-data-on-uva-box) with `3_intermediate_clean` data
+
+## Resources
+
+### MindTrails Changes and Issues Log
+
+This is a log of site changes, data issues, etc., tagged by study that is privately stored by the study team. For log entries tagged for Calm Thinking through 12/30/2021, a note has been added indicating whether the entry (a) does not apply to data cleaning; (b) was addressed by centralized cleaning (and if so, how); and (c) needs to be considered for analysis-specific data cleaning. If you address an issue for a specific analysis, please note in the log how you addressed it and provide a link to your code.
+
+Researchers can request access to relevant information from the log by contacting the study team ([studyteam@mindtrails.org](mailto:studyteam@mindtrails.org)).
+
+### Outtakes: Clean "angular_training"
+
+TODO
+
+### Outtakes: Create Reports
+
+TODO
