@@ -59,24 +59,66 @@ identify_columns <- function(df, grep_pattern) {
 }
 
 # ---------------------------------------------------------------------------- #
-# Import raw and redacted data ----
+# Document data file names ----
 # ---------------------------------------------------------------------------- #
 
-# Obtain file names of raw and redacted CSV data files. Obtain the full set of
-# raw data files if available; otherwise, obtain the partial set.
+# Obtain file names of raw and redacted CSV data files
 
 if (dir.exists(paste0(wd_dir, "/data/1_raw_full"))) {
-  raw_data_dir <- paste0(wd_dir, "/data/1_raw_full")
-} else {
-  raw_data_dir <- paste0(wd_dir, "/data/1_raw_partial")
+  raw_data_dir_full <- paste0(wd_dir, "/data/1_raw_full")
+  raw_full_filenames <- 
+    list.files(raw_data_dir_full, pattern = "*.csv", full.names = FALSE)
+}
+
+if (dir.exists(paste0(wd_dir, "/data/1_raw_partial"))) {
+  raw_data_dir_partial <- paste0(wd_dir, "/data/1_raw_partial")
+  raw_partial_filenames <- 
+    list.files(raw_data_dir_partial, pattern = "*.csv", full.names = FALSE)
 }
 
 red_data_dir <- paste0(wd_dir, "/data/2_redacted")
-
-raw_filenames <- list.files(raw_data_dir, pattern = "*.csv", full.names = FALSE)
 red_filenames <- list.files(red_data_dir, pattern = "*.csv", full.names = FALSE)
 
-# Import data files into lists
+# Output file names to TXT
+
+dir.create("./docs")
+
+sink(file = "./docs/data_filenames.txt")
+
+if (exists("raw_data_dir_full")) {
+  cat("In './data/1_raw_full'", "\n")
+  cat("\n")
+  print(raw_full_filenames)
+  cat("\n")
+}
+
+if (exists("raw_data_dir_partial")) {
+  cat("In './data/1_raw_partial'", "\n")
+  cat("\n")
+  print(raw_partial_filenames)
+  cat("\n")
+}
+
+cat("In './data/2_redacted'", "\n")
+cat("\n")
+print(red_filenames)
+
+sink()
+
+# ---------------------------------------------------------------------------- #
+# Import raw and redacted data ----
+# ---------------------------------------------------------------------------- #
+
+# Import raw and redacted CSV data files into lists. Obtain the full set of raw 
+# data files if available; otherwise, obtain the partial set.
+
+if (exists("raw_data_dir_full")) {
+  raw_data_dir <- raw_data_dir_full
+  raw_filenames <- raw_full_filenames
+} else {
+  raw_data_dir <- raw_data_dir_partial
+  raw_filenames <- raw_partial_filenames
+}
 
 raw_dat <- lapply(paste0(raw_data_dir, "/", raw_filenames), read.csv)
 red_dat <- lapply(paste0(red_data_dir, "/", red_filenames), read.csv)
