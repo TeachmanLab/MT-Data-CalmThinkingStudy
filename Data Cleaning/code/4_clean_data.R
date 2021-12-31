@@ -32,7 +32,7 @@ wd_dir <- getwd()
 
 # Load custom functions
 
-source("./MT-Data-CalmThinkingStudy/Data Cleaning/code/2_define_functions.R")
+source("./code/2_define_functions.R")
 
 # Check correct R version, load groundhog package, and specify groundhog_day
 
