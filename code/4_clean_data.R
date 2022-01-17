@@ -88,20 +88,20 @@ sink(file = "./docs/data_filenames.txt")
 if (exists("raw_data_dir_full")) {
   cat("In './data/1_raw_full'", "\n")
   cat("\n")
-  print(raw_full_filenames)
+  print(raw_full_filenames, width = 80)
   cat("\n")
 }
 
 if (exists("raw_data_dir_partial")) {
   cat("In './data/1_raw_partial'", "\n")
   cat("\n")
-  print(raw_partial_filenames)
+  print(raw_partial_filenames, width = 80)
   cat("\n")
 }
 
 cat("In './data/2_redacted'", "\n")
 cat("\n")
-print(red_filenames)
+print(red_filenames, width = 80)
 
 sink()
 
