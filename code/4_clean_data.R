@@ -652,11 +652,11 @@ invisible(mapply(view_date_str, df = dat, df_name = names(dat)))
 
 # Some "date" and "date_submitted" fields are blank in "js_psych_trial" table. 
 # Changes/Issues log states on 10/7/2019 that a timeout on Recognition Ratings 
-# led to some of these data not being recorded for four participants. Based on
-# "task_log", each participant completed "RR" at "preTest", but the data are
-# not recorded in "js_psych_trial". Mark the blank "session" fields for these
-# entries as "preTest" and replace their "date" and "date_submitted" with the
-# corresponding "date_completed" from "task_log".
+# led to some of these data not being recorded for four participants (identified
+# below as 639, 645, 910, and 1028). Based on "task_log", each participant 
+# completed "RR" at "preTest", but the data are not recorded in "js_psych_trial". 
+# Mark the blank "session" fields for these entries as "preTest" and replace their 
+# "date" and "date_submitted" with corresponding "date_completed" from "task_log".
 
 blank_date_ids <- unique(dat$js_psych_trial[dat$js_psych_trial$date == "" |
                            dat$js_psych_trial$date_submitted == "", 
