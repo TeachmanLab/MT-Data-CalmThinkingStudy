@@ -51,9 +51,9 @@ Given a version number SCHEMA.CONTENT.SCRIPT (e.g., v1.0.0), increment the:
      - Ex. Add functionality (e.g., perform new checks, highlight new issues) without changing data
      - Ex. Fix bugs (e.g., correct existing checks, clarify existing issues) without changing data
 
-When the SCHEMA, CONTENT, or SCRIPT version is incremented, a new tag (e.g., "v1.0.0" is added to the repo).
+When the SCHEMA, CONTENT, or SCRIPT version is incremented, a new [tag](https://docs.github.com/en/repositories/releasing-projects-on-github/viewing-your-repositorys-releases-and-tags) (e.g., "v1.0.0" is added to the repo).
 
-When the SCHEMA or CONTENT version is incremented, a new version of the data is uploaded to OSF alongside the old version(s), with the ZIP file named based on the version number. There is no need to upload a new data version when the SCRIPT version is incremented.
+When the SCHEMA or CONTENT version is incremented, a new version of the [data](#data-on-open-science-framework) is uploaded to OSF alongside the old version(s), with the ZIP file named based on the version number. There is no need to upload a new data version when the SCRIPT version is incremented.
 
 ## Data on Open Science Framework
 
@@ -61,7 +61,7 @@ Raw and centrally cleaned data from the "calm" SQL database are stored in the [M
 
 ### Private Component
 
-The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](#1_get_raw_dataipynb)). The folder structure is below.
+The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](#1_get_raw_dataipynb)). The folder structure of a [version](#versioning)'s ZIP file is below.
 
 The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](#3_redact_dataR)). 
 
@@ -76,7 +76,7 @@ Researchers can request access to files on this component by contacting the stud
 
 ### Public Component
 
-The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](#1_get_raw_dataipynb) that did not need redaction), redacted data tables (from [3_redact_data.R](#3_redact_dataR)), and intermediately clean data tables (from [4_clean_data.R](#4_clean_dataR)). The folder structure is below.
+The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](#1_get_raw_dataipynb) that did not need redaction), redacted tables (from [3_redact_data.R](#3_redact_dataR)), and intermediately clean tables (from [4_clean_data.R](#4_clean_dataR)). The structure of a [version](#versioning)'s ZIP file is below.
 
 Note: Tables in the `1_raw_full` folder of the [Private Component](#private-component) that are not in the `1_raw_partial` folder of this [Public Component](https://osf.io/s8v3h/) contain free-text responses that may or may not have identifiers. In the [Public Component](https://osf.io/s8v3h/), redacted versions of such tables are in `2_redacted`.
 
