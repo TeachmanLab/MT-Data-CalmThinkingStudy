@@ -1,4 +1,4 @@
-# README
+# MT-Data-CalmThinkingStudy
 
 Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
@@ -6,6 +6,7 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
 
 ## Table of Contents
 
+- [Versioning](#versioning)
 - [Data on Open Science Framework](#data-on-open-science-framework)
   - [Private Component](#private-component)
   - [Public Component](#public-component)
@@ -28,6 +29,31 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [MindTrails Wiki](#mindtrails-wiki)
   - [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR)
   - [outtakes_create_reports.R](#outtakes_create_reportsR)
+
+## Versioning
+
+This repository and associated [data](#data-on-open-science-framework) are versioned using the following adaptation of [SemVer](https://semver.org/). When a given version of the data are analyzed, the version of the cleaning scripts and data can be documented and cited, and previous versions can be found by version number.
+
+Given a version number SCHEMA.CONTENT.SCRIPT (e.g., v1.0.0), increment the:
+
+1. SCHEMA version when making incompatible changes that **affect the data schema**
+   - Such changes *may break subsequent cleaning/analysis scripts*
+     - Ex. Adding/removing/renaming table or column
+     - Ex. Recoding/changing column meaning (e.g., adding/removing levels)
+
+2. CONTENT version when making backwards-compatible changes that **affect the data content**
+   - Such changes mean that *subsequent scripts should still run but may yield different results*
+     - Ex. Adding/removing a row
+     - Ex. Recoding certain cells of a variable using existing levels
+
+3. SCRIPT version when making backwards-compatible changes that **do not affect the data schema or content**
+   - Such changes mean that *subsequent scripts should still run and yield the same results*
+     - Ex. Add functionality (e.g., perform new checks, highlight new issues) without changing data
+     - Ex. Fix bugs (e.g., correct existing checks, clarify existing issues) without changing data
+
+When the SCHEMA, CONTENT, or SCRIPT version is incremented, a new tag (e.g., "v1.0.0" is added to the repo).
+
+When the SCHEMA or CONTENT version is incremented, a new version of the data is uploaded to OSF alongside the old version(s), with the ZIP file named based on the version number. There is no need to upload a new data version when the SCRIPT version is incremented.
 
 ## Data on Open Science Framework
 
