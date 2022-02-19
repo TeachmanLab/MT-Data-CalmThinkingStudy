@@ -12,6 +12,7 @@ For questions about the cleaning scripts or resulting datasets, please contact [
   - [Versioning](#versioning)
   - [GitHub Releases](#github-releases)
   - [Zenodo DOIs](#zenodo-dois)
+  - [Acknowledgments](#acknowledgments)
 - [Data on Open Science Framework](#data-on-open-science-framework)
   - [Private Component](#private-component)
   - [Public Component](#public-component)
@@ -83,6 +84,10 @@ For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-Calm
 The following Concept DOI represents all versions of the cleaning scripts and resulting datasets. Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should cite the [Version DOI](#version-doi); cite the Concept DOI only "when it is desirable to cite an evolving research artifact, without being specific about the version."
 
 [![DOI](https://zenodo.org/badge/165323812.svg)](https://zenodo.org/badge/latestdoi/165323812)
+
+### Acknowledgments
+
+We would like to thank [Claudia Calicho-Mamani](https://github.com/cpc4tz) for her contributions to an initial cleaning script for the Calm Thinking study.
 
 ## Data on Open Science Framework
 
