@@ -81,9 +81,11 @@ For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-Calm
 
 #### Concept DOI
 
-The following Concept DOI represents all versions of the cleaning scripts and resulting datasets. Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should cite the [Version DOI](#version-doi); cite the Concept DOI only "when it is desirable to cite an evolving research artifact, without being specific about the version."
+The following Concept DOI represents all versions of the cleaning scripts and resulting datasets and will resolve to the latest Version DOI.
 
-[![DOI](https://zenodo.org/badge/165323812.svg)](https://zenodo.org/badge/latestdoi/165323812)
+Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should cite the [Version DOI](#version-doi). Cite the Concept DOI only "when it is desirable to cite an evolving research artifact, without being specific about the version."
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6149365.svg)](https://doi.org/10.5281/zenodo.6149365)
 
 ### Acknowledgments
 
