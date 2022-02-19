@@ -65,7 +65,7 @@ When the SCHEMA or CONTENT version is incremented, a new version of the [data](#
 
 ### GitHub Releases
 
-Releases are named based on the version of their corresponding tag. The date in Release Notes is the date of the last committed change for that tag, and all changes in the release are bulleted in Release Notes.
+Releases are named based on the version of their corresponding tag. The date in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases) is the date of the last committed change for that tag, and all changes in the release are bulleted in the Release Notes.
 
 For example, [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0) is for tag v1.0.0. Although the release itself was created on 2022-02-18, the date of the last commit was 2022-01-12.
 
