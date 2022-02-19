@@ -1,12 +1,17 @@
 # MT-Data-CalmThinkingStudy
 
-Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
+README Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
 This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
 
+For questions about the cleaning scripts or resulting datasets, please contact [Jeremy W. Eberle](https://github.com/jwe4ec) or [Sonia Baee](https://github.com/soniabaee) or file an [issue](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/issues).
+
 ## Table of Contents
 
-- [Versioning](#versioning)
+- [Citation](#citation)
+  - [Versioning](#versioning)
+  - [GitHub Releases](#github-releases)
+  - [Zenodo DOIs](#zenodo-dois)
 - [Data on Open Science Framework](#data-on-open-science-framework)
   - [Private Component](#private-component)
   - [Public Component](#public-component)
@@ -30,7 +35,9 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR)
   - [outtakes_create_reports.R](#outtakes_create_reportsR)
 
-## Versioning
+## Citation
+
+### Versioning
 
 This repository and associated [data](#data-on-open-science-framework) are versioned using the following adaptation of [SemVer](https://semver.org/). When a given version of the data are analyzed, the version of the cleaning scripts and data can be documented and cited, and previous versions can be found by version number.
 
@@ -54,6 +61,28 @@ Given a version number SCHEMA.CONTENT.SCRIPT (e.g., v1.0.0), increment the:
 When the SCHEMA, CONTENT, or SCRIPT version is incremented, a new [tag](https://docs.github.com/en/repositories/releasing-projects-on-github/viewing-your-repositorys-releases-and-tags) (e.g., "v1.0.0" is added to the repo).
 
 When the SCHEMA or CONTENT version is incremented, a new version of the [data](#data-on-open-science-framework) is uploaded to OSF alongside the old version(s), with the ZIP file named based on the version number. There is no need to upload a new data version when the SCRIPT version is incremented.
+
+### GitHub Releases
+
+Releases are named based on the version number of their corresponding tag. The date included in Release Notes is the date of the last committed change for that tag, and all changes associated with the release are bulleted in the Release Notes.
+
+For example, [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0) is for tag v1.0.0. Although the release itself was created on 2022-02-18, the date of the last commit was 2022-01-12.
+
+### Zenodo DOIs
+
+#### Version DOI
+
+The [Zenodo integration with GitHub](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content) creates a new Version DOI each time a new GitHub release is created.
+
+When using the cleaning scripts or resulting datasets, please cite the Version DOI for the specific version of the cleaning scripts and data used. The Version DOI for a given release can be found in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases) for a given release.
+
+For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0), use the citation in the Share pane of the corresponding [Zenodo record for release 1.0.0](https://zenodo.org/record/6149366).
+
+#### Concept DOI
+
+The following Concept DOI represents all versions of the cleaning scripts and resulting datasets. Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should cite the [Version DOI](#version-doi); cite the Concept DOI only "when it is desirable to cite an evolving research artifact, without being specific about the version."
+
+[![DOI](https://zenodo.org/badge/165323812.svg)](https://zenodo.org/badge/latestdoi/165323812)
 
 ## Data on Open Science Framework
 
