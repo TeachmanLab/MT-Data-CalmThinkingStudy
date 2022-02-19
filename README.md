@@ -4,7 +4,7 @@ README Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
 This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
 
-For questions about the cleaning scripts or resulting datasets, please contact [Jeremy W. Eberle](https://github.com/jwe4ec) or [Sonia Baee](https://github.com/soniabaee) or file an [issue](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/issues).
+For questions, please contact [Jeremy W. Eberle](https://github.com/jwe4ec) or [Sonia Baee](https://github.com/soniabaee) or file an [issue](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/issues).
 
 ## Table of Contents
 
@@ -65,7 +65,7 @@ When the SCHEMA or CONTENT version is incremented, a new version of the [data](#
 
 ### GitHub Releases
 
-Releases are named based on the version number of their corresponding tag. The date included in Release Notes is the date of the last committed change for that tag, and all changes associated with the release are bulleted in the Release Notes.
+Releases are named based on the version of their corresponding tag. The date in Release Notes is the date of the last committed change for that tag, and all changes in the release are bulleted in Release Notes.
 
 For example, [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0) is for tag v1.0.0. Although the release itself was created on 2022-02-18, the date of the last commit was 2022-01-12.
 
@@ -75,9 +75,9 @@ For example, [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinking
 
 The [Zenodo integration with GitHub](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content) creates a new Version DOI each time a new GitHub release is created.
 
-When using the cleaning scripts or resulting datasets, please cite the Version DOI for the specific version of the cleaning scripts and data used. The Version DOI for a given release can be found in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases) for a given release.
+When using the cleaning scripts or resulting data, please cite the Version DOI for the version of the scripts and data used. The Version DOI for a given release is in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases).
 
-For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0), use the citation in the Share pane of the corresponding [Zenodo record for release 1.0.0](https://zenodo.org/record/6149366).
+For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0), use the citation in the Share pane of the [Zenodo record for release 1.0.0](https://zenodo.org/record/6149366).
 
 #### Concept DOI
 
@@ -89,7 +89,7 @@ Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should
 
 ### Acknowledgments
 
-We would like to thank [Claudia Calicho-Mamani](https://github.com/cpc4tz) for her contributions to an initial cleaning script for the Calm Thinking study.
+We thank [Claudia Calicho-Mamani](https://github.com/cpc4tz) for contributions to initial cleaning for the Calm Thinking study.
 
 ## Data on Open Science Framework
 
