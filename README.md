@@ -1,11 +1,18 @@
-# README
+# MT-Data-CalmThinkingStudy
 
-Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
+README Author: [Jeremy W. Eberle](https://github.com/jwe4ec)
 
 This README describes centralized data cleaning for the [MindTrails Project](https://mindtrails.virginia.edu/) Calm Thinking Study, an NIMH-funded ([R01MH113752](https://reporter.nih.gov/project-details/9513058)) sequential multiple assignment randomized controlled trial of web-based interpretation bias training for anxious adults (ClinicalTrials.gov [NCT03498651](https://clinicaltrials.gov/ct2/show/NCT03498651?term=NCT03498651&draw=2&rank=1)).
 
+For questions, please contact [Jeremy W. Eberle](https://github.com/jwe4ec) or [Sonia Baee](https://github.com/soniabaee) or file an [issue](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/issues).
+
 ## Table of Contents
 
+- [Citation](#citation)
+  - [Versioning](#versioning)
+  - [GitHub Releases](#github-releases)
+  - [Zenodo DOIs](#zenodo-dois)
+  - [Acknowledgments](#acknowledgments)
 - [Data on Open Science Framework](#data-on-open-science-framework)
   - [Private Component](#private-component)
   - [Public Component](#public-component)
@@ -29,13 +36,68 @@ This README describes centralized data cleaning for the [MindTrails Project](htt
   - [outtakes_clean_angular_training.R](#outtakes_clean_angular_trainingR)
   - [outtakes_create_reports.R](#outtakes_create_reportsR)
 
+## Citation
+
+### Versioning
+
+This repository and associated [data](#data-on-open-science-framework) are versioned using the following adaptation of [SemVer](https://semver.org/). When a given version of the data are analyzed, the version of the cleaning scripts and data can be documented and cited, and previous versions can be found by version number.
+
+Given a version number SCHEMA.CONTENT.SCRIPT (e.g., v1.0.0), increment the:
+
+1. SCHEMA version when making incompatible changes that **affect the data schema**
+   - Such changes *may break subsequent cleaning/analysis scripts*
+     - Ex. Adding/removing/renaming table or column
+     - Ex. Recoding/changing column meaning (e.g., adding/removing levels)
+
+2. CONTENT version when making backwards-compatible changes that **affect the data content**
+   - Such changes mean that *subsequent scripts should still run but may yield different results*
+     - Ex. Adding/removing a row
+     - Ex. Recoding certain cells of a variable using existing levels
+
+3. SCRIPT version when making backwards-compatible changes that **do not affect the data schema or content**
+   - Such changes mean that *subsequent scripts should still run and yield the same results*
+     - Ex. Add functionality (e.g., perform new checks, highlight new issues) without changing data
+     - Ex. Fix bugs (e.g., correct existing checks, clarify existing issues) without changing data
+
+When the SCHEMA, CONTENT, or SCRIPT version is incremented, a new [tag](https://docs.github.com/en/repositories/releasing-projects-on-github/viewing-your-repositorys-releases-and-tags) (e.g., "v1.0.0" is added to the repo).
+
+When the SCHEMA or CONTENT version is incremented, a new version of the [data](#data-on-open-science-framework) is uploaded to OSF alongside the old version(s), with the ZIP file named based on the version number. There is no need to upload a new data version when the SCRIPT version is incremented.
+
+### GitHub Releases
+
+Releases are named based on the version of their corresponding tag. The date in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases) is the date of the last committed change for that tag, and all changes in the release are bulleted in the Release Notes.
+
+For example, [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0) is for tag v1.0.0. Although the release itself was created on 2022-02-18, the date of the last commit was 2022-01-12.
+
+### Zenodo DOIs
+
+#### Version DOI
+
+The [Zenodo integration with GitHub](https://docs.github.com/en/repositories/archiving-a-github-repository/referencing-and-citing-content) creates a new Version DOI each time a new GitHub release is created.
+
+When using the cleaning scripts or resulting data, please cite the Version DOI for the version of the scripts and data used. The Version DOI for a given release is in the [Release Notes](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases).
+
+For example, to cite [release 1.0.0](https://github.com/TeachmanLab/MT-Data-CalmThinkingStudy/releases/tag/v1.0.0), use the citation in the Share pane of the [Zenodo record for release 1.0.0](https://zenodo.org/record/6149366).
+
+#### Concept DOI
+
+The following Concept DOI represents all versions of the cleaning scripts and resulting datasets and will resolve to the latest Version DOI.
+
+Per [Zenodo guidance](https://help.zenodo.org/#versioning), typically you should cite the [Version DOI](#version-doi). Cite the Concept DOI only "when it is desirable to cite an evolving research artifact, without being specific about the version."
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6149365.svg)](https://doi.org/10.5281/zenodo.6149365)
+
+### Acknowledgments
+
+We thank [Claudia Calicho-Mamani](https://github.com/cpc4tz) for contributions to initial cleaning for the Calm Thinking study.
+
 ## Data on Open Science Framework
 
 Raw and centrally cleaned data from the "calm" SQL database are stored in the [MindTrails Calm Thinking Study](https://osf.io/zbd52/) project on the Open Science Framework (OSF). The project has two components, with different permissions: a [Private Component](https://osf.io/jwvnb/) and a [Public Component](https://osf.io/s8v3h/).
 
 ### Private Component
 
-The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](#1_get_raw_dataipynb)). The folder structure is below.
+The [Private Component](https://osf.io/jwvnb/) contains the full set of 67 raw data tables (with some exceptions) dumped from the "calm" SQL database on the "teachmanlab" Data Server on December 3, 2020 (using [1_get_raw_data.ipynb](#1_get_raw_dataipynb)). The folder structure of a [version](#versioning)'s ZIP file is below.
 
 The exceptions are that only redacted versions of "gift_log", "import_log", and "sms_log" tables are included (redacted using [3_redact_data.R](#3_redact_dataR)). 
 
@@ -50,7 +112,7 @@ Researchers can request access to files on this component by contacting the stud
 
 ### Public Component
 
-The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](#1_get_raw_dataipynb) that did not need redaction), redacted data tables (from [3_redact_data.R](#3_redact_dataR)), and intermediately clean data tables (from [4_clean_data.R](#4_clean_dataR)). The folder structure is below.
+The [Public Component](https://osf.io/s8v3h/) contains a partial set of raw data tables (i.e., those obtained using [1_get_raw_data.ipynb](#1_get_raw_dataipynb) that did not need redaction), redacted tables (from [3_redact_data.R](#3_redact_dataR)), and intermediately clean tables (from [4_clean_data.R](#4_clean_dataR)). The structure of a [version](#versioning)'s ZIP file is below.
 
 Note: Tables in the `1_raw_full` folder of the [Private Component](#private-component) that are not in the `1_raw_partial` folder of this [Public Component](https://osf.io/s8v3h/) contain free-text responses that may or may not have identifiers. In the [Public Component](https://osf.io/s8v3h/), redacted versions of such tables are in `2_redacted`.
 
@@ -74,9 +136,9 @@ For more details about these data, cleaned by Alex Werntz and Allie Silverman, s
 
 ## Cleaning Scripts: Setup and File Relations
 
-The scripts in the [`code`](code) subfolder of this [Data Cleaning](https://github.com/jwe4ec/MT-Data-CalmThinkingStudy/tree/jeremy/Data%20Cleaning) folder import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
+The scripts in the [`code`](code) folder of this repository import the full raw data files, redact certain files, and clean the redacted and remaining raw files to yield intermediately clean files. The resulting files are considered only intermediately cleaned because further analysis-specific cleaning will be required for any given analysis.
 
-To run the cleaning scripts, create a parent folder (with any desired name, indicated by `.` below) with two subfolders: `data` and `code`. The working directory must be set to the parent folder in order for the scripts to import and export data correctly using relative file paths.
+To run the cleaning scripts, create a parent folder (with any desired name, indicated by `.` below) with two subfolders: `data` and `code`. The working directory must be set to the parent folder for the scripts to import and export data correctly using relative file paths.
 
 ```
 .                                # Parent folder (i.e., working directory)

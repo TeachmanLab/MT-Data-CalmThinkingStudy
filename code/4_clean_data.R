@@ -88,20 +88,20 @@ sink(file = "./docs/data_filenames.txt")
 if (exists("raw_data_dir_full")) {
   cat("In './data/1_raw_full'", "\n")
   cat("\n")
-  print(raw_full_filenames)
+  print(raw_full_filenames, width = 80)
   cat("\n")
 }
 
 if (exists("raw_data_dir_partial")) {
   cat("In './data/1_raw_partial'", "\n")
   cat("\n")
-  print(raw_partial_filenames)
+  print(raw_partial_filenames, width = 80)
   cat("\n")
 }
 
 cat("In './data/2_redacted'", "\n")
 cat("\n")
-print(red_filenames)
+print(red_filenames, width = 80)
 
 sink()
 
@@ -652,11 +652,11 @@ invisible(mapply(view_date_str, df = dat, df_name = names(dat)))
 
 # Some "date" and "date_submitted" fields are blank in "js_psych_trial" table. 
 # Changes/Issues log states on 10/7/2019 that a timeout on Recognition Ratings 
-# led to some of these data not being recorded for four participants. Based on
-# "task_log", each participant completed "RR" at "preTest", but the data are
-# not recorded in "js_psych_trial". Mark the blank "session" fields for these
-# entries as "preTest" and replace their "date" and "date_submitted" with the
-# corresponding "date_completed" from "task_log".
+# led to some of these data not being recorded for four participants (identified
+# below as 639, 645, 910, and 1028). Based on "task_log", each participant 
+# completed "RR" at "preTest", but the data are not recorded in "js_psych_trial". 
+# Mark the blank "session" fields for these entries as "preTest" and replace their 
+# "date" and "date_submitted" with corresponding "date_completed" from "task_log".
 
 blank_date_ids <- unique(dat$js_psych_trial[dat$js_psych_trial$date == "" |
                            dat$js_psych_trial$date_submitted == "", 
